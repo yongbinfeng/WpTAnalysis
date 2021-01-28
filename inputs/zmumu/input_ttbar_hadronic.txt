@@ -1,0 +1,5 @@
+/afs/cern.ch/work/y/yofeng/public/WpT/CMSSW_9_4_19/src/Nano/top1_select.raw_Skim_0.root
+/afs/cern.ch/work/y/yofeng/public/WpT/CMSSW_9_4_19/src/Nano/top1_select.raw_Skim_1.root
+/afs/cern.ch/work/y/yofeng/public/WpT/CMSSW_9_4_19/src/Nano/top1_select.raw_Skim_2.root
+/afs/cern.ch/work/y/yofeng/public/WpT/CMSSW_9_4_19/src/Nano/top1_select.raw_Skim_3.root
+/afs/cern.ch/work/y/yofeng/public/WpT/CMSSW_9_4_19/src/Nano/top1_select.raw_Skim_4.root
