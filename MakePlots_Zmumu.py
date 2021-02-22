@@ -1,7 +1,3 @@
-'''
-plot the data-MC comparisons pre/post DmumupMET corrections.
-and the systematic uncs.
-'''
 import ROOT
 import numpy as np
 from collections import OrderedDict
