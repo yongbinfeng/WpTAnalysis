@@ -43,8 +43,8 @@ def main():
         input_zxx     = "inputs/zee/input_zxx.txt"
 
     DataSamp  = Sample(input_data, isMC=False, legend="Data", name="Data", bjetVeto=VetoB)
-    DYSamp    = Sample(input_dy,    xsec = 6077.22*1e3,      color=92,  reweightzpt = True, legend="DY", name="DY", bjetVeto=VetoB, nmcevt=311461009200.830078)
-    TTbarSamp = Sample(input_ttbar, xsec = 831.76*0.105*1e3, color=46, reweightzpt = False, legend="t#bar{t}", name="ttbar2lep", bjetVeto=VetoB, nmcevt=360411094.548295)
+    DYSamp    = Sample(input_dy,    xsec = 6077.22*1e3,      color=92,  reweightzpt = True, legend="Z#rightarrow ee", name="DY", bjetVeto=VetoB, nmcevt=311461009200.830078 * 74510/75164.0)
+    TTbarSamp = Sample(input_ttbar, xsec = 831.76*0.105*1e3, color=46, reweightzpt = False, legend="t#bar{t}", name="ttbar2lep", bjetVeto=VetoB, nmcevt=360411094.548295 * 202 / 211.0)
     if not dotest:
         WWSamp  = Sample(input_ww,  xsec = 12.178*1e3,       color=38, reweightzpt = False, legend="WW2L",     name="WW",  bjetVeto=VetoB, nmcevt=1000000.0)
         WZSamp  = Sample(input_wz,  xsec = 5.26*1e3,         color=39, reweightzpt = False, legend="WZ3L",     name="WZ",  bjetVeto=VetoB, nmcevt=885000.00)
@@ -64,22 +64,38 @@ def main():
     sampMan.DefineAll("zmass", "ZMass")
     sampMan.DefineAll("zy",  "Z.Rapidity()")
     sampMan.DefineAll("zeta",  "Z.Rapidity()")
+    sampMan.DefineAll("zphi", "Z.Phi()")
     sampMan.DefineAll("nPV", "npv")
 
-    # define u1 and u2 for PUPPI and PF
-    # u1 and u2 for DeepMET has already been defined in SampleManager
-    sampMan.DefineAll("LeadElec_pt", "lep1_corr.Pt()")
-    sampMan.DefineAll("LeadElec_eta", "lep1_corr.Eta()")
-    sampMan.DefineAll("SubleadElec_pt", "lep2_corr.Pt()")
-    sampMan.DefineAll("SubleadElec_eta", "lep2_corr.Eta()")
+    sampMan.DefineAll("urawvec", "UVec(zpt, zphi, met_raw_pt, met_raw_phi)")
+    sampMan.DefineAll("uraw_pt",  "urawvec.Mod()")
+    sampMan.DefineAll("uraw_phi", "urawvec.Phi()")
+    sampMan.DefineAll("uraw1",    "uraw_pt * TMath::Cos(uraw_phi + TMath::Pi() - zphi)")
+    sampMan.DefineAll("uraw2",    "uraw_pt * TMath::Sin(uraw_phi + TMath::Pi() - zphi)")
+
+    sampMan.DefineAll("uvec", "UVec(zpt, zphi, met_corrected_pt, met_corrected_phi)")
+    sampMan.DefineAll("u_pt",  "uvec.Mod()")
+    sampMan.DefineAll("u_phi", "uvec.Phi()")
+    sampMan.DefineAll("ucor1",    "u_pt * TMath::Cos(u_phi + TMath::Pi() - zphi)")
+    sampMan.DefineAll("ucor2",    "u_pt * TMath::Sin(u_phi + TMath::Pi() - zphi)")
+
+    sampMan.DefineAll("e1pt",  "lep1_corr.Pt()")
+    sampMan.DefineAll("e1eta", "lep1_corr.Eta()")
+    sampMan.DefineAll("e2pt",  "lep2_corr.Pt()")
+    sampMan.DefineAll("e2eta", "lep2_corr.Eta()")
+
+    sampMan.DefineAll("LeadElec_pt",     "(e1pt > e2pt ? e1pt : e2pt)")
+    sampMan.DefineAll("LeadElec_eta",    "(e1pt > e2pt ? e1eta : e2eta)")
+    sampMan.DefineAll("SubleadElec_pt",  "(e1pt > e2pt ? e2pt : e1pt)")
+    sampMan.DefineAll("SubleadElec_eta", "(e1pt > e2pt ? e2eta : e1eta)")
 
     #DYSamp.Define("u_pt_corr_central", "TMath::Sqrt(u1_corr_central*u1_corr_central + u2_corr_central*u2_corr_central)")
     #sampMan.DefineAll("u1_corr_central",     "u1"  , excludes=['DY'])
 
 
     met_pt_bins = np.array([0., 2.0, 4., 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 33, 36, 39, 42, 45, 48, 51, 55, 60, 65, 70, 75, 80, 90, 100, 110, 120, 135, 150, 165, 180, 200])
-    u1_bins = np.array([-40.,-36.,-32., -28., -25., -22.0, -20.0, -18, -16, -14, -12, -10, -8, -6, -4, -2, 0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32, 34, 36, 38, 40, 42, 44, 46, 48, 50, 53, 56, 59, 64, 68, 72, 76, 80, 85, 90, 100])
-    u2_bins = np.array([-80., -70., -65., -60., -56., -52, -48, -44, -40, -37, -34, -31, -28, -25., -22., -20, -18, -16, -14, -12, -10, -8, -6, -4, -2, 0, 2, 4, 6, 8, 10, 12, 16, 18, 20, 22, 25, 28, 31, 34, 37, 40, 44, 48, 52, 56, 60, 65, 70, 80])
+    u1_bins = np.array([-20.0, -16, -12, -10, -8, -6, -4, -2, 0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32, 34, 36, 38, 40, 42, 44, 46, 48, 50, 53, 56, 59, 64, 68, 72, 76, 80, 85, 90, 100])
+    u2_bins = np.array([-30, -25., -22., -20, -18, -16, -14, -12, -10, -8, -6, -4, -2, 0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 25, 30])
     #u_bins = np.array([0., 2., 4., 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32, 34, 36, 38, 40, 43, 46, 49, 52, 56, 60, 64, 68, 72, 76, 80, 85, 90, 95, 100, 105, 110, 115, 120, 130, 140, 150])
     phimin = -ROOT.TMath.Pi()
     phimax = ROOT.TMath.Pi()
@@ -104,6 +120,21 @@ def main():
 
     sampMan.cacheDraw("met", "histo_zjets_ee_pfmet_pt", met_pt_bins, DrawConfig(xmin=0, xmax=100, xlabel='PF MET [GeV]'))
     sampMan.cacheDraw("metPhi", "histo_zjets_ee_pfmet_phi", 30, phimin, phimax, DrawConfig(xmin=phimin, xmax=phimax, xlabel='PF MET #phi'))
+
+    sampMan.cacheDraw("met_raw_pt", "histo_zjets_ee_pfmet_raw_pt", met_pt_bins, DrawConfig(xmin=0, xmax=100, xlabel='Raw PF MET [GeV]'))
+    sampMan.cacheDraw("met_raw_phi", "histo_zjets_ee_pfmet_raw_phi", 30, phimin, phimax, DrawConfig(xmin=phimin, xmax=phimax, xlabel='Raw PF MET #phi'))
+
+    sampMan.cacheDraw("met_wlepcorr_pt", "histo_zjets_ee_pfmet_wlepcorr_pt", met_pt_bins, DrawConfig(xmin=0, xmax=100, xlabel='PF MET [GeV]'))
+    sampMan.cacheDraw("met_wlepcorr_phi", "histo_zjets_ee_pfmet_wlepcorr_phi", 30, phimin, phimax, DrawConfig(xmin=phimin, xmax=phimax, xlabel='PF MET #phi'))
+
+    sampMan.cacheDraw("met_corrected_pt", "histo_zjets_ee_pfmet_corrected_pt", met_pt_bins, DrawConfig(xmin=0, xmax=100, xlabel='PF MET [GeV]'))
+    sampMan.cacheDraw("met_corrected_phi", "histo_zjets_ee_pfmet_corrected_phi", 30, phimin, phimax, DrawConfig(xmin=phimin, xmax=phimax, xlabel='PF MET #phi'))
+
+    sampMan.cacheDraw("uraw1", "histo_zjets_ee_pfmet_uraw1_pt", u1_bins, DrawConfig(xmin=-20.0, xmax=100.0, xlabel="Raw u_{#parallel} [GeV]", extraText='ee channel'))
+    sampMan.cacheDraw("uraw2", "histo_zjets_ee_pfmet_uraw2_pt", u2_bins, DrawConfig(xmin=-30.0, xmax=30.0, xlabel= "Raw u_{#perp  } [GeV]", extraText='ee channel'))
+
+    sampMan.cacheDraw("ucor1", "histo_zjets_ee_pfmet_ucor1_pt", u1_bins, DrawConfig(xmin=-20.0, xmax=100.0, xlabel="u_{#parallel} [GeV]", extraText='ee channel'))
+    sampMan.cacheDraw("ucor2", "histo_zjets_ee_pfmet_ucor2_pt", u2_bins, DrawConfig(xmin=-30.0, xmax=30.0, xlabel= "u_{#perp  } [GeV]", extraText='ee channel'))
 
     sampMan.launchDraw()
 

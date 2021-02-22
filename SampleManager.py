@@ -53,7 +53,7 @@ class DrawConfig(object):
         self.yrlabel = kwargs.get('yrlabel', 'Data / MC ')
 
         self.legends = kwargs.get('legends', [])
-        self.legendPos = kwargs.get('legendPos', [0.92, 0.88, 0.70, 0.66])
+        self.legendPos = kwargs.get('legendPos', [0.92, 0.88, 0.70, 0.62])
         self.colors = kwargs.get('colors', [])
 
         self.redrawihist = kwargs.get('redrawihist', 0)
@@ -67,12 +67,13 @@ class DrawConfig(object):
 
 class Sample(object):
     def __init__(self, inputfiles, isMC=True, xsec=1.0, color=1, reweightzpt = False, legend="", name="", 
-                 isZSR=True, isWSR=False, applySF=True, bjetVeto=False, nmcevt=-1):
+                 isZSR=True, isWSR=False, applySF=True, bjetVeto=False, nmcevt=-1, additionalnorm=1.0):
         if isMC:
             if nmcevt>0:
                 self.nmcevt = nmcevt
             else:
                 self.nmcevt = self.getNMCEvt(inputfiles)
+            self.nmcevt = self.nmcevt
             self.mcxsec = xsec
             self.color = color
             #self.normfactor = LUMI * self.mcxsec / self.nmcevt
@@ -84,13 +85,17 @@ class Sample(object):
             self.color = 1
             self.normfactor = 1.0
             self.reweightzpt = False
+        self.additionalnorm = additionalnorm
 
         self.isMC = isMC
         self.legend = legend
         self.name = name
         self.isZSR = isZSR
+        if isWSR:
+            # can not be ZSR and WSR at the same time
+            self.isZSR = False
         self.isWSR = isWSR
-        assert not (self.isZSR and self.isWSR), "can not be ZSR and WSR at the same time !!"
+        #assert not (self.isZSR and self.isWSR), "can not be ZSR and WSR at the same time !!"
         self.applySF = applySF
         # this variable is used in cases where the xsec is allowed to 
         # free-float, or normalized to the rest of (data-MC_sum)
@@ -150,7 +155,8 @@ class Sample(object):
         So use rdf_org to hold the pre-selected one.
         """
         if self.isZSR:
-            self.rdf_temp = self.rdf_org.Filter("category==1 || category==2 || category==3")\
+            self.rdf_temp = self.rdf_org.Filter("category==1 || category==2 || category==3") \
+                                .Filter("abs(lep1.Eta()) < 2.4 && abs(lep2.Eta()) < 2.4") \
                                 .Define("lep1_corr", "VLep(lep1_corrected_pt, lep1.Eta(), lep1.Phi(), lep1.M())") \
                                 .Define("lep2_corr", "VLep(lep2_corrected_pt, lep2.Eta(), lep2.Phi(), lep2.M())") \
                                 .Define("Z", "(lep1_corr + lep2_corr)") \
@@ -165,7 +171,9 @@ class Sample(object):
             else:
                 self.rdf = self.rdf_temp
         elif self.isWSR:
-            self.rdf = self.rdf_org.Define("lep_n", "mu_n+el_n").Filter("lep_n==1")
+            self.rdf = self.rdf_org.Filter("abs(lep.Eta())<2.4") \
+                                   .Filter("lep.Pt()>25.0") \
+                                   .Filter("mtCorr>40")
         else:
             self.rdf = self.rdf_org
         #print self.rdf.Count().GetValue()
@@ -187,11 +195,14 @@ class Sample(object):
         #    self.rdf_org = self.rdf_org.Define("weight_WoVpt", "( PUWeight * NLOWeight )")
         if self.isMC:
             print(str(LUMI/self.nmcevt))
-            self.rdf_org = self.rdf_org.Define("mcnorm", str(LUMI/self.nmcevt))\
-                                       .Define("weight_WoVpt_WoEff", "scale1fb * prefireWeight * mcnorm") \
+            self.rdf_org = self.rdf_org.Define("mcnorm", str(LUMI/self.nmcevt * self.additionalnorm))
+            if self.isZSR:
+                self.rdf_org = self.rdf_org.Define("weight_WoVpt_WoEff", "scale1fb * prefireWeight * mcnorm") \
                                        .Define("weight_WoVpt", "scale1fb * prefireWeight * mcnorm * lepsfweight")
+            elif self.isWSR:
+                self.rdf_org = self.rdf_org.Define("weight_WoVpt", "evtWeight[0] * mcnorm")
         else:
-            self.rdf_org = self.rdf_org.Define("weight_WoVpt", "1.0")
+            self.rdf_org = self.rdf_org.Define("weight_WoVpt", str(self.additionalnorm))
 
         #if self.isZSR:
         #    pass
