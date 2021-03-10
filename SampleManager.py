@@ -9,17 +9,17 @@ import ROOT
 import numpy as np
 import sys
 from collections import OrderedDict
-sys.path.append("/afs/cern.ch/work/y/yofeng/public/CMSPLOTS")
+sys.path.append("/uscms_data/d3/yfeng/CMSPLOTS")
 from myFunction import DrawHistos
 
 MINMASS = 60
 MAXMASS = 120
 LEPPTMIN = 25.0
 LEPETA = 2.4
-LUMI = 199.27
+LUMI = 199.27 * 1e-3
 
 ROOT.ROOT.EnableImplicitMT()
-ROOT.gSystem.Load("/afs/cern.ch/work/y/yofeng/public/WpT/CMSSW_10_6_0/src/PostCorrNTuple/Functions_cc.so")
+ROOT.gSystem.Load("Functions_cc.so")
 
 
 class DrawConfig(object):
@@ -67,7 +67,7 @@ class DrawConfig(object):
 
 class Sample(object):
     def __init__(self, inputfiles, isMC=True, xsec=1.0, color=1, reweightzpt = False, legend="", name="", 
-                 isZSR=True, isWSR=False, applySF=True, bjetVeto=False, nmcevt=-1, additionalnorm=1.0):
+                 isZSR=True, isWSR=False, applySF=True, bjetVeto=False, nmcevt=-1, additionalnorm=1.0, isNLO=False):
         if isMC:
             if nmcevt>0:
                 self.nmcevt = nmcevt
@@ -79,6 +79,7 @@ class Sample(object):
             #self.normfactor = LUMI * self.mcxsec / self.nmcevt
             self.normfactor = 1.0
             self.reweightzpt = reweightzpt
+            self.isNLO = isNLO
         else:
             self.nmcevt = 0
             self.mcxsec = 0
@@ -126,15 +127,16 @@ class Sample(object):
 
     def getNMCEvt(self, inputfiles):
         print "count total number of MC events from:"
+        Nevt = 0
         for line in open( inputfiles, "r"):
             fname = line.rstrip()
             if fname.startswith('#'):
                 continue
             print fname
-            ifile = ROOT.TFile(fname)
-            hist = ifile.Get("hGenWeights")
-            Nevt = hist.Integral()
-            ifile.Close()
+            ifile = ROOT.TFile.Open(fname)
+            hist = ifile.Get("hEvtCount")
+            Nevt += hist.GetBinContent(1)
+            #ifile.Close()
         print "total number of events: {}".format(Nevt)
         return Nevt
 
@@ -154,28 +156,29 @@ class Sample(object):
         be different before and after Filter.
         So use rdf_org to hold the pre-selected one.
         """
-        if self.isZSR:
-            self.rdf_temp = self.rdf_org.Filter("category==1 || category==2 || category==3") \
-                                .Filter("abs(lep1.Eta()) < 2.4 && abs(lep2.Eta()) < 2.4") \
-                                .Define("lep1_corr", "VLep(lep1_corrected_pt, lep1.Eta(), lep1.Phi(), lep1.M())") \
-                                .Define("lep2_corr", "VLep(lep2_corrected_pt, lep2.Eta(), lep2.Phi(), lep2.M())") \
-                                .Define("Z", "(lep1_corr + lep2_corr)") \
-                                .Define("ZMass", "Z.M()") \
-                                .Filter("ZMass > {MINMASS} && ZMass < {MAXMASS}".format(MINMASS=MINMASS, MAXMASS=MAXMASS))
-                                #.Filter("Muon.pt[0] > {} && Muon.pt[1] > {}".format(LEPPTMIN, LEPPTMIN))  \
-                                #.Filter("abs(Muon.eta[0]) < {} && abs(Muon.eta[1]) < {}".format(LEPETA, LEPETA))
-                                #.Filter("lep_n==2")
-                                #.Filter("Z_pt < 40.0")
-            if self.bjetVeto:
-                self.rdf = self.rdf_temp.Filter("jet_CSVLoose_n<1")
-            else:
-                self.rdf = self.rdf_temp
-        elif self.isWSR:
-            self.rdf = self.rdf_org.Filter("abs(lep.Eta())<2.4") \
-                                   .Filter("lep.Pt()>25.0") \
-                                   .Filter("mtCorr>40")
-        else:
-            self.rdf = self.rdf_org
+        self.rdf = self.rdf_org
+        #if self.isZSR:
+        #    self.rdf_temp = self.rdf_org.Filter("category==1 || category==2 || category==3") \
+        #                        .Filter("abs(lep1.Eta()) < 2.4 && abs(lep2.Eta()) < 2.4") \
+        #                        .Define("lep1_corr", "VLep(lep1_corrected_pt, lep1.Eta(), lep1.Phi(), lep1.M())") \
+        #                        .Define("lep2_corr", "VLep(lep2_corrected_pt, lep2.Eta(), lep2.Phi(), lep2.M())") \
+        #                        .Define("Z", "(lep1_corr + lep2_corr)") \
+        #                        .Define("ZMass", "Z.M()") \
+        #                        .Filter("ZMass > {MINMASS} && ZMass < {MAXMASS}".format(MINMASS=MINMASS, MAXMASS=MAXMASS))
+        #                        #.Filter("Muon.pt[0] > {} && Muon.pt[1] > {}".format(LEPPTMIN, LEPPTMIN))  \
+        #                        #.Filter("abs(Muon.eta[0]) < {} && abs(Muon.eta[1]) < {}".format(LEPETA, LEPETA))
+        #                        #.Filter("lep_n==2")
+        #                        #.Filter("Z_pt < 40.0")
+        #    if self.bjetVeto:
+        #        self.rdf = self.rdf_temp.Filter("jet_CSVLoose_n<1")
+        #    else:
+        #        self.rdf = self.rdf_temp
+        #elif self.isWSR:
+        #    self.rdf = self.rdf_org.Filter("abs(lep.Eta())<2.4") \
+        #                           .Filter("lep.Pt()>25.0") \
+        #                           .Filter("mtCorr>40")
+        #else:
+        #    self.rdf = self.rdf_org
         #print self.rdf.Count().GetValue()
 
     def ApplyCut(self, cutstring):
@@ -195,10 +198,14 @@ class Sample(object):
         #    self.rdf_org = self.rdf_org.Define("weight_WoVpt", "( PUWeight * NLOWeight )")
         if self.isMC:
             print(str(LUMI/self.nmcevt))
-            self.rdf_org = self.rdf_org.Define("mcnorm", str(LUMI/self.nmcevt * self.additionalnorm))
+            self.rdf_org = self.rdf_org.Define("mcnorm", str(LUMI/self.nmcevt * self.mcxsec * self.additionalnorm))
+            if self.isNLO:
+                self.rdf_org = self.rdf_org.Define("NLOWeight", "genWeight > 0 ? 1 : -1")
+            else:
+                self.rdf_org = self.rdf_org.Define("NLOWeight", "1.0")
             if self.isZSR:
-                self.rdf_org = self.rdf_org.Define("weight_WoVpt_WoEff", "scale1fb * prefireWeight * mcnorm") \
-                                       .Define("weight_WoVpt", "scale1fb * prefireWeight * mcnorm * lepsfweight")
+                self.rdf_org = self.rdf_org.Define("weight_WoVpt_WoEff", "NLOWeight * PrefireWeight * mcnorm") \
+                                       .Define("weight_WoVpt", "NLOWeight * PrefireWeight * mcnorm * lepsfweight")
             elif self.isWSR:
                 self.rdf_org = self.rdf_org.Define("weight_WoVpt", "evtWeight[0] * mcnorm")
         else:
