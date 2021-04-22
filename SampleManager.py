@@ -204,12 +204,12 @@ class Sample(object):
             else:
                 self.rdf_org = self.rdf_org.Define("NLOWeight", "1.0")
             if self.isZSR:
-                self.rdf_org = self.rdf_org.Define("weight_WoVpt_WoEff", "NLOWeight * PrefireWeight * mcnorm") \
-                                       .Define("weight_WoVpt", "NLOWeight * PrefireWeight * mcnorm * lepsfweight")
+                self.rdf_org = self.rdf_org.Define("weight_WoVpt_WoEff", "NLOWeight * mcnorm * PrefireWeight") \
+                                       .Define("weight_WoVpt", "NLOWeight * mcnorm * PrefireWeight * lepsfweight")
             elif self.isWSR:
-                self.rdf_org = self.rdf_org.Define("weight_WoVpt", "evtWeight[0] * mcnorm")
+                self.rdf_org = self.rdf_org.Define("weight_WoVpt", "NLOWeight * mcnorm * PrefireWeight")
         else:
-            self.rdf_org = self.rdf_org.Define("weight_WoVpt", str(self.additionalnorm))
+            self.rdf_org = self.rdf_org.Define("weight_WoVpt_WoEff",str(self.additionalnorm)).Define("weight_WoVpt", str(self.additionalnorm))
 
         #if self.isZSR:
         #    pass
@@ -261,6 +261,9 @@ class SampleManager(object):
         # count the number of events in data and MC
         self.counts = []
 
+        # default weight str
+        self.default_weight_str = None
+
     def ApplyCutAll(self, cutstring):
         self.data.ApplyCut(cutstring)
         for mc in self.mcs:
@@ -274,6 +277,10 @@ class SampleManager(object):
             elif mc.groupname in sampgroupnames:
                 print "Apply Cut {} for sample {} in grouped sample {}".format(cutstring, mc.name, mc.groupname)
                 mc.ApplyCut(cutstring)
+
+    def SetDefaultWeightStr(self, weightstr):
+        # set the default weightstr used to reweight the histograms
+        self.default_weight_str = weightstr
 
     def DefineAll(self, varname, formula, excludes=[], excludeGroups=[]):
         self.DefineData(varname, formula)
@@ -331,6 +338,9 @@ class SampleManager(object):
             print colored('some somples are not grouped yet, please check the names...: {}'.format(mcnames_to_be_grouped), 'red')
 
     def cacheDraw(self, *args, **kwds):
+        if "weightname" not in kwds.keys() and self.default_weight_str:
+            kwds['weightname'] = self.default_weight_str
+            print("use default weight str " + self.default_weight_str + " for histogram "+ args[1])
         if len(args) == 6:
             self.cacheDraw_fb(*args, **kwds)
         elif len(args) == 4:   
