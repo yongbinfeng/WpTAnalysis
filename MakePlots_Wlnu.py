@@ -126,37 +126,38 @@ def main():
     # WpT bins
     # bin0 is the inclusive bin
     sampMan.DefineAll("WpT_bin0",  "WpT>=0.")
-    sampMan.DefineAll("WpT_bin1",  "WpT>=0. && WpT<8.0")
-    sampMan.DefineAll("WpT_bin2",  "WpT>=8.0 &&  WpT<16.0")
-    sampMan.DefineAll("WpT_bin3",  "WpT>=16.0 && WpT<24.0")
-    sampMan.DefineAll("WpT_bin4",  "WpT>=24.0 && WpT<32.0")
-    sampMan.DefineAll("WpT_bin5",  "WpT>=32.0 && WpT<40.0")
-    sampMan.DefineAll("WpT_bin6",  "WpT>=40.0 && WpT<50.0")
-    sampMan.DefineAll("WpT_bin7",  "WpT>=50.0 && WpT<70.0")
-    sampMan.DefineAll("WpT_bin8",  "WpT>=70.0 && WpT<100.0")
-    sampMan.DefineAll("WpT_bin9",  "WpT>=100.0")
-    wptbins = ["WpT_bin0", "WpT_bin1", "WpT_bin2", "WpT_bin3", "WpT_bin4", "WpT_bin5", "WpT_bin6", "WpT_bin7", "WpT_bin8", "WpT_bin9"]
-    if doTest:
-        wptbins = ["WpT_bin0", "WpT_bin1"]
-    if not doWpT:
-        wptbins = ["WpT_bin0"]
+    wptbins = ["WpT_bin0"]
+    if doWpT:
+        sampMan.DefineAll("WpT_bin1",  "WpT>=0. && WpT<8.0")
+        sampMan.DefineAll("WpT_bin2",  "WpT>=8.0 &&  WpT<16.0")
+        sampMan.DefineAll("WpT_bin3",  "WpT>=16.0 && WpT<24.0")
+        sampMan.DefineAll("WpT_bin4",  "WpT>=24.0 && WpT<32.0")
+        sampMan.DefineAll("WpT_bin5",  "WpT>=32.0 && WpT<40.0")
+        sampMan.DefineAll("WpT_bin6",  "WpT>=40.0 && WpT<50.0")
+        sampMan.DefineAll("WpT_bin7",  "WpT>=50.0 && WpT<70.0")
+        sampMan.DefineAll("WpT_bin8",  "WpT>=70.0 && WpT<100.0")
+        sampMan.DefineAll("WpT_bin9",  "WpT>=100.0")
+        wptbins = ["WpT_bin0", "WpT_bin1", "WpT_bin2", "WpT_bin3", "WpT_bin4", "WpT_bin5", "WpT_bin6", "WpT_bin7", "WpT_bin8", "WpT_bin9"]
+        if doTest:
+            wptbins = ["WpT_bin0", "WpT_bin1"]
 
     # truth level
-    sampMan.DefineSpecificMCs("WpT_truth", "genV.Pt()", sampnames=signalSampnames)
-    sampMan.DefineSpecificMCs("WpT_truth_bin1",  "WpT_truth>=0.   &&  WpT_truth<8.0",  sampnames=signalSampnames)
-    sampMan.DefineSpecificMCs("WpT_truth_bin2",  "WpT_truth>=8.0  &&  WpT_truth<16.0", sampnames=signalSampnames)
-    sampMan.DefineSpecificMCs("WpT_truth_bin3",  "WpT_truth>=16.0 &&  WpT_truth<24.0", sampnames=signalSampnames)
-    sampMan.DefineSpecificMCs("WpT_truth_bin4",  "WpT_truth>=24.0 &&  WpT_truth<32.0", sampnames=signalSampnames)
-    sampMan.DefineSpecificMCs("WpT_truth_bin5",  "WpT_truth>=32.0 &&  WpT_truth<40.0", sampnames=signalSampnames)
-    sampMan.DefineSpecificMCs("WpT_truth_bin6",  "WpT_truth>=40.0 &&  WpT_truth<50.0", sampnames=signalSampnames)
-    sampMan.DefineSpecificMCs("WpT_truth_bin7",  "WpT_truth>=50.0 &&  WpT_truth<70.0", sampnames=signalSampnames)
-    sampMan.DefineSpecificMCs("WpT_truth_bin8",  "WpT_truth>=70.0 &&  WpT_truth<100.0",sampnames=signalSampnames)
-    sampMan.DefineSpecificMCs("WpT_truth_bin9",  "WpT_truth>=100.0",                   sampnames=signalSampnames)
-    wpttruthbins  = ["WpT_truth_bin1", "WpT_truth_bin2", "WpT_truth_bin3", "WpT_truth_bin4", "WpT_truth_bin5", "WpT_truth_bin6", "WpT_truth_bin7", "WpT_truth_bin8", "WpT_truth_bin9"]
-    if doTest:
-        wpttruthbins = ["WpT_truth_bin1", "WpT_truth_bin2"]
-    if not doWpT:
-        wpttruthbins = []
+    wpttruthbins = []
+    if doWpT:
+        sampMan.DefineSpecificMCs("WpT_truth", "genV.Pt()", sampnames=signalSampnames)
+        sampMan.DefineSpecificMCs("WpT_truth_bin1",  "WpT_truth>=0.   &&  WpT_truth<8.0",  sampnames=signalSampnames)
+        sampMan.DefineSpecificMCs("WpT_truth_bin2",  "WpT_truth>=8.0  &&  WpT_truth<16.0", sampnames=signalSampnames)
+        sampMan.DefineSpecificMCs("WpT_truth_bin3",  "WpT_truth>=16.0 &&  WpT_truth<24.0", sampnames=signalSampnames)
+        sampMan.DefineSpecificMCs("WpT_truth_bin4",  "WpT_truth>=24.0 &&  WpT_truth<32.0", sampnames=signalSampnames)
+        sampMan.DefineSpecificMCs("WpT_truth_bin5",  "WpT_truth>=32.0 &&  WpT_truth<40.0", sampnames=signalSampnames)
+        sampMan.DefineSpecificMCs("WpT_truth_bin6",  "WpT_truth>=40.0 &&  WpT_truth<50.0", sampnames=signalSampnames)
+        sampMan.DefineSpecificMCs("WpT_truth_bin7",  "WpT_truth>=50.0 &&  WpT_truth<70.0", sampnames=signalSampnames)
+        sampMan.DefineSpecificMCs("WpT_truth_bin8",  "WpT_truth>=70.0 &&  WpT_truth<100.0",sampnames=signalSampnames)
+        sampMan.DefineSpecificMCs("WpT_truth_bin9",  "WpT_truth>=100.0",                   sampnames=signalSampnames)
+        wpttruthbins  = ["WpT_truth_bin1", "WpT_truth_bin2", "WpT_truth_bin3", "WpT_truth_bin4", "WpT_truth_bin5", "WpT_truth_bin6", "WpT_truth_bin7", "WpT_truth_bin8", "WpT_truth_bin9"]
+        if doTest:
+            wpttruthbins = ["WpT_truth_bin1", "WpT_truth_bin2"]
+
 
     # eta bins for electrons: barral and endcap
     sampMan.DefineAll("lepEta_bin0", "1.0")
@@ -185,6 +186,9 @@ def main():
                         for samp in signalSamps:
                             samp.Define("weight_{}_{}_{}_{}_{}".format(chg, str(i), wpt, lepeta, wpttruth), "weight_{}_{}_{}_{} * {}".format(chg, str(i),  wpt, lepeta, wpttruth))
 
+    #
+    # Some histograms for simple data-MC comparison
+    #
     met_pt_bins = np.array([0., 2.0, 4., 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 33, 36, 39, 42, 45, 48, 51, 55, 60, 65, 70, 75, 80])
     mt_bins = np.concatenate((np.linspace(40, 90, 51), np.linspace(92, 100, 5), np.linspace(104, 120, 5)))
     phimin = -ROOT.TMath.Pi()
@@ -284,7 +288,8 @@ def main():
     #
     # write out mT histograms for combine
     #
-    outfile = ROOT.TFile("output_shapes_"+lepname+".root", "recreate")
+    postfix = "_WpT" if doWpT else ""
+    outfile = ROOT.TFile("output_shapes_"+lepname+postfix+".root", "recreate")
 
     # Data
     odir = outfile.mkdir("Data")
@@ -314,6 +319,12 @@ def main():
                         hname = "histo_wjets_{}_mT_1_{}_{}_{}_signalMC".format(chg, wpt, lepeta, wpttruth)
                         hlists_central = [h_sigsMerged[hname]]
 
+                    # central values for MC
+                    for ih in xrange(len(hlists_central)):
+                        hcen = hlists_central[ih]
+                        hcen.SetDirectory(odir)
+                        hcen.Write()
+
                     # recoil systematics
                     for i in [2, 3, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]:
                         if wpttruth == "MCTemplates":
@@ -334,8 +345,6 @@ def main():
                             for ibin in xrange(1, hup.GetNbinsX()+1):
                                 hdn.SetBinContent(ibin, 2*hcen.GetBinContent(ibin) - hup.GetBinContent(ibin))
 
-                            hcen.SetDirectory(odir)
-                            hcen.Write()
                             hup.SetDirectory(odir)
                             hup.Write()
                             hdn.SetDirectory(odir)
