@@ -14,6 +14,9 @@ doMuon = True
 # debugging
 doTest = False
 
+# boolean flag to bin in different W pt bins
+doWpT = False
+
 def main():
     print "Program start..."
 
@@ -135,6 +138,8 @@ def main():
     wptbins = ["WpT_bin0", "WpT_bin1", "WpT_bin2", "WpT_bin3", "WpT_bin4", "WpT_bin5", "WpT_bin6", "WpT_bin7", "WpT_bin8", "WpT_bin9"]
     if doTest:
         wptbins = ["WpT_bin0", "WpT_bin1"]
+    if not doWpT:
+        wptbins = ["WpT_bin0"]
 
     # truth level
     sampMan.DefineSpecificMCs("WpT_truth", "genV.Pt()", sampnames=signalSampnames)
@@ -150,6 +155,8 @@ def main():
     wpttruthbins  = ["WpT_truth_bin1", "WpT_truth_bin2", "WpT_truth_bin3", "WpT_truth_bin4", "WpT_truth_bin5", "WpT_truth_bin6", "WpT_truth_bin7", "WpT_truth_bin8", "WpT_truth_bin9"]
     if doTest:
         wpttruthbins = ["WpT_truth_bin1", "WpT_truth_bin2"]
+    if not doWpT:
+        wpttruthbins = []
 
     # eta bins for electrons: barral and endcap
     sampMan.DefineAll("lepEta_bin0", "1.0")
