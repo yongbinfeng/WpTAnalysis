@@ -1,13 +1,6 @@
 import ROOT
 import numpy as np
 from collections import OrderedDict
-import sys
-sys.path.append("/afs/cern.ch/work/y/yofeng/public/CMSPLOTS")
-from tdrstyle import setTDRStyle
-from myFunction import DrawHistos, THStack2TH1
-import CMS_lumi
-import pickle
-
 from SampleManager import DrawConfig, Sample, SampleManager
 
 ROOT.gROOT.SetBatch(True)
@@ -17,6 +10,9 @@ ROOT.ROOT.EnableImplicitMT(10)
 # doMuon = False means the electron channel
 doMuon = True
 
+# boolean flag to run on a subset of samples for
+# debugging
+doTest = False
 
 def main():
     print "Program start..."
@@ -55,21 +51,6 @@ def main():
         input_wx1     = "inputs/wenu/input_wx1.txt"
         input_wx2     = "inputs/wenu/input_wx2.txt"
 
-    #input_antiiso_data    = "inputs/awmunu/input_data.txt"
-    #input_antiiso_wm0     = "inputs/awmunu/input_wm0.txt"
-    #input_antiiso_wm1     = "inputs/awmunu/input_wm1.txt"
-    #input_antiiso_wm2     = "inputs/awmunu/input_wm2.txt"
-    #input_antiiso_ttbar   = "inputs/awmunu/input_ttbar_dilepton.txt"
-    #input_antiiso_ttbar_1lep = "inputs/awmunu/input_ttbar_singlelepton.txt"
-    #input_antiiso_ttbar_0lep = "inputs/awmunu/input_ttbar_hadronic.txt"
-    #input_antiiso_ww      = "inputs/awmunu/input_ww.txt"
-    #input_antiiso_wz      = "inputs/awmunu/input_wz.txt"
-    #input_antiiso_zz      = "inputs/awmunu/input_zz.txt"
-    #input_antiiso_zxx     = "inputs/awmunu/input_zxx.txt"
-    #input_antiiso_wx0     = "inputs/awmunu/input_wx0.txt"
-    #input_antiiso_wx1     = "inputs/awmunu/input_wx1.txt"
-    #input_antiiso_wx2     = "inputs/awmunu/input_wx2.txt"
-
     DataSamp  = Sample(input_data, isMC=False, legend="Data", name="Data", isWSR=True)
     # W -> munu
     #wjetsnorm = 1.06
@@ -91,37 +72,26 @@ def main():
     Wx1Samp = Sample(input_wx1, isMC=True, name = "wx1", isWSR=True)
     Wx2Samp = Sample(input_wx2, isMC=True, name = "wx2", isWSR=True)
 
-    #qcdnorm = 1.0243
-    #DataAisoSamp  = Sample(input_antiiso_data, isMC=False, name="Data_aiso", isWSR=True, additionalnorm = qcdnorm, legend = 'QCD', color='226')
-    ## W -> munu
-    #Wm0AisoSamp   = Sample(input_antiiso_wm0, isMC=True, name = "wm0_aiso", isWSR=True, additionalnorm=-1.0 * qcdnorm)
-    #Wm1AisoSamp   = Sample(input_antiiso_wm1, isMC=True, name = "wm1_aiso", isWSR=True, additionalnorm=-1.0 * qcdnorm)
-    #Wm2AisoSamp   = Sample(input_antiiso_wm2, isMC=True, name = "wm2_aiso", isWSR=True, additionalnorm=-1.0 * qcdnorm)
-    ## ttbar
-    #TTbarAisoSamp  = Sample(input_antiiso_ttbar, isMC=True, name = "ttbar_dilepton_aiso", isWSR=True, additionalnorm=-1.0 * qcdnorm)
-    #TT1LepAisoSamp = Sample(input_antiiso_ttbar_1lep, isMC=True, name = "ttbar_1lepton_aiso", isWSR=True, additionalnorm=-1.0 * qcdnorm)
-    #TT0LepAisoSamp = Sample(input_antiiso_ttbar_0lep, isMC=True, name = "ttbar_0lepton_aiso", isWSR=True, additionalnorm=-1.0 * qcdnorm)
-    ### dibosons
-    #WWAisoSamp = Sample(input_antiiso_ww, isMC=True, name = "WW_aiso", isWSR=True, additionalnorm=-1.0 * qcdnorm)
-    #WZAisoSamp = Sample(input_antiiso_wz, isMC=True, name = "WZ_aiso", isWSR=True, additionalnorm=-1.0 * qcdnorm)
-    #ZZAisoSamp = Sample(input_antiiso_zz, isMC=True, name = "ZZ_aiso", isWSR=True, additionalnorm=-1.0 * qcdnorm)
-    ## tau
-    #ZXXAisoSamp = Sample(input_antiiso_zxx, isMC=True, name = "ZXX_aiso", isWSR=True, additionalnorm=-1.0 * qcdnorm)
-    #Wx0AisoSamp = Sample(input_antiiso_wx0, isMC=True, name = "wx0_aiso", isWSR=True, additionalnorm=-1.0 * qcdnorm)
-    #Wx1AisoSamp = Sample(input_antiiso_wx1, isMC=True, name = "wx1_aiso", isWSR=True, additionalnorm=-1.0 * qcdnorm)
-    #Wx2AisoSamp = Sample(input_antiiso_wx2, isMC=True, name = "wx2_aiso", isWSR=True, additionalnorm=-1.0 * qcdnorm)
-
-    #sampMan = SampleManager(DataSamp, [Wm0Samp, Wm1Samp, Wm2Samp, TTbarSamp, TT1LepSamp, TT0LepSamp, WWSamp, WZSamp, ZZSamp, ZXXSamp, Wx0Samp, Wx1Samp, Wx2Samp, 
-    #        DataAisoSamp, Wm0AisoSamp, Wm1AisoSamp, Wm2AisoSamp, TTbarAisoSamp, TT1LepAisoSamp, TT0LepAisoSamp, WWAisoSamp, WZAisoSamp, ZZAisoSamp, ZXXAisoSamp, Wx0AisoSamp, Wx1AisoSamp, Wx2AisoSamp])
-    global sampMan
-    sampMan = SampleManager(DataSamp, [Wl0Samp, Wl1Samp, Wl2Samp, TTbarSamp, TT1LepSamp, TT0LepSamp, WWSamp, WZSamp, ZZSamp, ZXXSamp, Wx0Samp, Wx1Samp, Wx2Samp])
+    if not doTest:
+        sampMan = SampleManager(DataSamp, [Wl0Samp, Wl1Samp, Wl2Samp, TTbarSamp, TT1LepSamp, TT0LepSamp, WWSamp, WZSamp, ZZSamp, ZXXSamp, Wx0Samp, Wx1Samp, Wx2Samp])
+    else:
+        sampMan = SampleManager(DataSamp, [Wl1Samp, Wl2Samp])
     sampMan.groupMCs(["wx0", "wx1", "wx2"], 'wx', 216, 'wx')
     sampMan.groupMCs(["WW", "WZ", "ZZ"], 'vv', 216, 'vv')
     sampMan.groupMCs(["ttbar_dilepton", "ttbar_1lepton", "ttbar_0lepton"], "ttbar", 96, "t#bar{t}")
     label = "W#rightarrow#mu#nu" if doMuon else "W#rightarrow e#nu"
     sampMan.groupMCs(['wl0', 'wl1', 'wl2'], "wlnu", 92,"W#rightarrow#mu#nu")
-    #sampMan.groupMCs(['Data_aiso', 'wm0_aiso', 'wm1_aiso', 'wm2_aiso', 'ttbar_dilepton_aiso', 'ttbar_1lepton_aiso', 'ttbar_0lepton_aiso', 'WW_aiso', 'WZ_aiso', 'ZZ_aiso', 'ZXX_aiso', 'wx0_aiso', 'wx1_aiso' ,'wx2_aiso'], 'QCD', 226, 'QCD')
 
+    # for the signal samples
+    if not doTest:
+        signalSamps = [Wl0Samp, Wl1Samp, Wl2Samp]
+    else:
+        signalSamps = [Wl1Samp, Wl2Samp]
+    signalSampnames = [samp.name for samp in signalSamps]
+    print("signal sample names: ", signalSampnames)
+    h_sigs = OrderedDict()
+
+    # define variables and weights
     sampMan.DefineAll("Lep_pt",  "lep.Pt()")
     sampMan.DefineAll("Lep_eta", "lep.Eta()")
     sampMan.DefineAll("Lep_phi", "lep.Phi()")
@@ -144,49 +114,71 @@ def main():
     sampMan.DefineAll("WpT", "V2W.Mod()")
     sampMan.DefineAll("Wphi", "TVector2::Phi_mpi_pi(V2W.Phi())")
 
+    # charge
+    lepname = "mu" if doMuon else "e"
+    sampMan.DefineAll(lepname+"plus",  "q > 0")
+    sampMan.DefineAll(lepname+"minus", "q < 0")
+    chgbins = [lepname+"plus", lepname + "minus"]
+
     # WpT bins
     # bin0 is the inclusive bin
-    sampMan.DefineAll("WpT_bin0", "WpT>=0.")
-    sampMan.DefineAll("WpT_bin1", "WpT<8.0")
-    sampMan.DefineAll("WpT_bin2", "WpT>8.0 &&  WpT<16.0")
-    sampMan.DefineAll("WpT_bin3", "WpT>16.0 && WpT<24.0")
-    sampMan.DefineAll("WpT_bin4", "WpT>24.0 && WpT<32.0")
-    sampMan.DefineAll("WpT_bin5", "WpT>32.0 && WpT<40.0")
-    sampMan.DefineAll("WpT_bin6", "WpT>40.0 && WpT<50.0")
-    sampMan.DefineAll("WpT_bin7", "WpT>50.0 && WpT<70.0")
-    sampMan.DefineAll("WpT_bin8", "WpT>70.0 && WpT<100.0")
+    sampMan.DefineAll("WpT_bin0",  "WpT>=0.")
+    sampMan.DefineAll("WpT_bin1",  "WpT>=0. && WpT<8.0")
+    sampMan.DefineAll("WpT_bin2",  "WpT>=8.0 &&  WpT<16.0")
+    sampMan.DefineAll("WpT_bin3",  "WpT>=16.0 && WpT<24.0")
+    sampMan.DefineAll("WpT_bin4",  "WpT>=24.0 && WpT<32.0")
+    sampMan.DefineAll("WpT_bin5",  "WpT>=32.0 && WpT<40.0")
+    sampMan.DefineAll("WpT_bin6",  "WpT>=40.0 && WpT<50.0")
+    sampMan.DefineAll("WpT_bin7",  "WpT>=50.0 && WpT<70.0")
+    sampMan.DefineAll("WpT_bin8",  "WpT>=70.0 && WpT<100.0")
+    sampMan.DefineAll("WpT_bin9",  "WpT>=100.0")
+    wptbins = ["WpT_bin0", "WpT_bin1", "WpT_bin2", "WpT_bin3", "WpT_bin4", "WpT_bin5", "WpT_bin6", "WpT_bin7", "WpT_bin8", "WpT_bin9"]
+    if doTest:
+        wptbins = ["WpT_bin0", "WpT_bin1"]
+
+    # truth level
+    sampMan.DefineSpecificMCs("WpT_truth", "genV.Pt()", sampnames=signalSampnames)
+    sampMan.DefineSpecificMCs("WpT_truth_bin1",  "WpT_truth>=0.   &&  WpT_truth<8.0",  sampnames=signalSampnames)
+    sampMan.DefineSpecificMCs("WpT_truth_bin2",  "WpT_truth>=8.0  &&  WpT_truth<16.0", sampnames=signalSampnames)
+    sampMan.DefineSpecificMCs("WpT_truth_bin3",  "WpT_truth>=16.0 &&  WpT_truth<24.0", sampnames=signalSampnames)
+    sampMan.DefineSpecificMCs("WpT_truth_bin4",  "WpT_truth>=24.0 &&  WpT_truth<32.0", sampnames=signalSampnames)
+    sampMan.DefineSpecificMCs("WpT_truth_bin5",  "WpT_truth>=32.0 &&  WpT_truth<40.0", sampnames=signalSampnames)
+    sampMan.DefineSpecificMCs("WpT_truth_bin6",  "WpT_truth>=40.0 &&  WpT_truth<50.0", sampnames=signalSampnames)
+    sampMan.DefineSpecificMCs("WpT_truth_bin7",  "WpT_truth>=50.0 &&  WpT_truth<70.0", sampnames=signalSampnames)
+    sampMan.DefineSpecificMCs("WpT_truth_bin8",  "WpT_truth>=70.0 &&  WpT_truth<100.0",sampnames=signalSampnames)
+    sampMan.DefineSpecificMCs("WpT_truth_bin9",  "WpT_truth>=100.0",                   sampnames=signalSampnames)
+    wpttruthbins  = ["WpT_truth_bin1", "WpT_truth_bin2", "WpT_truth_bin3", "WpT_truth_bin4", "WpT_truth_bin5", "WpT_truth_bin6", "WpT_truth_bin7", "WpT_truth_bin8", "WpT_truth_bin9"]
+    if doTest:
+        wpttruthbins = ["WpT_truth_bin1", "WpT_truth_bin2"]
 
     # eta bins for electrons: barral and endcap
     sampMan.DefineAll("lepEta_bin0", "1.0")
-    sampMan.DefineAll("lepEta_bin1", "abs(lep.Eta()) <= 1.4442") 
-    sampMan.DefineAll("lepEta_bin2", "abs(lep.Eta()) > 1.4442")
+    sampMan.DefineAll("lepEta_bin1", "abs(lep.Eta()) <= 2.0") 
+    sampMan.DefineAll("lepEta_bin2", "abs(lep.Eta()) > 2.0")
 
     if doMuon:
         etabins = ["lepEta_bin0"]
     else:
         etabins = ["lepEta_bin0", "lepEta_bin1", "lepEta_bin2"]
+    #etabins = ["lepEta_bin0", "lepEta_bin1", "lepEta_bin2"]
     
-    #sampMan.DefineAll("weight_wplus", "weight_WoVpt * (q>0)")
-    #sampMan.DefineAll("weight_wminus", "weight_WoVpt * (q<0)")
-    #for wpt in ["WpT_bin0", "WpT_bin1", "WpT_bin2", "WpT_bin3", "WpT_bin4", "WpT_bin5", "WpT_bin6", "WpT_bin7", "WpT_bin8"]:
-    #    sampMan.DefineAll("weight_wplus_{}".format(wpt),  "weight_wplus * {}".format(wpt))
-    #    sampMan.DefineAll("weight_wminus_{}".format(wpt), "weight_wminus * {}".format(wpt))
-
     # sample weight
     # 0 is the central one with all corrections
     for i in [0, 1, 2, 3, 4, 6, 7]:
-        for wpt in ["WpT_bin0", "WpT_bin1", "WpT_bin2", "WpT_bin3", "WpT_bin4", "WpT_bin5", "WpT_bin6", "WpT_bin7", "WpT_bin8"]:
+        for wpt in wptbins:
             for lepeta in etabins:
                 sampMan.DefineMC("weight_{}_{}_{}".format(str(i), wpt, lepeta), "evtWeight[{}] * mcnorm * {} * {}".format(str(i), wpt, lepeta))
                 DataSamp.Define("weight_{}_{}_{}".format(str(i), wpt, lepeta),  "1.0 * {} * {}".format(wpt, lepeta))
 
-                sampMan.DefineAll("weight_wplus_{}_{}_{}".format(str(i),  wpt, lepeta), "weight_{}_{}_{} * (q>0)".format(str(i), wpt, lepeta))
-                sampMan.DefineAll("weight_wminus_{}_{}_{}".format(str(i), wpt, lepeta), "weight_{}_{}_{} * (q<0)".format(str(i), wpt, lepeta))
+                for chg in chgbins:
+                    sampMan.DefineAll("weight_{}_{}_{}_{}".format(chg, str(i),  wpt, lepeta), "weight_{}_{}_{} * {}".format(str(i), wpt, lepeta, chg))
+
+                    # for signal MC, define the truth WpT bins
+                    for wpttruth in wpttruthbins:
+                        for samp in signalSamps:
+                            samp.Define("weight_{}_{}_{}_{}_{}".format(chg, str(i), wpt, lepeta, wpttruth), "weight_{}_{}_{}_{} * {}".format(chg, str(i),  wpt, lepeta, wpttruth))
 
     met_pt_bins = np.array([0., 2.0, 4., 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 33, 36, 39, 42, 45, 48, 51, 55, 60, 65, 70, 75, 80])
-    u1_bins = np.array([-40.,-36.,-32., -28., -25., -22.0, -20.0, -18, -16, -14, -12, -10, -8, -6, -4, -2, 0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32, 34, 36, 38, 40, 42, 44, 46, 48, 50, 53, 56, 59, 64, 68, 72, 76, 80, 85, 90, 100])
-    u2_bins = np.array([-80., -70., -65., -60., -56., -52, -48, -44, -40, -37, -34, -31, -28, -25., -22., -20, -18, -16, -14, -12, -10, -8, -6, -4, -2, 0, 2, 4, 6, 8, 10, 12, 16, 18, 20, 22, 25, 28, 31, 34, 37, 40, 44, 48, 52, 56, 60, 65, 70, 80])
-    #u_bins = np.array([0., 2., 4., 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32, 34, 36, 38, 40, 43, 46, 49, 52, 56, 60, 64, 68, 72, 76, 80, 85, 90, 95, 100, 105, 110, 115, 120, 130, 140, 150])
     mt_bins = np.concatenate((np.linspace(40, 90, 51), np.linspace(92, 100, 5), np.linspace(104, 120, 5)))
     phimin = -ROOT.TMath.Pi()
     phimax = ROOT.TMath.Pi()
@@ -195,108 +187,182 @@ def main():
     eta_bins = np.concatenate((np.linspace(-2.4, -2.0, 3),np.linspace(-1.8,1.8,37), np.linspace(2.0, 2.4, 3)))
     pt_bins = np.concatenate((np.linspace(25, 35, 6),np.linspace(36,55,20), np.linspace(57, 63, 4), np.linspace(66,70,2)))
     mass_bins = np.concatenate((np.linspace(70, 76, 3),np.linspace(78,86,5), np.linspace(87, 96, 10), np.linspace(98,104,5), np.linspace(106, 110, 2)))
-    u_bins = np.concatenate((np.linspace(0, 20, 11),np.linspace(24,80,15), np.linspace(85, 109, 4), np.linspace(120,150,3)))
-    u_bins = np.concatenate((np.linspace(0, 20, 11),np.linspace(24,60,10)))
-
-    lepname = "mu" if doMuon else "e"
 
     # nPV
-    sampMan.cacheDraw("npv", "histo_nPV_"+lepname+"nu", 10, 0, 10, DrawConfig(xmin=0, xmax=10, xlabel='# PV', ylabel='Events / 1', dology=False, ymax = 9e5), weightname = "weight_0_WpT_bin0_lepEta_bin0")
+    sampMan.cacheDraw("npv", "histo_nPV_"+lepname, 10, 0, 10, DrawConfig(xmin=0, xmax=10, xlabel='# PV', ylabel='Events / 1', dology=False, ymax = 9e5), weightname = "weight_0_WpT_bin0_lepEta_bin0")
     # lepton pt
-    sampMan.cacheDraw("Lep_pt", "histo_Lep_pt_"+lepname+"nu", pt_bins, DrawConfig(xmin=20, xmax=70, xlabel='p_{T}(#mu) [GeV]', dology=False, ymax=1.05e5), weightname="weight_0_WpT_bin0_lepEta_bin0")
-    sampMan.cacheDraw("Lep_eta", "histo_Lep_eta_"+lepname+"nu", eta_bins, DrawConfig(xmin=-2.6, xmax=2.6, xlabel='#eta (#mu) [GeV]', ylabel='Events / 1', dology=False, ymax=6e5), weightname = "weight_0_WpT_bin0_lepEta_bin0")
-    sampMan.cacheDraw("Lep_pt", "histo_Lep_pt_"+lepname+"plusnu", pt_bins, DrawConfig(xmin=20, xmax=70, xlabel='p_{T}(#mu) [GeV]', dology=False, ymax=6.05e4), weightname = "weight_wplus_0_WpT_bin0_lepEta_bin0")
-    sampMan.cacheDraw("Lep_pt", "histo_Lep_pt_"+lepname+"minusnu", pt_bins, DrawConfig(xmin=20, xmax=70, xlabel='p_{T}(#mu) [GeV]', dology=False, ymax=5.05e4), weightname = "weight_wminus_0_WpT_bin0_lepEta_bin0")
+    sampMan.cacheDraw("Lep_pt", "histo_Lep_pt_"+lepname, pt_bins, DrawConfig(xmin=20, xmax=70, xlabel='p_{T}(#mu) [GeV]', dology=False, ymax=1.05e5), weightname="weight_0_WpT_bin0_lepEta_bin0")
+    sampMan.cacheDraw("Lep_eta", "histo_Lep_eta_"+lepname, eta_bins, DrawConfig(xmin=-2.6, xmax=2.6, xlabel='#eta (#mu) [GeV]', ylabel='Events / 1', dology=False, ymax=6e5), weightname = "weight_0_WpT_bin0_lepEta_bin0")
+    sampMan.cacheDraw("Lep_pt", "histo_Lep_pt_"+lepname+"plus", pt_bins, DrawConfig(xmin=20, xmax=70, xlabel='p_{T}(#mu) [GeV]', dology=False, ymax=6.05e4), weightname = "weight_"+lepname+"plus_0_WpT_bin0_lepEta_bin0")
+    sampMan.cacheDraw("Lep_pt", "histo_Lep_pt_"+lepname+"minus", pt_bins, DrawConfig(xmin=20, xmax=70, xlabel='p_{T}(#mu) [GeV]', dology=False, ymax=5.05e4), weightname = "weight_"+lepname+"minus_0_WpT_bin0_lepEta_bin0")
 
     # met and raw_met
-    sampMan.cacheDraw("met_1_pt", "histo_wjets_"+lepname+"nu_pfmet_pt", met_pt_bins, DrawConfig(xmin=0, xmax=80, xlabel='PF MET [GeV]', dology=False, ymax=8e4), weightname="weight_0_WpT_bin0_lepEta_bin0")
-    sampMan.cacheDraw("met_1_phi", "histo_wjets_"+lepname+"nu_pfmet_phi", 30, phimin, phimax, DrawConfig(xmin=phimin, xmax=phimax, xlabel='PF MET #phi', dology=False, ymax=6e5), weightname = "weight_0_WpT_bin0_lepEta_bin0")
+    sampMan.cacheDraw("met_1_pt", "histo_wjets_"+lepname+"_pfmet_pt", met_pt_bins, DrawConfig(xmin=0, xmax=80, xlabel='PF MET [GeV]', dology=False, ymax=8e4), weightname="weight_0_WpT_bin0_lepEta_bin0")
+    sampMan.cacheDraw("met_1_phi", "histo_wjets_"+lepname+"_pfmet_phi", 30, phimin, phimax, DrawConfig(xmin=phimin, xmax=phimax, xlabel='PF MET #phi', dology=False, ymax=6e5), weightname = "weight_0_WpT_bin0_lepEta_bin0")
 
     # deltaPhi
-    sampMan.cacheDraw("deltaPhi", "histo_wjets_"+lepname+"nu_deltaphi",      dphi_bins,  DrawConfig(xmin=0., xmax=2*phimax, xlabel='#Delta #phi(#mu, MET)', dology=False, ymax=2e6), weightname="weight_0_WpT_bin0_lepEta_bin0")
+    sampMan.cacheDraw("deltaPhi", "histo_wjets_"+lepname+"_deltaphi",      dphi_bins,  DrawConfig(xmin=0., xmax=2*phimax, xlabel='#Delta #phi(#mu, MET)', dology=False, ymax=2e6), weightname="weight_0_WpT_bin0_lepEta_bin0")
 
     # mt
-    sampMan.cacheDraw("mtCorr", "histo_wjets_"+lepname+"nu_mtcorr",      mt_bins, DrawConfig(xmin=40, xmax=120, xlabel="m_{T} [GeV]", dology=False, ymax=7e4), weightname="weight_0_WpT_bin0_lepEta_bin0")
-    sampMan.cacheDraw("mtCorr", "histo_wjets_"+lepname+"plusnu_mtcorr",  mt_bins, DrawConfig(xmin=40, xmax=120, xlabel="m_{T} [GeV]", dology=False, ymax=4e4), weightname = "weight_wplus_0_WpT_bin0_lepEta_bin0")
-    sampMan.cacheDraw("mtCorr", "histo_wjets_"+lepname+"minusnu_mtcorr", mt_bins, DrawConfig(xmin=40, xmax=120, xlabel="m_{T} [GeV]", dology=False, ymax=3.5e4), weightname = "weight_wminus_0_WpT_bin0_lepEta_bin0")
+    sampMan.cacheDraw("mtCorr", "histo_wjets_"+lepname+"_mtcorr",      mt_bins, DrawConfig(xmin=40, xmax=120, xlabel="m_{T} [GeV]", dology=False, ymax=7e4), weightname="weight_0_WpT_bin0_lepEta_bin0")
+    sampMan.cacheDraw("mtCorr", "histo_wjets_"+lepname+"plus_mtcorr",  mt_bins, DrawConfig(xmin=40, xmax=120, xlabel="m_{T} [GeV]", dology=False, ymax=4e4), weightname = "weight_"+lepname+"plus_0_WpT_bin0_lepEta_bin0")
+    sampMan.cacheDraw("mtCorr", "histo_wjets_"+lepname+"minus_mtcorr", mt_bins, DrawConfig(xmin=40, xmax=120, xlabel="m_{T} [GeV]", dology=False, ymax=3.5e4), weightname = "weight_"+lepname+"minus_0_WpT_bin0_lepEta_bin0")
 
-    # variation on recoil corections
-    for i in [1, 2, 3, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]:
-        for wpt in ["WpT_bin0", "WpT_bin1", "WpT_bin2", "WpT_bin3", "WpT_bin4", "WpT_bin5", "WpT_bin6", "WpT_bin7", "WpT_bin8"]:
-            for lepeta in etabins:
-                sampMan.cacheDraw("mT_{}".format(str(i)), "histo_wjets_{}plusnu_mT_{}_{}_{}".format(lepname, str(i), wpt, lepeta),  70, 0, 140, DrawConfig(xmin=0, xmax=140, xlabel="m_{T} [GeV]", dology=False, ymax=4e4, donormalizebin=False, addOverflow=False, addUnderflow=False), weightname = "weight_wplus_0_{}_{}".format(wpt, lepeta))
-                sampMan.cacheDraw("mT_{}".format(str(i)), "histo_wjets_{}minusnu_mT_{}_{}_{}".format(lepname, str(i), wpt, lepeta), 70, 0, 140, DrawConfig(xmin=0, xmax=140, xlabel="m_{T} [GeV]", dology=False, ymax=3.5e4, donormalizebin=False, addOverflow=False, addUnderflow=False), weightname = "weight_wminus_0_{}_{}".format(wpt, lepeta))
-
-    # variation on the scale factors
-    for i in [0, 1, 2, 3, 4, 6, 7]:
-        for wpt in ["WpT_bin0", "WpT_bin1", "WpT_bin2", "WpT_bin3", "WpT_bin4", "WpT_bin5", "WpT_bin6", "WpT_bin7", "WpT_bin8"]:
-            for lepeta in etabins:
-                sampMan.cacheDraw("mT_1", "histo_wjets_{}plusnu_mtcorr_weight_{}_{}_{}".format(lepname, str(i), wpt, lepeta),  70, 0, 140, DrawConfig(xmin=0, xmax=140, xlabel="m_{T} [GeV]", dology=False, ymax=4e4, donormalizebin=False, addOverflow=False, addUnderflow=False), weightname = "weight_wplus_{}_{}_{}".format(str(i), wpt, lepeta))
-                sampMan.cacheDraw("mT_1", "histo_wjets_{}minusnu_mtcorr_weight_{}_{}_{}".format(lepname, str(i), wpt, lepeta), 70, 0, 140, DrawConfig(xmin=0, xmax=140, xlabel="m_{T} [GeV]", dology=False, ymax=3.5e4, donormalizebin=False, addOverflow=False, addUnderflow=False), weightname = "weight_wminus_{}_{}_{}".format(str(i), wpt, lepeta))
+    # wpt
+    sampMan.cacheDraw("WpT", "histo_wjets_"+lepname+"_wpt",        300, 0,  300, DrawConfig(xmin=0, xmax=300, xlabel="p^{W}_{T} [GeV]", dology=True, ymax=1e6, ymin=1e1), weightname="weight_0_WpT_bin0_lepEta_bin0")
+    sampMan.cacheDraw("WpT", "histo_wjets_"+lepname+"plus_wpt",    300, 0,  300, DrawConfig(xmin=0, xmax=300, xlabel="p^{W}_{T} [GeV]", dology=True, ymax=1e6, ymin=1e1), weightname="weight_"+lepname+"plus_0_WpT_bin0_lepEta_bin0")
+    sampMan.cacheDraw("WpT", "histo_wjets_"+lepname+"minus_wpt",   300, 0,  300, DrawConfig(xmin=0, xmax=300, xlabel="p^{W}_{T} [GeV]", dology=True, ymax=1e6, ymin=1e1), weightname="weight_"+lepname+"minus_0_WpT_bin0_lepEta_bin0")
 
 
+    ymaxs = {lepname+"plus": 4e4, lepname+"minus": 3.5e4}
+    nbins = 14
+    xmin = 0
+    xmax = 140
+
+    #
+    # templates and variations for combine
+    #
+    for chg in chgbins:
+        # variation on recoil corections
+        for i in [1, 2, 3, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]:
+            for wpt in wptbins:
+                for lepeta in etabins:
+                    sampMan.cacheDraw("mT_{}".format(str(i)), "histo_wjets_{}_mT_{}_{}_{}".format(chg, str(i), wpt, lepeta),  nbins, xmin, xmax, DrawConfig(xmin=xmin, xmax=xmax, xlabel="m_{T} [GeV]", dology=False, ymax=ymaxs[chg], donormalizebin=False, addOverflow=False, addUnderflow=False), weightname = "weight_{}_0_{}_{}".format(chg, wpt, lepeta))
+
+                    # for signal MC, draw the histogram in different truth WpT bins
+                    for wpttruth in wpttruthbins:
+                        h_list = []
+                        hname = "histo_wjets_{}_mT_{}_{}_{}_{}_signalMC".format(chg, str(i), wpt, lepeta, wpttruth)
+                        for isamp, samp in enumerate(signalSamps):    
+                            h_list.append( samp.rdf.Histo1D((hname+str(isamp), hname, nbins, xmin, xmax), "mT_{}".format(str(i)), "weight_{}_0_{}_{}_{}".format(chg, wpt, lepeta, wpttruth)) )
+                        h_sigs[hname] = h_list
+                            
+
+        # variation on the scale factors and sample weights
+        for i in [0, 1, 2, 3, 4, 6, 7]:
+            for wpt in wptbins:
+                for lepeta in etabins:
+                    sampMan.cacheDraw("mT_1", "histo_wjets_{}_mtcorr_weight_{}_{}_{}".format(chg, str(i), wpt, lepeta),  nbins, xmin, xmax, DrawConfig(xmin=xmin, xmax=xmax, xlabel="m_{T} [GeV]", dology=False, ymax=ymaxs[chg], donormalizebin=False, addOverflow=False, addUnderflow=False), weightname = "weight_{}_{}_{}_{}".format(chg, str(i), wpt, lepeta))
+
+                    # for signal MC, draw the histogram in different truth WpT bins
+                    for wpttruth in wpttruthbins:
+                        h_list = []
+                        hname = "histo_wjets_{}_mtcorr_weight_{}_{}_{}_{}_signalMC".format(chg, str(i), wpt, lepeta, wpttruth)
+                        for isamp, samp in enumerate(signalSamps):
+                            h_list.append( samp.rdf.Histo1D((hname+str(isamp), hname, nbins, xmin, xmax), "mT_1", "weight_{}_{}_{}_{}_{}".format(chg, str(i), wpt, lepeta, wpttruth)))
+                        h_sigs[hname] = h_list
+
+
+    # Draw all these histograms
     sampMan.launchDraw()
     sampMan.dumpCounts()
 
+    # 
+    # merge the signal MC histograms in different samples
+    #
+    def addSignals(hname):
+        h_list = h_sigs[hname]
+        hadded = h_list[0].Clone(hname)
+        # merge the signal MCs
+        for idx in xrange(1, len(h_list)):
+            hadded.Add(h_list[idx].GetValue())
+        return hadded
 
-    outfile = ROOT.TFile("output_shapes_"+lepname+"nu.root", "recreate")
+    h_sigsMerged = OrderedDict()
+    for hname in h_sigs.keys():
+        hadded = addSignals(hname)
+        h_sigsMerged[hname] = hadded
 
-    for chg in [lepname+"plusnu", lepname+"minusnu"]:
-        for wpt in ["WpT_bin0", "WpT_bin1", "WpT_bin2", "WpT_bin3", "WpT_bin4", "WpT_bin5", "WpT_bin6", "WpT_bin7", "WpT_bin8"]:
+
+    #
+    # write out mT histograms for combine
+    #
+    outfile = ROOT.TFile("output_shapes_"+lepname+".root", "recreate")
+
+    # Data
+    odir = outfile.mkdir("Data")
+    outfile.cd("Data")
+    for chg in chgbins:
+        for wpt in wptbins:
             for lepeta in etabins:
                 hdata = sampMan.hdatas["histo_wjets_{}_mT_1_{}_{}".format(chg, wpt, lepeta)]
-                hdata.SetDirectory(outfile)
+                hdata.SetDirectory(odir)
                 hdata.Write()
 
-                hsmcs_central = sampMan.hsmcs["histo_wjets_{}_mT_1_{}_{}".format(chg, wpt, lepeta)]
-                hlists_central = list(hsmcs_central.GetHists())
+    # MC
+    for wpttruth in ["MCTemplates"] + wpttruthbins:
+        # the 1st wpttruth bin is 'fake', for all MC templates
+        # the other wpttruth bins are for signal MC only
+        odir = outfile.mkdir(wpttruth)
+        outfile.cd(wpttruth)
+        for chg in chgbins:
+            for wpt in wptbins:
+                for lepeta in etabins:
 
-                # recoil systematics
-                for i in [2, 3, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]:
-                    hsmcs_up = sampMan.hsmcs["histo_wjets_{}_mT_{}_{}_{}".format(chg, str(i), wpt, lepeta)]
+                    if wpttruth == "MCTemplates":
+                        hsmcs_central = sampMan.hsmcs["histo_wjets_{}_mT_1_{}_{}".format(chg, wpt, lepeta)]
+                        hlists_central = list(hsmcs_central.GetHists())
+                    else:
+                        # signal MC
+                        hname = "histo_wjets_{}_mT_1_{}_{}_{}_signalMC".format(chg, wpt, lepeta, wpttruth)
+                        hlists_central = [h_sigsMerged[hname]]
 
-                    hlists_up = list(hsmcs_up.GetHists())
-                    for ih in xrange(len(hlists_up)):
-                        # loop over different simulated processes
-                        hcen = hlists_central[ih]
-                        hup  = hlists_up[ih]
-                        hup.SetName("{}_SysRecoil{}Up".format(hcen.GetName(), str(i)))
-
-                        hdn  = hcen.Clone("{}_SysRecoil{}Down".format(hcen.GetName(), str(i)))
-                        for ibin in xrange(1, hup.GetNbinsX()+1):
-                            hdn.SetBinContent(ibin, 2*hcen.GetBinContent(ibin) - hup.GetBinContent(ibin))
-
-                        hcen.SetDirectory(outfile)
-                        hcen.Write()
-                        hup.SetDirectory(outfile)
-                        hup.Write()
-                        hdn.SetDirectory(outfile)
-                        hdn.Write()
-
-                # weights/corrections
-                for i in [0, 1, 2, 3, 4, 6, 7]:
-                    hsmcs_up = sampMan.hsmcs["histo_wjets_{}_mtcorr_weight_{}_{}_{}".format(chg, str(i), wpt, lepeta)]
-                    hlists_up = list(hsmcs_up.GetHists())
-                    for ih in xrange(len(hlists_up)):
-                        # loop over different processes
-                        hcen = hlists_central[ih]
-                        hup  = hlists_up[ih]
-                        if i<=6:
-                            hup.SetName("{}_SysWeight{}Up".format(hcen.GetName(), str(i)))
+                    # recoil systematics
+                    for i in [2, 3, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]:
+                        if wpttruth == "MCTemplates":
+                            hsmcs_up = sampMan.hsmcs["histo_wjets_{}_mT_{}_{}_{}".format(chg, str(i), wpt, lepeta)]
+                            hlists_up = list(hsmcs_up.GetHists())
                         else:
-                            hup.SetName("{}_SysWeight6Down".format(hcen.GetName()))
+                            # signal MC
+                            hname = "histo_wjets_{}_mT_{}_{}_{}_{}_signalMC".format(chg, str(i), wpt, lepeta, wpttruth)
+                            hlists_up = [h_sigsMerged[hname]]
 
-                        if i<6:
-                            # for prefire, the up and down weights are calculated seperately
-                            hdn  = hcen.Clone("{}_SysWeight{}Down".format(hcen.GetName(), str(i)))
+                        for ih in xrange(len(hlists_up)):
+                            # loop over different simulated processes
+                            hcen = hlists_central[ih]
+                            hup  = hlists_up[ih]
+                            hup.SetName("{}_SysRecoil{}Up".format(hcen.GetName(), str(i)))
+
+                            hdn  = hcen.Clone("{}_SysRecoil{}Down".format(hcen.GetName(), str(i)))
                             for ibin in xrange(1, hup.GetNbinsX()+1):
                                 hdn.SetBinContent(ibin, 2*hcen.GetBinContent(ibin) - hup.GetBinContent(ibin))
-                        
-                        hup.SetDirectory(outfile)
-                        hup.Write()
-                        if i<6:
-                            hdn.SetDirectory(outfile)
+
+                            hcen.SetDirectory(odir)
+                            hcen.Write()
+                            hup.SetDirectory(odir)
+                            hup.Write()
+                            hdn.SetDirectory(odir)
                             hdn.Write()
+
+                    # weights/corrections
+                    for i in [0, 1, 2, 3, 4, 6, 7]:
+                        if wpttruth == "MCTemplates":
+                            hsmcs_up = sampMan.hsmcs["histo_wjets_{}_mtcorr_weight_{}_{}_{}".format(chg, str(i), wpt, lepeta)]
+                            hlists_up = list(hsmcs_up.GetHists())
+                        else:
+                            # signal MC
+                            hname = "histo_wjets_{}_mtcorr_weight_{}_{}_{}_{}_signalMC".format(chg, str(i), wpt, lepeta, wpttruth)
+                            hlists_up = [h_sigsMerged[hname]]
+                        for ih in xrange(len(hlists_up)):
+                            # loop over different processes
+                            hcen = hlists_central[ih]
+                            hup  = hlists_up[ih]
+                            if i<=6:
+                                hup.SetName("{}_SysWeight{}Up".format(hcen.GetName(), str(i)))
+                            else:
+                                hup.SetName("{}_SysWeight6Down".format(hcen.GetName()))
+
+                            if i<6:
+                                # for prefire, the up and down weights are calculated seperately
+                                hdn  = hcen.Clone("{}_SysWeight{}Down".format(hcen.GetName(), str(i)))
+                                for ibin in xrange(1, hup.GetNbinsX()+1):
+                                    hdn.SetBinContent(ibin, 2*hcen.GetBinContent(ibin) - hup.GetBinContent(ibin))
+                            
+                            hup.SetDirectory(odir)
+                            hup.Write()
+                            if i<6:
+                                hdn.SetDirectory(odir)
+                                hdn.Write()
 
     outfile.Close()
 

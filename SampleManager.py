@@ -19,7 +19,7 @@ LEPETA = 2.4
 LUMI = 199.27
 
 ROOT.ROOT.EnableImplicitMT()
-ROOT.gSystem.Load("/afs/cern.ch/work/y/yofeng/public/WpT/CMSSW_10_6_0/src/PostCorrNTuple/Functions_cc.so")
+ROOT.gSystem.Load("Functions_cc.so")
 
 
 class DrawConfig(object):
@@ -172,8 +172,7 @@ class Sample(object):
                 self.rdf = self.rdf_temp
         elif self.isWSR:
             self.rdf = self.rdf_org.Filter("abs(lep.Eta())<2.4") \
-                                   .Filter("lep.Pt()>25.0") \
-                                   .Filter("mtCorr>40")
+                                   .Filter("lep.Pt()>25.0")
         else:
             self.rdf = self.rdf_org
         #print self.rdf.Count().GetValue()
@@ -198,7 +197,7 @@ class Sample(object):
             self.rdf_org = self.rdf_org.Define("mcnorm", str(LUMI/self.nmcevt * self.additionalnorm))
             if self.isZSR:
                 self.rdf_org = self.rdf_org.Define("weight_WoVpt_WoEff", "scale1fb * prefireWeight * mcnorm") \
-                                       .Define("weight_WoVpt", "scale1fb * prefireWeight * mcnorm * lepsfweight")
+                                       .Define("weight_WoVpt", "scale1fb * mcnorm * prefireWeight * lepsfweight")
             elif self.isWSR:
                 self.rdf_org = self.rdf_org.Define("weight_WoVpt", "evtWeight[0] * mcnorm")
         else:
