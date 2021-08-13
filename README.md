@@ -26,3 +26,8 @@ Change `doMuon` flag to false will run in the electron channel.
 Change `doWpT` flag to true will add some W pT bins at reco level, and also some W pT truth bins for the signal MC.
 
 The scripts are based on RDataFrame. Tested using `CMSSW_10_6_0` environment and it runs fine.
+
+To produce the histograms (QCD background templates) in the lepton anti-isolated region (CR), run
+```
+python MakePlots_Wlnu_AntiIso.py
+```
