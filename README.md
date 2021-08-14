@@ -38,3 +38,28 @@ python MakePlots_Wlnu_AntiIso.py
 ```
 
 ### QCD Extrapolation
+The `ExtrapolateQCD.py` script is used to extrapolate the QCD template from a set of antiIsolated control regions to the signal region. Run 
+```
+python ExtrapolateQCD.py
+```
+would run the extrapolation for the muon plus channel. Change `doMuon` to false would run the eplus channel. Note currently in the electron channel we do the barrel and endcap extrapolation separately.
+
+### Make DataCards
+`MakeCards.py` script is used to generate the datacards needed for combine. It takes the data and MC templates from the 1st step, and the QCD extrapolated templates from the 2nd step, and add some systematic uncertainties. 
+
+Then one can run the tfcombine (https://github.com/bendavid/HiggsAnalysis-CombinedLimit/tree/tensorflowfit). (I'm on branch `tensorflowfit`.). E.g.:
+```
+text2hdf5.py datacard_muplus_lepEta_bin0.txt
+ combinetf.py datacard_muplus_lepEta_bin0.hdf5 --saveHists --doImpacts --output datacard_muplus_lepEta_bin0.root
+```
+
+In the electron channel, the two datacards in the barrel and endcap region needs to be combined first:
+```
+combineCards.py Barrel=datacard_eplus_lepEta_bin1.txt Endcap=datacard_eplus_lepEta_bin2.txt > datacard_eplus_lepEta.txt
+text2hdf5.py datacard_eplus_lepEta.txt
+ combinetf.py datacard_eplus_lepEta.hdf5 --saveHists --doImpacts --output datacard_eplus_lepEta.root
+```
+
+### ToDO
+- add the scripts to make pre/post-fit distributions, and the impact plots
+- add functionality in these scripts to do the extrapolation and make cards in different W pT bins
