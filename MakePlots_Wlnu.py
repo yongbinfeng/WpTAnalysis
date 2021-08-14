@@ -8,7 +8,7 @@ ROOT.ROOT.EnableImplicitMT(10)
 
 # boolean flag to set either muon or electron channel
 # doMuon = False means the electron channel
-doMuon = True
+doMuon = False
 
 # boolean flag to run on a subset of samples for
 # debugging
@@ -161,8 +161,8 @@ def main():
 
     # eta bins for electrons: barral and endcap
     sampMan.DefineAll("lepEta_bin0", "1.0")
-    sampMan.DefineAll("lepEta_bin1", "abs(lep.Eta()) <= 2.0") 
-    sampMan.DefineAll("lepEta_bin2", "abs(lep.Eta()) > 2.0")
+    sampMan.DefineAll("lepEta_bin1", "abs(lep.Eta()) <= 1.4442") 
+    sampMan.DefineAll("lepEta_bin2", "abs(lep.Eta()) > 1.4442")
 
     if doMuon:
         etabins = ["lepEta_bin0"]
@@ -226,9 +226,9 @@ def main():
 
 
     ymaxs = {lepname+"plus": 4e4, lepname+"minus": 3.5e4}
-    nbins = 14
+    nbins = 12
     xmin = 0
-    xmax = 140
+    xmax = 120
 
     #
     # templates and variations for combine

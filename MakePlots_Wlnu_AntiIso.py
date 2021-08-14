@@ -155,8 +155,8 @@ def main():
 
     # eta bins for electrons: barral and endcap
     sampMan.DefineAll("lepEta_bin0", "1.0")
-    sampMan.DefineAll("lepEta_bin1", "abs(lep.Eta()) <= 2.0")
-    sampMan.DefineAll("lepEta_bin2", "abs(lep.Eta()) > 2.0")
+    sampMan.DefineAll("lepEta_bin1", "abs(lep.Eta()) <= 1.4442")
+    sampMan.DefineAll("lepEta_bin2", "abs(lep.Eta()) > 1.4442")
 
     if doMuon:
         etabins = ["lepEta_bin0"]
@@ -170,9 +170,9 @@ def main():
                     sampMan.DefineAll("weight_{}_{}_{}_{}".format(chg, iso,  wpt, lepeta), "w_{} * weight_WoVpt * {} * {} * {}".format(iso, wpt, lepeta, chg))
                     #sampMan.DefineAll("weight_{}_{}_{}_{}".format(chg, iso, wpt, lepeta), "w_{} * weight_{} * {} * {}".format(iso, chg, wpt, lepeta))
 
-    nbins = 14
+    nbins = 12
     xmin = 0
-    xmax = 140
+    xmax = 120
 
     for iso in isobins:
         for wpt in wptbins:
@@ -181,7 +181,7 @@ def main():
                     strname = "weight_{}_{}_{}_{}".format(chg, iso, wpt, lepeta)
 
                     outputname = "histo_wjetsAntiIso_fullrange_mtcorr_" + strname 
-                    sampMan.cacheDraw("mtCorr", outputname, nbins,  xmin, xmax, DrawConfig(xmin=0, xmax=140, xlabel="m_{T} [GeV]", dology=True, ymax=2e4, donormalizebin=False, addOverflow=False, addUnderflow=False, showratio=True), weightname = strname)
+                    sampMan.cacheDraw("mtCorr", outputname, nbins,  xmin, xmax, DrawConfig(xmin=xmin, xmax=xmax, xlabel="m_{T} [GeV]", dology=True, ymax=2e4, donormalizebin=False, addOverflow=False, addUnderflow=False, showratio=True), weightname = strname)
                     #outputname = "histo_wjetsAntiIso_fullrange_lepEta_" + strname
                     #sampMan.cacheDraw("Lep_eta", outputname, 24, -2.4, 2.4, DrawConfig(xmin=-2.4, xmax=2.4, xlabel="Lepton Eta", dology=True, ymax=2e6, donormalizebin=False, addOverflow=False, addUnderflow=False, showratio=True), weightname = strname)
 
