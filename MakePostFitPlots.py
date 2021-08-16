@@ -2,14 +2,16 @@
 script to make postfit comparisons
 """
 import ROOT
-import os,sys
-import numpy as np
+import os,sys,math
 
-sys.path.append("/afs/cern.ch/work/y/yofeng/public/CMSPLOTS")
-from myFunction import DrawHistos
+from CMSPLOTS.myFunction import DrawHistos
 from SampleManager import DrawConfig
 
 ROOT.gROOT.SetBatch(True)
+
+# boolean flag to config if the pull
+# distribution should be included in the plots
+showPULL = False
 
 def doPlot(ifilename, channel, etabins, postfix):
     ifile = ROOT.TFile(ifilename)
@@ -47,6 +49,7 @@ def doPlot(ifilename, channel, etabins, postfix):
     httbar  = ROOT.TH1D("httbar_{}_{}".format(channel, postfix),  "httbar_{}_{}".format(channel, postfix),  *binnings)
     hqcd    = ROOT.TH1D("hqcd_{}_{}".format(  channel, postfix),  "hqcd_{}_{}".format(  channel, postfix),  *binnings)
     hratio  = ROOT.TH1D("hrato_{}_{}".format( channel, postfix),  "hratio_{}_{}".format(channel, postfix),  *binnings)
+    hpull   = ROOT.TH1D("hpull_{}_{}".format( channel, postfix),  "hpull_{}_{}".format( channel, postfix),  *binnings)
     for ibin in xrange(1, nbins+1):
         hdata.SetBinContent(ibin,   horgdata.GetBinContent(ibin))
         hdata.SetBinError(ibin,     horgdata.GetBinError(ibin))
@@ -58,6 +61,12 @@ def doPlot(ifilename, channel, etabins, postfix):
 
         hratio.SetBinContent(ibin, hexpfull.GetBinContent(ibin))
         hratio.SetBinError(ibin,   hexpfull.GetBinError(ibin))
+
+        diff = horgdata.GetBinContent(ibin) - hexpfull.GetBinContent(ibin)
+        # take the sigma as sqrt(data**2 + templates**2)
+        # not 100% sure if this is the correct way to calculate pull
+        sig = math.sqrt(horgdata.GetBinError(ibin)**2 + hexpfull.GetBinError(ibin)**2)
+        hpull.SetBinContent(ibin, diff/(sig+1e-6))
 
     # deal with the uncertainty bar
     for ibin in xrange(1, hratio.GetNbinsX()+1):
@@ -101,7 +110,7 @@ def doPlot(ifilename, channel, etabins, postfix):
     ymaxs = {"muplus": 3e4, "muminus": 2e4, "eplus": 1.5e4, "eminus": 1.0e4}
     "histo_wjets_eplus_mT_1_WpT_bin0_lepEta_bin1_data"
     drawconfigs = DrawConfig(xmin = xmin, xmax = xmax, xlabel = "m_{T} [GeV]", ymin = 0, ymax = ymaxs[channel], ylabel = "Events / GeV", outputname = "histo_wjets_{}_mT_PostFit_{}".format(channel, postfix), dology=False, addOverflow=False, addUnderflow=False, yrmin=0.95, yrmax=1.05)
-    DrawHistos( [hdata, hs_gmc], ["Data", "Signal", "EWK", "ttbar", "QCD"], drawconfigs.xmin, drawconfigs.xmax, drawconfigs.xlabel, drawconfigs.ymin, drawconfigs.ymax, drawconfigs.ylabel, drawconfigs.outputname, dology=drawconfigs.dology, dologx=drawconfigs.dologx, showratio=drawconfigs.showratio, yrmax = drawconfigs.yrmax, yrmin = drawconfigs.yrmin, yrlabel = drawconfigs.yrlabel, donormalize=drawconfigs.donormalize, ratiobase=drawconfigs.ratiobase, legendPos = drawconfigs.legendPos, redrawihist = drawconfigs.redrawihist, extraText = drawconfigs.extraText, noCMS = drawconfigs.noCMS, addOverflow = drawconfigs.addOverflow, addUnderflow = drawconfigs.addUnderflow, nMaxDigits = drawconfigs.nMaxDigits, hratiopannel=hratio, drawoptions=['PE', 'HIST same'])
+    DrawHistos( [hdata, hs_gmc], ["Data", "Signal", "EWK", "ttbar", "QCD"], drawconfigs.xmin, drawconfigs.xmax, drawconfigs.xlabel, drawconfigs.ymin, drawconfigs.ymax, drawconfigs.ylabel, drawconfigs.outputname, dology=drawconfigs.dology, dologx=drawconfigs.dologx, showratio=drawconfigs.showratio, yrmax = drawconfigs.yrmax, yrmin = drawconfigs.yrmin, yrlabel = drawconfigs.yrlabel, donormalize=drawconfigs.donormalize, ratiobase=drawconfigs.ratiobase, legendPos = drawconfigs.legendPos, redrawihist = drawconfigs.redrawihist, extraText = drawconfigs.extraText, noCMS = drawconfigs.noCMS, addOverflow = drawconfigs.addOverflow, addUnderflow = drawconfigs.addUnderflow, nMaxDigits = drawconfigs.nMaxDigits, hratiopannel=hratio, drawoptions=['PE', 'HIST same'], showpull=showPULL, hpulls=[hpull])
 
 if __name__ == "__main__":
     doPlot("Cards/datacard_muplus_lepEta_bin0.root", "muplus", ["lepEta_bin0"], "")

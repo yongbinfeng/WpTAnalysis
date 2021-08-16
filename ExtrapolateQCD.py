@@ -1,8 +1,7 @@
 import ROOT
 import os,sys
 import numpy as np
-sys.path.append("/afs/cern.ch/work/y/yofeng/public/CMSPLOTS")
-from myFunction import DrawHistos
+from CMSPLOTS.myFunction import DrawHistos
 
 doPol2 = False # use Pol1 if doPol2 set to false
 doMuon = False

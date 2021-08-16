@@ -9,8 +9,7 @@ import ROOT
 import numpy as np
 import sys
 from collections import OrderedDict
-sys.path.append("/afs/cern.ch/work/y/yofeng/public/CMSPLOTS")
-from myFunction import DrawHistos
+from CMSPLOTS.myFunction import DrawHistos
 
 MINMASS = 60
 MAXMASS = 120
