@@ -12,16 +12,30 @@ from SampleManager import DrawConfig
 
 ROOT.gROOT.SetBatch(True)
 
-def MakePostPlot(ifilename, channel, etabins, postfix, showpull=False):
+def MakePostPlot(ifilename, channel, postfix, showpull=False):
     """
-    compare the postfit of data and templates
+    compare the unrolled postfit of data and templates
     """
     ifile = ROOT.TFile(ifilename)
     
     horgdata = ifile.Get("obs")
+
+    # get the list of histograms saved in the file
+    hkeys = ifile.GetListOfKeys()
+    hnames_sig = []
+    hnames_qcd = []
+    for hkey in hkeys:
+        if bool(re.match(r"expproc_w_"+channel+"_\w*sig_postfit", hkey.GetName())):
+            hnames_sig.append( hkey.GetName() )
+        elif bool(re.match(r"expproc_QCD_"+channel+"_\w*postfit", hkey.GetName())):
+            hnames_qcd.append( hkey.GetName() )
+    assert len(hnames_sig)>=1, "There should be at least one sig histogram in file: {}".format(ifilename)
+    assert len(hnames_qcd)>=1, "There should be at least one QCD histogram in file: {}".format(ifilename)
     
     ## read the postfit plots from input file
-    hexpsig = ifile.Get("expproc_w_{}_sig_postfit".format(channel))
+    hexpsig = ifile.Get(hnames_sig[0])
+    for hname_sig in hnames_sig[1:]:
+        hexpsig.Add( ifile.Get(hname_sig) )
     # ewk bkg includes W->tau+nu, z->ll, and diboson process
     hexpewk = ifile.Get("expproc_taunu_postfit")
     hexpewk.Add( ifile.Get("expproc_zxx_postfit"))
@@ -29,9 +43,9 @@ def MakePostPlot(ifilename, channel, etabins, postfix, showpull=False):
     hexpttbar = ifile.Get("expproc_tt_postfit")
 
     # qcd process might have contributions from a few different etabins
-    hexpqcd = ifile.Get("expproc_QCD_{}_{}_postfit".format(channel, etabins[0]))
-    for etabin in etabins[1:]:
-        hexpqcd.Add( ifile.Get("expproc_QCD_{}_{}_postfit".format(channel, etabin)) )
+    hexpqcd = ifile.Get(hnames_qcd[0])
+    for hname_qcd in hnames_qcd[1:]:
+        hexpqcd.Add( ifile.Get(hname_qcd) )
 
     # the combined prediction of all processes,
     # which should have included the correct total postfit uncertainties
@@ -108,11 +122,9 @@ def MakePostPlot(ifilename, channel, etabins, postfix, showpull=False):
     hs_gmc.Add(hewk)
     hs_gmc.Add(hsig)
 
-    ymaxs = {"pm": 3e4, "mm": 2e4}
     ymaxs = {"muplus": 3e4, "muminus": 2e4, "eplus": 1.5e4, "eminus": 1.0e4}
-    "histo_wjets_eplus_mT_1_WpT_bin0_lepEta_bin1_data"
-    drawconfigs = DrawConfig(xmin = xmin, xmax = xmax, xlabel = "m_{T} [GeV]", ymin = 0, ymax = ymaxs[channel], ylabel = "Events / GeV", outputname = "histo_wjets_{}_mT_PostFit_{}".format(channel, postfix), dology=False, addOverflow=False, addUnderflow=False, yrmin=0.95, yrmax=1.05)
-    DrawHistos( [hdata, hs_gmc], ["Data", "Signal", "EWK", "ttbar", "QCD"], drawconfigs.xmin, drawconfigs.xmax, drawconfigs.xlabel, drawconfigs.ymin, drawconfigs.ymax, drawconfigs.ylabel, drawconfigs.outputname, dology=drawconfigs.dology, dologx=drawconfigs.dologx, showratio=drawconfigs.showratio, yrmax = drawconfigs.yrmax, yrmin = drawconfigs.yrmin, yrlabel = drawconfigs.yrlabel, donormalize=drawconfigs.donormalize, ratiobase=drawconfigs.ratiobase, legendPos = drawconfigs.legendPos, redrawihist = drawconfigs.redrawihist, extraText = drawconfigs.extraText, noCMS = drawconfigs.noCMS, addOverflow = drawconfigs.addOverflow, addUnderflow = drawconfigs.addUnderflow, nMaxDigits = drawconfigs.nMaxDigits, hratiopannel=hratio, drawoptions=['PE', 'HIST same'], showpull=showpull, hpulls=[hpull])
+    drawconfigs = DrawConfig(xmin = xmin, xmax = xmax, xlabel = "Unrolled m_{T} [GeV]", ymin = 0, ymax = ymaxs[channel] / (int(nbins/36)+1), ylabel = "Events / GeV", outputname = "histo_wjets_{}_mT_PostFit_{}".format(channel, postfix), dology=False, addOverflow=False, addUnderflow=False, yrmin=0.95, yrmax=1.05)
+    DrawHistos( [hdata, hs_gmc], ["Data", "Signal", "EWK", "ttbar", "QCD"], drawconfigs.xmin, drawconfigs.xmax, drawconfigs.xlabel, drawconfigs.ymin, drawconfigs.ymax, drawconfigs.ylabel, drawconfigs.outputname, dology=drawconfigs.dology, dologx=drawconfigs.dologx, showratio=drawconfigs.showratio, yrmax = drawconfigs.yrmax, yrmin = drawconfigs.yrmin, yrlabel = drawconfigs.yrlabel, donormalize=drawconfigs.donormalize, ratiobase=drawconfigs.ratiobase, legendPos = drawconfigs.legendPos, redrawihist = drawconfigs.redrawihist, extraText = drawconfigs.extraText, noCMS = drawconfigs.noCMS, addOverflow = drawconfigs.addOverflow, addUnderflow = drawconfigs.addUnderflow, nMaxDigits = drawconfigs.nMaxDigits, hratiopannel=hratio, drawoptions=['PE', 'HIST same'], showpull=showpull, hpulls=[hpull], W_ref = 600 * int(nbins/36+1))
 
 
 def result2json(ifilename, poiname, ofilename):

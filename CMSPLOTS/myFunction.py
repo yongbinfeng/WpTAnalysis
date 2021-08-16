@@ -239,7 +239,7 @@ draw histograms with the CMS tdr style
 '''
 
 
-def DrawHistos(myhistos, mylabels, xmin, xmax, xlabel, ymin, ymax, ylabel, outputname, dology=True, showratio=False, dologx=False, lheader="", donormalize=False, binomialratio=False, yrmax=2.0, yrmin=0.0, yrlabel=None, MCOnly=False, leftlegend=False, mycolors=[], legendPos=[], legendNCols=1, linestyles=[], markerstyles=[], showpull=False, doNewman=False, doPearson=False, ignoreHistError=False, ypullmin=-2.99, ypullmax=2.99, drawashist=False, padsize=(2, 0.9, 1.1), setGridx=False, setGridy=False, drawoptions=[], legendoptions=[], ratiooptions=[], dologz=False, doth2=False, ratiobase=0, redrawihist=-1, extraText=None, noCMS=False, nMaxDigits=None, addOverflow=False, addUnderflow=False, plotdiff=False, hratiopannel = None, doratios=None, hpulls=None):
+def DrawHistos(myhistos, mylabels, xmin, xmax, xlabel, ymin, ymax, ylabel, outputname, dology=True, showratio=False, dologx=False, lheader="", donormalize=False, binomialratio=False, yrmax=2.0, yrmin=0.0, yrlabel=None, MCOnly=False, leftlegend=False, mycolors=[], legendPos=[], legendNCols=1, linestyles=[], markerstyles=[], showpull=False, doNewman=False, doPearson=False, ignoreHistError=False, ypullmin=-2.99, ypullmax=2.99, drawashist=False, padsize=(2, 0.9, 1.1), setGridx=False, setGridy=False, drawoptions=[], legendoptions=[], ratiooptions=[], dologz=False, doth2=False, ratiobase=0, redrawihist=-1, extraText=None, noCMS=False, nMaxDigits=None, addOverflow=False, addUnderflow=False, plotdiff=False, hratiopannel = None, doratios=None, hpulls=None, W_ref = 600):
     # set the tdr style
     tdrstyle.setTDRStyle()
 
@@ -262,7 +262,6 @@ def DrawHistos(myhistos, mylabels, xmin, xmax, xlabel, ymin, ymax, ylabel, outpu
         ROOT.TGaxis.SetMaxDigits(5)
 
     H_ref = 500
-    W_ref = 600
     W = W_ref
     H = H_ref
 
@@ -303,8 +302,10 @@ def DrawHistos(myhistos, mylabels, xmin, xmax, xlabel, ymin, ymax, ylabel, outpu
         pad2 = TPad("pad2" + outputname, "pad1", 0, 0, 1, padsize2)
         pad1.SetTopMargin(0.06/padsize1)
         pad1.SetBottomMargin(0.012/padsize1)
+        pad1.SetLeftMargin(0.15 * (600.0)/W)
         pad2.SetTopMargin(0.010/padsize2)
         pad2.SetBottomMargin(0.13/padsize2)
+        pad2.SetLeftMargin(0.15 * (600.0)/W)
         pad2.SetGridy(1)
         pad1.Draw()
         pad2.Draw()
@@ -315,11 +316,14 @@ def DrawHistos(myhistos, mylabels, xmin, xmax, xlabel, ymin, ymax, ylabel, outpu
         pad3 = TPad("pad3" + outputname, "pad3", 0, 0.,   1, padsize3)
         pad1.SetTopMargin(0.06/(padsize1+padsize3))
         pad1.SetBottomMargin(0.012/padsize1)
+        pad1.SetLeftMargin(0.15 * (600.0)/W)
         pad2.SetTopMargin(0.010/padsize2)
         pad2.SetBottomMargin(0.02/padsize2)
+        pad2.SetLeftMargin(0.15 * (600.0)/W)
         pad2.SetGridy(1)
         pad3.SetTopMargin(0.01/padsize3)
         pad3.SetBottomMargin(0.13/padsize3)
+        pad3.SetLeftMargin(0.15 * (600.0)/W)
         pad3.SetGridy(1)
         pad1.Draw()
         pad2.Draw()
@@ -348,7 +352,7 @@ def DrawHistos(myhistos, mylabels, xmin, xmax, xlabel, ymin, ymax, ylabel, outpu
     h1.GetYaxis().SetLabelSize(0.045/(padsize1+padsize3))
     h1.GetXaxis().SetTitleSize(0.050/(padsize1+padsize3))
     h1.GetXaxis().SetLabelSize(0.045/(padsize1+padsize3))
-    h1.GetYaxis().SetTitleOffset(1.3*(padsize1+padsize3))
+    h1.GetYaxis().SetTitleOffset(1.35*(padsize1+padsize3)*(600.0/W))
     h1.GetXaxis().SetTitleOffset(1.1*(padsize1+padsize3))
 
     if showratio or showpull:
@@ -540,7 +544,7 @@ def DrawHistos(myhistos, mylabels, xmin, xmax, xlabel, ymin, ymax, ylabel, outpu
         h2.GetXaxis().SetLabelSize(0.045/(padsize2+0.3*padsize3))
         h2.GetYaxis().SetTitleSize(0.050/(padsize2+0.3*padsize3))
         h2.GetYaxis().SetLabelSize(0.045/(padsize2+0.3*padsize3))
-        h2.GetYaxis().SetTitleOffset(1.3*(padsize2+0.35*padsize3))
+        h2.GetYaxis().SetTitleOffset(1.35*(padsize2+0.35*padsize3)*(600.0/W))
 
         h2.GetYaxis().SetNdivisions(8)
         h2.GetYaxis().CenterTitle()
@@ -601,7 +605,7 @@ def DrawHistos(myhistos, mylabels, xmin, xmax, xlabel, ymin, ymax, ylabel, outpu
         h3.GetXaxis().SetLabelSize(0.045/(padsize3+0.3*padsize2))
         h3.GetYaxis().SetTitleSize(0.050/(padsize3+0.3*padsize2))
         h3.GetYaxis().SetLabelSize(0.045/(padsize3+0.3*padsize2))
-        h3.GetYaxis().SetTitleOffset(1.3*(padsize3+0.35*padsize2))
+        h3.GetYaxis().SetTitleOffset(1.35*(padsize3+0.35*padsize2)*(600.0/W))
         h3.GetYaxis().SetNdivisions(8)
         h3.GetYaxis().CenterTitle()
         #h3.GetYaxis().SetTitle("#frac{Obs. - Exp.}{Err}")
