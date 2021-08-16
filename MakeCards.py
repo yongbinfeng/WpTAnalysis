@@ -4,7 +4,15 @@ script to generate the W(lnv) cards for tfCombine
 from collections import OrderedDict
 import os
 
-doMuon = False
+doMuon = True
+doWpT = False
+# doWpT = True is still under development
+
+if doWpT:
+    wptbins = ["WpT_bin0", "WpT_bin1", "WpT_bin2", "WpT_bin3", "WpT_bin4", "WpT_bin5", "WpT_bin6", "WpT_bin7", "WpT_bin8", "WpT_bin9"]
+else:
+    wptbins = ["WpT_bin0"]
+
 
 class Process(object):
     """
@@ -43,25 +51,42 @@ class Process(object):
             self.xsecUnc = "-1.0"
 
 
-def MakeCards(fname_mc, fname_qcd, channel, etabin):
+def MakeCards(fname_mc, fname_qcd, channel, wptbin, etabin):
     # data
     data = Process(name = "data_obs", fname = fname_mc,
-                   hname = "Data/histo_wjets_{}_mT_1_WpT_bin0_{}_data".format(channel, etabin),
+                   hname = "Data/histo_wjets_{}_mT_1_{}_{}_data".format(channel, wptbin, etabin),
                    isObs = True,
                    )
-    # sig process
-    sig = Process(name = "w_"+channel+"_sig", fname = fname_mc, 
-                 hname = "MCTemplates/histo_wjets_{}_mT_1_WpT_bin0_{}_grouped_wlnu0".format(channel, etabin),
-                 hsys  = "MCTemplates/histo_wjets_{}_mT_1_WpT_bin0_{}_grouped_wlnu0_".format(channel, etabin),
-                 isSignal = True,
-                 isMC = True,
-                 isV = True,
-                 isQCD = False
-                 ) 
+    # sig processes
+    sigs = []
+    if not doWpT:
+        sig = Process(name = "w_"+channel+"_sig", fname = fname_mc, 
+                     hname = "MCTemplates/histo_wjets_{}_mT_1_{}_{}_grouped_wlnu0".format( channel, wptbin, etabin),
+                     hsys  = "MCTemplates/histo_wjets_{}_mT_1_{}_{}_grouped_wlnu0_".format(channel, wptbin, etabin),
+                     isSignal = True,
+                     isMC = True,
+                     isV = True,
+                     isQCD = False
+                     ) 
+        sigs.append(sig)
+    else:
+        wpttruthbins  = ["WpT_truth_bin1", "WpT_truth_bin2", "WpT_truth_bin3", "WpT_truth_bin4", "WpT_truth_bin5", "WpT_truth_bin6", "WpT_truth_bin7", "WpT_truth_bin8", "WpT_truth_bin9"]
+        for wpttruthbin in wpttruthbins:
+            sig = Process(name = "w_"+channel+"_sig", fname = fname_mc,
+                     hname = "{}/histo_wjets_{}_mT_1_{}_{}_{}_signalMC_grouped_wlnu0".format( wpttruthbin, channel, wptbin, etabin, wpttruthbin),
+                     hsys  = "{}/histo_wjets_{}_mT_1_{}_{}_{}_signalMC_grouped_wlnu0_".format(wpttruthbin, channel, wptbin, etabin, wpttruthbin),
+                     isSignal = True,
+                     isMC = True,
+                     isV = True,
+                     isQCD = False
+                     )
+
+        
+
     # ttbar bkg
     ttbar = Process(name = "tt", fname = fname_mc,
-                    hname = "MCTemplates/histo_wjets_{}_mT_1_WpT_bin0_{}_grouped_ttbar3".format(channel, etabin),
-                    hsys = "MCTemplates/histo_wjets_{}_mT_1_WpT_bin0_{}_grouped_ttbar3_".format(channel, etabin),
+                    hname = "MCTemplates/histo_wjets_{}_mT_1_{}_{}_grouped_ttbar3".format(channel, wptbin, etabin),
+                    hsys = "MCTemplates/histo_wjets_{}_mT_1_{}_{}_grouped_ttbar3_".format(channel, wptbin, etabin),
                     isSignal = False,
                     isMC = True,
                     isV = False,
@@ -70,8 +95,8 @@ def MakeCards(fname_mc, fname_qcd, channel, etabin):
                 )
     # Z bkg
     zxx = Process(name = "zxx", fname = fname_mc,
-                  hname = "MCTemplates/histo_wjets_{}_mT_1_WpT_bin0_{}_grouped_ZXX9".format(channel, etabin),
-                  hsys = "MCTemplates/histo_wjets_{}_mT_1_WpT_bin0_{}_grouped_ZXX9_".format(channel, etabin),
+                  hname = "MCTemplates/histo_wjets_{}_mT_1_{}_{}_grouped_ZXX9".format(channel, wptbin, etabin),
+                  hsys = "MCTemplates/histo_wjets_{}_mT_1_{}_{}_grouped_ZXX9_".format(channel, wptbin, etabin),
                   isSignal = False,
                   isMC = True,
                   isV = True,
@@ -80,8 +105,8 @@ def MakeCards(fname_mc, fname_qcd, channel, etabin):
                   )
     # W->tau + nu bkg
     wtau = Process(name = "taunu", fname = fname_mc,
-                   hname = "MCTemplates/histo_wjets_{}_mT_1_WpT_bin0_{}_grouped_wx10".format(channel, etabin),
-                   hsys = "MCTemplates/histo_wjets_{}_mT_1_WpT_bin0_{}_grouped_wx10_".format(channel, etabin),
+                   hname = "MCTemplates/histo_wjets_{}_mT_1_{}_{}_grouped_wx10".format(channel, wptbin, etabin),
+                   hsys = "MCTemplates/histo_wjets_{}_mT_1_{}_{}_grouped_wx10_".format(channel, wptbin, etabin),
                    isSignal = False,
                    isMC = True,
                    isV = True,
@@ -90,8 +115,8 @@ def MakeCards(fname_mc, fname_qcd, channel, etabin):
                 )
     # VV bkg
     vv = Process(name = "VV", fname = fname_mc,
-                 hname = "MCTemplates/histo_wjets_{}_mT_1_WpT_bin0_{}_grouped_vv6".format(channel, etabin),
-                 hsys = "MCTemplates/histo_wjets_{}_mT_1_WpT_bin0_{}_grouped_vv6_".format(channel, etabin),
+                 hname = "MCTemplates/histo_wjets_{}_mT_1_{}_{}_grouped_vv6".format(channel, wptbin, etabin),
+                 hsys = "MCTemplates/histo_wjets_{}_mT_1_{}_{}_grouped_vv6_".format(channel, wptbin, etabin),
                  isSignal = False,
                  isMC = True,
                  isV = False,
@@ -100,7 +125,7 @@ def MakeCards(fname_mc, fname_qcd, channel, etabin):
                  )
     # QCD bkg
     qcd = Process(name = "QCD_" + channel + "_" + etabin, fname = fname_qcd,
-                  hname = "h_QCD_Extrapolated_{}_{}".format(channel, etabin),
+                  hname = "h_QCD_Extrapolated_{}_{}_{}".format(channel, etabin, wptbin),
                   hsys = "h_QCD_Extrapolated_{}_lepEta_".format(channel),
                   isSignal = False,
                   isMC = False,
@@ -126,7 +151,7 @@ def MakeCards(fname_mc, fname_qcd, channel, etabin):
 
     # qcd stat
     # this is hard coded for now. Will be improved later
-    prefix = etabin.split("_")[1]
+    prefix = etabin.split("_")[1]+"_"+wptbin
     nbins = 12
     qcdstats = [prefix+"_bin"+str(i)+"shape" for i in xrange(1, nbins+1)]
 
@@ -226,17 +251,17 @@ if __name__ == "__main__":
     channel = "muplus"
     etabin = "lepEta_bin0"
     fnames = {
-        "muplus" : "output_shapes_mu.root",
-        "muminus": "output_shapes_mu.root",
-        "eplus" :  "output_shapes_e.root",
-        "eminus":  "output_shapes_e.root",
+        "muplus" : "output_shapes_mu",
+        "muminus": "output_shapes_mu",
+        "eplus" :  "output_shapes_e",
+        "eminus":  "output_shapes_e",
     }
 
     fqcds = {
-        "muplus": "QCD/qcdshape_extrapolated_mu.root",
-        "muplus": "QCD/qcdshape_extrapolated_mu.root",
-        "eplus":  "QCD/qcdshape_extrapolated_e.root",
-        "eplus":  "QCD/qcdshape_extrapolated_e.root",
+        "muplus": "QCD/qcdshape_extrapolated_mu",
+        "muplus": "QCD/qcdshape_extrapolated_mu",
+        "eplus":  "QCD/qcdshape_extrapolated_e",
+        "eplus":  "QCD/qcdshape_extrapolated_e",
     }
 
     pwd = os.getcwd()
@@ -244,10 +269,13 @@ if __name__ == "__main__":
         channel = "muplus"
         etabin = "lepEta_bin0"
         pwd = os.getcwd()
-        MakeCards(pwd+"/"+fnames[channel], pwd+"/"+fqcds[channel], channel, etabin)
+        for wptbin in wptbins:
+            postfix = "" if not doWpT else "_WpT"
+            MakeCards(pwd+"/"+fnames[channel]+postfix+".root", pwd+"/"+fqcds[channel]+"_"+wptbin+".root", channel, wptbin, etabin)
     else:
         # do electron
         channel = "eplus"
         pwd = os.getcwd()
-        MakeCards(pwd+"/"+fnames[channel], pwd+"/"+fqcds[channel], channel, "lepEta_bin1")
-        MakeCards(pwd+"/"+fnames[channel], pwd+"/"+fqcds[channel], channel, "lepEta_bin2")
+        for wptbin in ["WpT_bin0"]:
+            MakeCards(pwd+"/"+fnames[channel]+".root", pwd+"/"+fqcds[channel]+"_"+wptbin+".root", channel, wptbin, "lepEta_bin1")
+            MakeCards(pwd+"/"+fnames[channel]+".root", pwd+"/"+fqcds[channel]+"_"+wptbin+".root", channel, wptbin, "lepEta_bin2")

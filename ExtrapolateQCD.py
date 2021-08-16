@@ -5,6 +5,7 @@ from CMSPLOTS.myFunction import DrawHistos
 
 doPol2 = False # use Pol1 if doPol2 set to false
 doMuon = False
+doWpT = False
 
 ROOT.gROOT.SetBatch(True)
 
@@ -20,7 +21,12 @@ channelLabels = {
     "eminus":  "W^{-}#rightarrow e^{-}#nu",
 }
 
-def ExtrapolateQCD(fname, oname, channel, etabins):
+if doWpT:
+    wptbins = ["WpT_bin0", "WpT_bin1", "WpT_bin2", "WpT_bin3", "WpT_bin4", "WpT_bin5", "WpT_bin6", "WpT_bin7", "WpT_bin8", "WpT_bin9"]
+else:
+    wptbins = ["WpT_bin0"]
+
+def ExtrapolateQCD(fname, oname, channel, wptbin, etabins):
     fqcd = ROOT.TFile(fname)
     if not os.path.exists("QCD"):
         os.makedirs("QCD")
@@ -52,7 +58,9 @@ def ExtrapolateQCD(fname, oname, channel, etabins):
         # to the same normalization first
         histos_norm = {}
         for iso in xrange(isomin, isomax):
-            hname = "histo_wjetsAntiIso_fullrange_mtcorr_weight_" + channel + "_iso" + str(iso) + "_WpT_bin0_" + etabin
+            #hname = "histo_wjetsAntiIso_fullrange_mtcorr_weight_" + channel + "_iso" + str(iso) + "_" + wptbin + "_" + etabin
+            # for QCD bkg template try not binning in W pT for now. test if it works
+            hname = "histo_wjetsAntiIso_fullrange_mtcorr_weight_" + channel + "_iso" + str(iso) + "_" + "WpT_bin0" + "_" + etabin
             h = fqcd.Get(hname)
             # set the overflow and underflow to zero
             h.SetBinContent(0, 0)
@@ -66,11 +74,11 @@ def ExtrapolateQCD(fname, oname, channel, etabins):
             histos_norm[iso].Scale(counts / histos_norm[iso].Integral())
 
         # define two histograms to save the trend of p0 and p1 as a function of mT
-        h_p0 = href.Clone("h_p0_{}_{}".format(channel, etabin))
-        h_p1 = href.Clone("h_p1_{}_{}".format(channel, etabin))
+        h_p0 = href.Clone("h_p0_{}_{}_{}".format(channel, etabin, wptbin))
+        h_p1 = href.Clone("h_p1_{}_{}_{}".format(channel, etabin, wptbin))
 
         # save the extrapolated shape
-        hnew = href.Clone("h_QCD_Extrapolated_" + channel + "_" + etabin)
+        hnew = href.Clone("h_QCD_Extrapolated_" + channel + "_" + etabin + "_" + wptbin)
 
         vals = []
         uncs = []
@@ -86,9 +94,9 @@ def ExtrapolateQCD(fname, oname, channel, etabins):
 
             graph = ROOT.TGraphErrors(len(bincontents), np.array(isocenters), np.array(bincontents), np.zeros(len(bincontents)), np.array(binerrors))
             if not doPol2:
-                f1 = ROOT.TF1("pol1_" + channel + "_iso"+str(iso) + "_" + etabin, "[0]*(x-{}) + [1]".format(str(isoSR)), -0.1, 0.60)
+                f1 = ROOT.TF1("pol1_"+channel+"_iso"+str(iso)+"_"+ etabin+"_"+wptbin, "[0]*(x-{}) + [1]".format(str(isoSR)), -0.1, 0.60)
             else:
-                f1 = ROOT.TF1("pol2_" + channel + "_iso"+str(iso) + "_" + etabin, "[0]*(x-{isoSR})*(x-{isoSR}) + [1]*(x-{isoSR}) + [2]".format(isoSR=str(isoSR)), -0.1, 0.60)
+                f1 = ROOT.TF1("pol2_"+channel+"_iso"+str(iso)+"_"+ etabin+"_"+wptbin, "[0]*(x-{isoSR})*(x-{isoSR}) + [1]*(x-{isoSR}) + [2]".format(isoSR=str(isoSR)), -0.1, 0.60)
             # fit range
             graph.Fit(f1, "R", "", 0.21, 0.60)
             #print("val at Signal region", f1.Eval(isoSR))
@@ -123,7 +131,7 @@ def ExtrapolateQCD(fname, oname, channel, etabins):
             label = "Pol2 Fit" if doPol2 else "Pol1 Fit"
             mTmin = histos_norm[isomin].GetBinLowEdge(ibin)
             mTmax = histos_norm[isomin].GetBinLowEdge(ibin) + histos_norm[isomin].GetBinWidth(ibin)
-            DrawHistos( [graph, f1, graph2], ["{} < mT < {}".format(mTmin, mTmax), label, "Extrapolation"], 0, 0.6, "Lepton Relative Isolation", 0.7*min(bincontents), 1.25*max(bincontents), "Bin Content", "QCDBinContentNorm_" + channel+ "_bin_"+str(ibin) + "_" + etabin, dology=False, drawoptions=["P same", "L", "P same"], legendoptions=["P", "L", "P"], nMaxDigits=3, legendPos=[0.65, 0.18, 0.88, 0.48], lheader=extraText)
+            DrawHistos( [graph, f1, graph2], ["{} < mT < {}".format(mTmin, mTmax), label, "Extrapolation"], 0, 0.6, "Lepton Relative Isolation", 0.7*min(bincontents), 1.25*max(bincontents), "Bin Content", "QCDBinContentNorm_"+channel+"_bin_"+str(ibin)+"_"+etabin+"_"+wptbin, dology=False, drawoptions=["P same", "L", "P same"], legendoptions=["P", "L", "P"], nMaxDigits=3, legendPos=[0.65, 0.18, 0.88, 0.48], lheader=extraText)
 
         # set the bin-by-bin shape variation
         hnew_ups = []
@@ -131,8 +139,8 @@ def ExtrapolateQCD(fname, oname, channel, etabins):
         for ibin in xrange(1, histos_norm[isomin].GetNbinsX()+1):
             val = vals[ibin-1]
             err = abs(uncs[ibin-1])
-            hnew_up   = hnew.Clone("h_QCD_Extrapolated_"+channel + "_" + etabin + "_bin{}shapeUp".format(str(ibin)))
-            hnew_down = hnew.Clone("h_QCD_Extrapolated_"+channel + "_" + etabin + "_bin{}shapeDown".format(str(ibin)))
+            hnew_up   = hnew.Clone("h_QCD_Extrapolated_"+channel+"_"+etabin+"_"+wptbin+"_bin{}shapeUp".format(str(ibin)))
+            hnew_down = hnew.Clone("h_QCD_Extrapolated_"+channel+"_"+etabin+"_"+wptbin+"_bin{}shapeDown".format(str(ibin)))
             hnew_up.SetBinContent(ibin, val+err)
             hnew_up.SetBinError(ibin, 0.)
             hnew_down.SetBinContent(ibin, max(val-err, 0.))
@@ -162,13 +170,16 @@ def ExtrapolateQCD(fname, oname, channel, etabins):
 
 if __name__ == "__main__":
     if doMuon:
-        oname = "pe_extrapolated_mu_pol2.root" if doPol2 else "qcdshape_extrapolated_mu.root"
         fname = "output_qcdshape_fullrange_munu.root"
-        ExtrapolateQCD(fname, oname, "muplus", "lepEta_bin0")
+        oname = "pe_extrapolated_mu_pol2" if doPol2 else "qcdshape_extrapolated_mu"
+        for wptbin in wptbins:
+            ExtrapolateQCD(fname, oname+"_"+wptbin+".root", "muplus", wptbin, ["lepEta_bin0"])
     else:
         # on electron channel
         # currently separate barrel and endcap for electrons
-        oname = "pe_extrapolated_e_pol2.root" if doPol2 else "qcdshape_extrapolated_e.root"
         fname = "output_qcdshape_fullrange_enu.root"
-        ExtrapolateQCD(fname, oname, "eplus", ["lepEta_bin1", "lepEta_bin2"])
+        oname = "pe_extrapolated_e_pol2" if doPol2 else "qcdshape_extrapolated_e"
+        for wptbin in ["WpT_bin0"]:
+            # for electrons, only implement the inclusive version for now
+            ExtrapolateQCD(fname, oname+"_"+wptbin+".root", "eplus", wptbin, ["lepEta_bin1", "lepEta_bin2"])
 
