@@ -4,8 +4,8 @@ import numpy as np
 from CMSPLOTS.myFunction import DrawHistos
 
 doPol2 = False # use Pol1 if doPol2 set to false
-doMuon = False
-doWpT = False
+doMuon = True
+doWpT = True
 
 ROOT.gROOT.SetBatch(True)
 
@@ -22,7 +22,7 @@ channelLabels = {
 }
 
 if doWpT:
-    wptbins = ["WpT_bin0", "WpT_bin1", "WpT_bin2", "WpT_bin3", "WpT_bin4", "WpT_bin5", "WpT_bin6", "WpT_bin7", "WpT_bin8", "WpT_bin9"]
+    wptbins = ["WpT_bin1", "WpT_bin2", "WpT_bin3", "WpT_bin4", "WpT_bin5", "WpT_bin6", "WpT_bin7", "WpT_bin8", "WpT_bin9"]
 else:
     wptbins = ["WpT_bin0"]
 
@@ -58,9 +58,7 @@ def ExtrapolateQCD(fname, oname, channel, wptbin, etabins):
         # to the same normalization first
         histos_norm = {}
         for iso in xrange(isomin, isomax):
-            #hname = "histo_wjetsAntiIso_fullrange_mtcorr_weight_" + channel + "_iso" + str(iso) + "_" + wptbin + "_" + etabin
-            # for QCD bkg template try not binning in W pT for now. test if it works
-            hname = "histo_wjetsAntiIso_fullrange_mtcorr_weight_" + channel + "_iso" + str(iso) + "_" + "WpT_bin0" + "_" + etabin
+            hname = wptbin + "/histo_wjetsAntiIso_fullrange_mtcorr_weight_" + channel + "_iso" + str(iso) + "_" + wptbin + "_" + etabin
             h = fqcd.Get(hname)
             # set the overflow and underflow to zero
             h.SetBinContent(0, 0)
