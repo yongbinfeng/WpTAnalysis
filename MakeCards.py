@@ -5,11 +5,11 @@ from collections import OrderedDict
 import os
 
 doMuon = True
-doWpT = False
+doWpT = True
 # doWpT = True is still under development
 
 if doWpT:
-    wptbins = ["WpT_bin0", "WpT_bin1", "WpT_bin2", "WpT_bin3", "WpT_bin4", "WpT_bin5", "WpT_bin6", "WpT_bin7", "WpT_bin8", "WpT_bin9"]
+    wptbins = ["WpT_bin1", "WpT_bin2", "WpT_bin3", "WpT_bin4", "WpT_bin5", "WpT_bin6", "WpT_bin7", "WpT_bin8", "WpT_bin9"]
 else:
     wptbins = ["WpT_bin0"]
 
@@ -72,9 +72,9 @@ def MakeCards(fname_mc, fname_qcd, channel, wptbin, etabin):
     else:
         wpttruthbins  = ["WpT_truth_bin1", "WpT_truth_bin2", "WpT_truth_bin3", "WpT_truth_bin4", "WpT_truth_bin5", "WpT_truth_bin6", "WpT_truth_bin7", "WpT_truth_bin8", "WpT_truth_bin9"]
         for wpttruthbin in wpttruthbins:
-            sig = Process(name = "w_"+channel+"_"+wpttruthbins+"_sig", fname = fname_mc,
-                     hname = "{}/histo_wjets_{}_mT_1_{}_{}_{}_signalMC_grouped_wlnu0".format( wpttruthbin, channel, wptbin, etabin, wpttruthbin),
-                     hsys  = "{}/histo_wjets_{}_mT_1_{}_{}_{}_signalMC_grouped_wlnu0_".format(wpttruthbin, channel, wptbin, etabin, wpttruthbin),
+            sig = Process(name = "w_"+channel+"_"+wpttruthbin+"_sig", fname = fname_mc,
+                     hname = "{}/histo_wjets_{}_mT_1_{}_{}_{}_signalMC".format( wpttruthbin, channel, wptbin, etabin, wpttruthbin),
+                     hsys  = "{}/histo_wjets_{}_mT_1_{}_{}_{}_signalMC_".format(wpttruthbin, channel, wptbin, etabin, wpttruthbin),
                      isSignal = True,
                      isMC = True,
                      isV = True,
@@ -123,7 +123,7 @@ def MakeCards(fname_mc, fname_qcd, channel, wptbin, etabin):
                  xsecUnc = "1.10"
                  )
     # QCD bkg
-    qcd = Process(name = "QCD_" + channel + "_" + etabin, fname = fname_qcd,
+    qcd = Process(name = "QCD_"+channel+"_"+etabin+"_"+wptbin, fname = fname_qcd,
                   hname = "h_QCD_Extrapolated_{}_{}_{}".format(channel, etabin, wptbin),
                   hsys = "h_QCD_Extrapolated_{}_lepEta_".format(channel),
                   isSignal = False,
@@ -158,9 +158,9 @@ def MakeCards(fname_mc, fname_qcd, channel, wptbin, etabin):
     #
     # writing datacards
     #
-    if not os.path.exists("Cards"):
-        os.makedirs("Cards")
-    ofile = open("Cards/datacard_{}_{}.txt".format(channel, etabin), "wb")
+    if not os.path.exists("cards"):
+        os.makedirs("cards")
+    ofile = open("cards/datacard_{}_{}_{}.txt".format(channel, etabin, wptbin), "wb")
     ofile.write("imax 1 number of channels\n")
 
     ofile.write("jmax {} number of processes -1\n".format(len(processes)-1))
@@ -244,6 +244,19 @@ def MakeCards(fname_mc, fname_qcd, channel, wptbin, etabin):
     ofile.write(qcdgroup+"\n")
 
     ofile.close()
+    return ofile.name.split("/")[-1]
+
+
+def combineCards(labels, cards, oname):
+    """
+    genrate and run the command to combine cards in different bins
+    """
+    cmd = "cd cards; combineCards.py"
+    for label, card in zip(labels, cards):
+        cmd += " {}={}".format(label, card)
+    cmd += " > {}; cd ../".format(oname)
+    print("combine cards with {}".format(cmd))
+    os.system(cmd)
     
     
 if __name__ == "__main__":
@@ -268,13 +281,22 @@ if __name__ == "__main__":
         channel = "muplus"
         etabin = "lepEta_bin0"
         pwd = os.getcwd()
+        cards = []
         for wptbin in wptbins:
             postfix = "" if not doWpT else "_WpT"
-            MakeCards(pwd+"/"+fnames[channel]+postfix+".root", pwd+"/"+fqcds[channel]+"_"+wptbin+".root", channel, wptbin, etabin)
+            card = MakeCards(pwd+"/"+fnames[channel]+postfix+".root", pwd+"/"+fqcds[channel]+"_"+wptbin+".root", channel, wptbin, etabin)
+            cards.append(card)
+
+        if doWpT:
+            # combine the cards in different w pt bins
+            combineCards(wptbins, cards, "datacard_{}_{}_WpT.txt".format(channel, etabin))
     else:
         # do electron
         channel = "eplus"
         pwd = os.getcwd()
         for wptbin in ["WpT_bin0"]:
-            MakeCards(pwd+"/"+fnames[channel]+".root", pwd+"/"+fqcds[channel]+"_"+wptbin+".root", channel, wptbin, "lepEta_bin1")
-            MakeCards(pwd+"/"+fnames[channel]+".root", pwd+"/"+fqcds[channel]+"_"+wptbin+".root", channel, wptbin, "lepEta_bin2")
+            card1 = MakeCards(pwd+"/"+fnames[channel]+".root", pwd+"/"+fqcds[channel]+"_"+wptbin+".root", channel, wptbin, "lepEta_bin1")
+            card2 = MakeCards(pwd+"/"+fnames[channel]+".root", pwd+"/"+fqcds[channel]+"_"+wptbin+".root", channel, wptbin, "lepEta_bin2")
+        
+        # combine the two cards in 2 eta bins
+        combineCards(["Barrel", "Endcap"], [card1, card2], "datacard_{}.txt".format(channel))
