@@ -223,9 +223,11 @@ def main():
         postfix = "nu.root"
     outfile = ROOT.TFile("output_qcdshape_fullrange_"+lepname+postfix, "recreate")
 
-    for iso in isobins[:-1]:
-        # skip the last iso bin as it is used for the uncertaintiy of the previous iso bin
-        for wpt in wptbins:
+    for wpt in wptbins:
+        odir = outfile.mkdir(wpt)
+        outfile.cd(wpt)
+        for iso in isobins[:-1]:
+            # skip the last iso bin as it is used for the uncertaintiy of the previous iso bin
             for lepeta in etabins:
                 for chg in chgbins:
                     i = int(iso[3:])
@@ -249,11 +251,11 @@ def main():
                         hcenter.SetBinContent(ibin, max(center, 0))
                         hup.SetBinContent(ibin, max(up, 0))
 
-                    hcenter.SetDirectory(outfile)
+                    hcenter.SetDirectory(odir)
                     hcenter.Write()
-                    hup.SetDirectory(outfile)
+                    hup.SetDirectory(odir)
                     hup.Write()
-                    hdown.SetDirectory(outfile)
+                    hdown.SetDirectory(odir)
                     hdown.Write()
 
     outfile.Close()
