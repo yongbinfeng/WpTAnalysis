@@ -72,7 +72,7 @@ def MakeCards(fname_mc, fname_qcd, channel, wptbin, etabin):
     else:
         wpttruthbins  = ["WpT_truth_bin1", "WpT_truth_bin2", "WpT_truth_bin3", "WpT_truth_bin4", "WpT_truth_bin5", "WpT_truth_bin6", "WpT_truth_bin7", "WpT_truth_bin8", "WpT_truth_bin9"]
         for wpttruthbin in wpttruthbins:
-            sig = Process(name = "w_"+channel+"_sig", fname = fname_mc,
+            sig = Process(name = "w_"+channel+"_"+wpttruthbins+"_sig", fname = fname_mc,
                      hname = "{}/histo_wjets_{}_mT_1_{}_{}_{}_signalMC_grouped_wlnu0".format( wpttruthbin, channel, wptbin, etabin, wpttruthbin),
                      hsys  = "{}/histo_wjets_{}_mT_1_{}_{}_{}_signalMC_grouped_wlnu0_".format(wpttruthbin, channel, wptbin, etabin, wpttruthbin),
                      isSignal = True,
@@ -80,8 +80,7 @@ def MakeCards(fname_mc, fname_qcd, channel, wptbin, etabin):
                      isV = True,
                      isQCD = False
                      )
-
-        
+            sigs.append(sig)
 
     # ttbar bkg
     ttbar = Process(name = "tt", fname = fname_mc,
@@ -133,7 +132,7 @@ def MakeCards(fname_mc, fname_qcd, channel, wptbin, etabin):
                   isQCD = True,
                 )
 
-    processes = [sig, ttbar, zxx, wtau, vv, qcd]
+    processes = sigs + [ttbar, zxx, wtau, vv, qcd]
 
     # correction systematics
     # in Aram's ntuples, defined here: https://github.com/MiT-HEP/MitEwk13TeV/blob/CMSSW_94X/NtupleMod/eleNtupleMod.C#L71
