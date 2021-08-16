@@ -60,6 +60,13 @@ text2hdf5.py datacard_eplus_lepEta.txt
 combinetf.py datacard_eplus_lepEta.hdf5 --saveHists --doImpacts --output datacard_eplus_lepEta.root
 ```
 
+These would produce root files with `datacard_muplus_lepEta_bin0.root` and `datacard_eplus_lepEta.root`, with the pre/postfit distributions and nuisance impacts information saved.
+
+## Make Postfit plots
+One can compare the data-Template postfit distributions and the impacts of nuisance parameters by running
+```
+python MakePostFitPlots.py
+```
+
 ## ToDO
-- add the scripts to make pre/post-fit distributions, and the impact plots
 - add functionality in these scripts to do the extrapolation and make cards in different W pT bins
