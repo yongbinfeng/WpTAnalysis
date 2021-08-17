@@ -106,6 +106,13 @@ def MakePostPlot(ifilename, channel, postfix, showpull=False):
     hqcd.SetFillColor(226)
     hqcd.SetLineColor(226)
 
+    nevts = OrderedDict()
+    nevts['data'] = hdata.Integral()
+    nevts['sig'] = hsig.Integral()
+    nevts['ewk'] = hewk.Integral()
+    nevts['ttbar'] = httbar.Integral()
+    nevts['qcd'] = hqcd.Integral()
+
     hdata.SetMarkerStyle(20)
     hdata.SetMarkerSize(1)
     hdata.SetMarkerColor(1)
@@ -125,6 +132,8 @@ def MakePostPlot(ifilename, channel, postfix, showpull=False):
     ymaxs = {"muplus": 3e4, "muminus": 2e4, "eplus": 1.5e4, "eminus": 1.0e4}
     drawconfigs = DrawConfig(xmin = xmin, xmax = xmax, xlabel = "Unrolled m_{T} [GeV]", ymin = 0, ymax = ymaxs[channel] / (int(nbins/36)+1), ylabel = "Events / GeV", outputname = "histo_wjets_{}_mT_PostFit_{}".format(channel, postfix), dology=False, addOverflow=False, addUnderflow=False, yrmin=0.95, yrmax=1.05)
     DrawHistos( [hdata, hs_gmc], ["Data", "Signal", "EWK", "ttbar", "QCD"], drawconfigs.xmin, drawconfigs.xmax, drawconfigs.xlabel, drawconfigs.ymin, drawconfigs.ymax, drawconfigs.ylabel, drawconfigs.outputname, dology=drawconfigs.dology, dologx=drawconfigs.dologx, showratio=drawconfigs.showratio, yrmax = drawconfigs.yrmax, yrmin = drawconfigs.yrmin, yrlabel = drawconfigs.yrlabel, donormalize=drawconfigs.donormalize, ratiobase=drawconfigs.ratiobase, legendPos = drawconfigs.legendPos, redrawihist = drawconfigs.redrawihist, extraText = drawconfigs.extraText, noCMS = drawconfigs.noCMS, addOverflow = drawconfigs.addOverflow, addUnderflow = drawconfigs.addUnderflow, nMaxDigits = drawconfigs.nMaxDigits, hratiopannel=hratio, drawoptions=['PE', 'HIST same'], showpull=showpull, hpulls=[hpull], W_ref = 600 * int(nbins/36+1))
+
+    return nevts
 
 
 def result2json(ifilename, poiname, ofilename):
@@ -193,24 +202,27 @@ def result2json(ifilename, poiname, ofilename):
         nuis = himpact.GetYaxis().GetBinLabel(ibinY)
         impacts[nuis] = himpact.GetBinContent(ibinX, ibinY)
 
-    # add the grouped QCD systematic
+    # add the grouped QCD and Recoil systematic
+    groupnames = []
     for ibinY in range(1, himpact_grouped.GetNbinsY()+1):
         tmpY = himpact_grouped.GetYaxis().GetBinLabel(ibinY)
-        if tmpY != 'QCD':
+        if tmpY == 'stat':
             continue
-        impacts['QCD'] = himpact_grouped.GetBinContent(ibinX, ibinY)
+        impacts[tmpY] = himpact_grouped.GetBinContent(ibinX, ibinY)
+        groupnames.append(tmpY)
 
     # sort impacts, descending
     impacts = OrderedDict(sorted(impacts.items(), key=lambda x: abs(x[1]), reverse=True))
 
     pulls = OrderedDict()
     for nuis in impacts.keys():
-        if nuis != 'QCD':
+        if nuis not in groupnames:
             val = getattr(tree, nuis)
             err = getattr(tree, nuis+"_err")
             err = abs(err)
         else:
-            # grouped QCD nuisance
+            # manually set the postfit of the grouped sys to [-1,1], and pulled at 0,
+            # since only the impacts are useful to us
             val = 0.
             err = 1.
         pulls[nuis] = [val - err, val, val + err]
@@ -231,3 +243,49 @@ def result2json(ifilename, poiname, ofilename):
 
     with open(ofilename, 'w') as fp:
         json.dump(results, fp, indent=2)
+
+
+def MakeWpTPostFitPlots(jsonNames, postfix=""):
+    """
+    plot the signal strength and systematic unc impacts as a function of wpt
+    """
+    import numpy as np
+    # hard code the w pt binning for now
+    wptbins = np.array([0., 8.0, 16.0, 24.0, 32.0, 40.0, 50.0, 70.0, 100.0, 120.0])
+    nbins = wptbins.shape[0] - 1
+
+    hmu = ROOT.TH1F("hmu_wpt_{}".format(postfix), "hmu_wpt_{}".format(postfix), nbins, wptbins)
+
+    sysUncs = ['lumi_13TeV', 'Recoil', 'QCD', 'Prefire', 'norm_tt', 'effstat', 'norm_taunu', 'FSR', 'tagpt', 'norm_z']
+    colors = {"total": 1, 'lumi_13TeV': 14, "Recoil": 2, "QCD": 3, "Prefire": 4, "effstat":6, "norm_taunu": 7, "tagpt": 8, "norm_z": 9, "norm_tt": 28, "FSR": 38}
+
+    himpacts = OrderedDict()
+    himpacts['total'] = ROOT.TH1F("htotal_wpt_{}".format(postfix), "htotal_wpt_{}".format(postfix), nbins, wptbins)
+    for unc in sysUncs: 
+        himpacts[unc] = ROOT.TH1F("h{}_wpt_{}".format(unc, postfix), "h{}_wpt_{}".format(unc, postfix), nbins, wptbins)
+
+    for ibin, jname in enumerate(jsonNames, start=1):
+        with open(jname) as f:
+            results = json.load(f)
+    
+        # assuming the 0th POI is the signal strength
+        poiname = results['POIs'][0]['name']
+        diff = results['POIs'][0]['fit'][1] - results['POIs'][0]['fit'][0]
+        hmu.SetBinContent(ibin, results['POIs'][0]['fit'][1])
+        hmu.SetBinError(ibin, diff)
+        himpacts['total'].SetBinContent(ibin, abs(diff))
+
+        # loop over the systematics, find the ones in the sysUncs list
+        for systematic in results['params']:
+            if systematic["name"] in sysUncs:
+                diff = systematic["impact_"+poiname]
+                himpacts[systematic["name"]].SetBinContent(ibin, abs(diff))
+
+    for key, val in himpacts.iteritems():
+        val.SetLineColor(colors[key])
+
+    hmu.SetLineColor(1)
+    DrawHistos([hmu], ['W^{+}#rightarrow#mu^{+}#nu'], 0, 120, "W p_{T} [GeV]", 0.5, 1.5, "#sigma_{Obs}/#sigma_{MC}", "hsignal_strength_"+postfix, dology=False, legendPos=[0.92, 0.88, 0.70, 0.80])
+
+    DrawHistos(himpacts.values(), himpacts.keys(), 0, 120, "W p_{T} [GeV]", 0, 0.20, "Uncertainty", "himpacts_wpt_"+postfix, dology=False, legendPos=[0.92, 0.88, 0.70, 0.40], drawashist=True)
+

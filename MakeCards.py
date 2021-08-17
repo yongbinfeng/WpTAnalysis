@@ -6,7 +6,6 @@ import os
 
 doMuon = True
 doWpT = True
-# doWpT = True is still under development
 
 if doWpT:
     wptbins = ["WpT_bin1", "WpT_bin2", "WpT_bin3", "WpT_bin4", "WpT_bin5", "WpT_bin6", "WpT_bin7", "WpT_bin8", "WpT_bin9"]
@@ -238,10 +237,16 @@ def MakeCards(fname_mc, fname_qcd, channel, wptbin, etabin):
     for sys in qcdstats:
         qcdgroup += " " + sys
 
+    # add the recoil group
+    recoilgroup = "Recoil group ="
+    for sys in recoilsys:
+        recoilgroup += " " + sys
+
     # write these systematic lines
     for line in lines.values():
         ofile.write(line+"\n")
     ofile.write(qcdgroup+"\n")
+    ofile.write(recoilgroup+"\n")
 
     ofile.close()
     return ofile.name.split("/")[-1]
