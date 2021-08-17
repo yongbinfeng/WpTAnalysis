@@ -4,8 +4,8 @@ import numpy as np
 from CMSPLOTS.myFunction import DrawHistos
 
 doPol2 = False # use Pol1 if doPol2 set to false
-doMuon = True
-doWpT = True
+doMuon = False
+doWpT = False
 
 ROOT.gROOT.SetBatch(True)
 
@@ -28,9 +28,9 @@ else:
 
 def ExtrapolateQCD(fname, oname, channel, wptbin, etabins):
     fqcd = ROOT.TFile(fname)
-    if not os.path.exists("QCD"):
-        os.makedirs("QCD")
-    ofile = ROOT.TFile("QCD/"+oname, "recreate")
+    if not os.path.exists("root/QCD"):
+        os.makedirs("root/QCD")
+    ofile = ROOT.TFile("root/QCD/"+oname, "recreate")
     
     for etabin in etabins:
         # hard code some isolation parameters
@@ -168,14 +168,14 @@ def ExtrapolateQCD(fname, oname, channel, wptbin, etabins):
 
 if __name__ == "__main__":
     if doMuon:
-        fname = "output_qcdshape_fullrange_munu.root"
+        fname = "root/output_qcdshape_fullrange_munu.root"
         oname = "pe_extrapolated_mu_pol2" if doPol2 else "qcdshape_extrapolated_mu"
         for wptbin in wptbins:
             ExtrapolateQCD(fname, oname+"_"+wptbin+".root", "muplus", wptbin, ["lepEta_bin0"])
     else:
         # on electron channel
         # currently separate barrel and endcap for electrons
-        fname = "output_qcdshape_fullrange_enu.root"
+        fname = "root/output_qcdshape_fullrange_enu.root"
         oname = "pe_extrapolated_e_pol2" if doPol2 else "qcdshape_extrapolated_e"
         for wptbin in ["WpT_bin0"]:
             # for electrons, only implement the inclusive version for now

@@ -4,8 +4,8 @@ script to generate the W(lnv) cards for tfCombine
 from collections import OrderedDict
 import os
 
-doMuon = True
-doWpT = True
+doMuon = False
+doWpT = False
 
 if doWpT:
     wptbins = ["WpT_bin1", "WpT_bin2", "WpT_bin3", "WpT_bin4", "WpT_bin5", "WpT_bin6", "WpT_bin7", "WpT_bin8", "WpT_bin9"]
@@ -289,7 +289,7 @@ if __name__ == "__main__":
         cards = []
         for wptbin in wptbins:
             postfix = "" if not doWpT else "_WpT"
-            card = MakeCards(pwd+"/"+fnames[channel]+postfix+".root", pwd+"/"+fqcds[channel]+"_"+wptbin+".root", channel, wptbin, etabin)
+            card = MakeCards(pwd+"/root/"+fnames[channel]+postfix+".root", pwd+"/root/"+fqcds[channel]+"_"+wptbin+".root", channel, wptbin, etabin)
             cards.append(card)
 
         if doWpT:
@@ -300,8 +300,8 @@ if __name__ == "__main__":
         channel = "eplus"
         pwd = os.getcwd()
         for wptbin in ["WpT_bin0"]:
-            card1 = MakeCards(pwd+"/"+fnames[channel]+".root", pwd+"/"+fqcds[channel]+"_"+wptbin+".root", channel, wptbin, "lepEta_bin1")
-            card2 = MakeCards(pwd+"/"+fnames[channel]+".root", pwd+"/"+fqcds[channel]+"_"+wptbin+".root", channel, wptbin, "lepEta_bin2")
+            card1 = MakeCards(pwd+"/root/"+fnames[channel]+".root", pwd+"/root/"+fqcds[channel]+"_"+wptbin+".root", channel, wptbin, "lepEta_bin1")
+            card2 = MakeCards(pwd+"/root/"+fnames[channel]+".root", pwd+"/root/"+fqcds[channel]+"_"+wptbin+".root", channel, wptbin, "lepEta_bin2")
         
         # combine the two cards in 2 eta bins
         combineCards(["Barrel", "Endcap"], [card1, card2], "datacard_{}.txt".format(channel))

@@ -289,7 +289,7 @@ def main():
     # write out mT histograms for combine
     #
     postfix = "_WpT" if doWpT else ""
-    outfile = ROOT.TFile("output_shapes_"+lepname+postfix+".root", "recreate")
+    outfile = ROOT.TFile("root/output_shapes_"+lepname+postfix+".root", "recreate")
 
     # Data
     odir = outfile.mkdir("Data")

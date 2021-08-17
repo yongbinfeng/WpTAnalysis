@@ -6,7 +6,7 @@ from PostFits.CombineHarvester.plotImpacts import plotImpacts
 import ROOT
 ROOT.gROOT.SetBatch(True)
 
-doInclusive = False
+doInclusive = True
 doWpT = True
 
 # boolean flag to config if the pull

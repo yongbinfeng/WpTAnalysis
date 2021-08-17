@@ -1,18 +1,16 @@
 # W cross section and W pT Analysis
 
-Some analyzers to make plots and run statistical analysis for the inclusive W and Z cross section, and W pT analysis. Still under development.
+Some analyzers to make plots and run statistical analysis for the inclusive W and Z cross section, and W pT analysis. Under development.
 
 ```
 git clone git@github.com:yongbinfeng/WpTAnalysis.git
 git checkout master
 ```
 
-The analyzer is based on the ntuples from this repository: https://github.com/MiT-HEP/MitEwk13TeV/tree/CMSSW_94X
+The analyzer is based on the ntuples from this repository: https://github.com/MiT-HEP/MitEwk13TeV/tree/CMSSW_94X. Some plotting scripts are based on RDataFrame. The combine command needs to be run with tfcombine (https://github.com/bendavid/HiggsAnalysis-CombinedLimit/tree/tensorflowfit). (I'm on branch `tensorflowfit`.). Tested with the `CMSSW_10_6_0` environment and everything works well.
 
 
 ## Make Histograms
-The scripts are based on RDataFrame. Tested using `CMSSW_10_6_0` environment and it runs fine.
-
 This histogram makers reply on some functions in `Functions.cc`. Compile it first before using:
 ```
 root -l
@@ -24,7 +22,7 @@ To produce the histograms in the signal region, just run
 ```
 python MakePlots_Wlnu.py
 ```
-which will produce all the needed histograms for data and MC templates in the muon channel. 
+which will produce all the needed histograms for data and MC templates in the muon channel, saved in the `root` directory. 
 
 This might take a while since it needs to loop over a large number of events with different systematic variations. Change `doTest` flag to true will run in the test mode, with only a subset of samples and variations. Suitable for debugging.
 
@@ -36,6 +34,8 @@ To produce the histograms (QCD background templates) in the lepton anti-isolated
 ```
 python MakePlots_Wlnu_AntiIso.py
 ```
+Some of the preprocessed root files have already been saved in the root directory
+
 
 ## QCD Extrapolation
 The `ExtrapolateQCD.py` script is used to extrapolate the QCD template from a set of antiIsolated control regions to the signal region. Run 
@@ -47,26 +47,32 @@ would run the extrapolation for the muon plus channel. Change `doMuon` to false 
 ## Make DataCards
 `MakeCards.py` script is used to generate the datacards needed for combine. It takes the data and MC templates from the 1st step, and the QCD extrapolated templates from the 2nd step, and add some systematic uncertainties. 
 
-Then one can run the tfcombine (https://github.com/bendavid/HiggsAnalysis-CombinedLimit/tree/tensorflowfit). (I'm on branch `tensorflowfit`.). E.g.:
+Then one can run the tfcombine in the `cards` directory, e.g.:
 ```
-text2hdf5.py datacard_muplus_lepEta_bin0.txt
-combinetf.py datacard_muplus_lepEta_bin0.hdf5 --saveHists --doImpacts --output datacard_muplus_lepEta_bin0.root
-```
-
-In the electron channel, the two datacards in the barrel and endcap region needs to be combined first:
-```
-combineCards.py Barrel=datacard_eplus_lepEta_bin1.txt Endcap=datacard_eplus_lepEta_bin2.txt > datacard_eplus_lepEta.txt
-text2hdf5.py datacard_eplus_lepEta.txt
-combinetf.py datacard_eplus_lepEta.hdf5 --saveHists --doImpacts --output datacard_eplus_lepEta.root
+text2hdf5.py datacard_muplus_lepEta_bin0_WpT_bin0.txt
+combinetf.py datacard_muplus_lepEta_bin0_WpT_bin0.hdf5 --saveHists --doImpacts --output datacard_muplus_lepEta_bin0_WpT_bin0.root
 ```
 
-These would produce root files with `datacard_muplus_lepEta_bin0.root` and `datacard_eplus_lepEta.root`, with the pre/postfit distributions and nuisance impacts information saved.
+Similarly, in the electron channel,
+```
+text2hdf5.py datacard_eplus.txt 
+combinetf.py datacard_eplus.hdf5 --saveHists --doImpacts --output datacard_eplus.root
+```
+
+In the W to muplus nu channel for W pT,
+```
+text2hdf5.py datacard_muplus_lepEta_bin0_WpT.txt
+combinetf.py datacard_muplus_lepEta_bin0_WpT.hdf5 --saveHists --doImpacts --output datacard_muplus_lepEta_bin0_WpT.root
+```
+
+These would produce root files with `datacard_muplus_lepEta_bin0_WpT_bin0.root`, `datacard_eplus.root`, and `datacard_muplus_lepEta_bin0_WpT.root`, with the pre/postfit distributions and nuisance impacts information saved.
 
 ## Make Postfit plots
-One can compare the data-Template postfit distributions and the impacts of nuisance parameters by running
+One can compare the data-Template postfit distributions and the impacts of nuisance parameters, etc by running
 ```
 python MakePostFitPlots.py
 ```
 
 ## ToDO
-- add functionality in these scripts to do the extrapolation and make cards in different W pT bins
+- Understand better the QCD background and its impact
+- Add electron scale uncertainties, and possibly the muon rochester correction uncertainties

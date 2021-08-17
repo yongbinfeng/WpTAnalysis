@@ -221,7 +221,7 @@ def main():
         postfix = "nu_applyScaling.root"
     else:
         postfix = "nu.root"
-    outfile = ROOT.TFile("output_qcdshape_fullrange_"+lepname+postfix, "recreate")
+    outfile = ROOT.TFile("root/output_qcdshape_fullrange_"+lepname+postfix, "recreate")
 
     for wpt in wptbins:
         odir = outfile.mkdir(wpt)
