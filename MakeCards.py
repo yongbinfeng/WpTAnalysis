@@ -4,8 +4,10 @@ script to generate the W(lnv) cards for tfCombine
 from collections import OrderedDict
 import os
 
-doMuon = False
+doMuon = True
+doElectron = True
 doWpT = False
+doQCDSys = True
 
 if doWpT:
     wptbins = ["WpT_bin1", "WpT_bin2", "WpT_bin3", "WpT_bin4", "WpT_bin5", "WpT_bin6", "WpT_bin7", "WpT_bin8", "WpT_bin9"]
@@ -152,6 +154,9 @@ def MakeCards(fname_mc, fname_qcd, channel, wptbin, etabin):
     prefix = etabin.split("_")[1]+"_"+wptbin
     nbins = 12
     qcdstats = [prefix+"_bin"+str(i)+"shape" for i in xrange(1, nbins+1)]
+    if doQCDSys:
+        qcdstats += [prefix+"_Pol2shape"]
+        qcdstats += [prefix+"_ScaledMCshape"]
 
 
     #
@@ -249,7 +254,7 @@ def MakeCards(fname_mc, fname_qcd, channel, wptbin, etabin):
     ofile.write(recoilgroup+"\n")
 
     ofile.close()
-    return ofile.name.split("/")[-1]
+    return ofile.name.split('/')[-1]
 
 
 def combineCards(labels, cards, oname):
@@ -294,8 +299,8 @@ if __name__ == "__main__":
 
         if doWpT:
             # combine the cards in different w pt bins
-            combineCards(wptbins, cards, "datacard_{}_{}_WpT.txt".format(channel, etabin))
-    else:
+            combineCards(wptbins, cards, pwd+"/cards/datacard_{}_{}_WpT.txt".format(channel, etabin))
+    if doElectron:
         # do electron
         channel = "eplus"
         pwd = os.getcwd()
@@ -304,4 +309,4 @@ if __name__ == "__main__":
             card2 = MakeCards(pwd+"/root/"+fnames[channel]+".root", pwd+"/root/"+fqcds[channel]+"_"+wptbin+".root", channel, wptbin, "lepEta_bin2")
         
         # combine the two cards in 2 eta bins
-        combineCards(["Barrel", "Endcap"], [card1, card2], "datacard_{}.txt".format(channel))
+        combineCards(["Barrel", "Endcap"], [card1, card2], pwd+"/cards/datacard_{}.txt".format(channel))

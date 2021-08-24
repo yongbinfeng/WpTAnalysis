@@ -7,21 +7,29 @@ import ROOT
 ROOT.gROOT.SetBatch(True)
 
 doInclusive = True
-doWpT = True
+doWpT = False
+doRebin = True
 
 # boolean flag to config if the pull
 # distribution should be included in the plots
-showPULL = False
+showPULL = True
 if doInclusive:
-    MakePostPlot("cards/datacard_muplus_lepEta_bin0_WpT_bin0.root", "muplus", "", showPULL)
-    MakePostPlot("cards/datacard_eplus.root",  "eplus", "", showPULL)
-    MakePostPlot("cards/datacard_muplus_lepEta_bin0_WpT.root", "muplus", "WpT", showPULL)
+    suffix = "_Rebin.root" if doRebin else ".root"
+    MakePostPlot("cards/datacard_muplus_lepEta_bin0_WpT_bin0" + suffix, "muplus", "", showPULL)
+    MakePostPlot("cards/datacard_eplus" + suffix,  "eplus", "", showPULL)
     
-    result2json("cards/datacard_muplus_lepEta_bin0_WpT_bin0.root", "w_muplus_sig_mu", "cards/impacts_muplus_lepEta_bin0_WpT_bin0.json")
-    result2json("cards/datacard_eplus.root",       "w_eplus_sig_mu",  "cards/impacts_eplus.json")
-    
+    result2json("cards/datacard_muplus_lepEta_bin0_WpT_bin0" + suffix, "w_muplus_sig_mu", "cards/impacts_muplus_lepEta_bin0_WpT_bin0.json")
+    result2json("cards/datacard_eplus" + suffix,       "w_eplus_sig_mu",  "cards/impacts_eplus.json")
+
     plotImpacts("cards/impacts_muplus_lepEta_bin0_WpT_bin0.json", "impacts_muplus_lepEta_bin0")
     plotImpacts("cards/impacts_eplus.json",       "impacts_eplus_lepEta")
+
+    # plot the impacts on QCD
+    result2json("cards/datacard_muplus_lepEta_bin0_WpT_bin0" + suffix, "QCD_muplus_lepEta_bin0_WpT_bin0_mu", "cards/impacts_muplus_lepEta_bin0_WpT_bin0_qcd.json")
+    result2json("cards/datacard_eplus" + suffix,       "QCD_eplus_lepEta_bin1_WpT_bin0_mu",  "cards/impacts_eplus_qcd.json")
+
+    plotImpacts("cards/impacts_muplus_lepEta_bin0_WpT_bin0_qcd.json", "impacts_muplus_lepEta_bin0_qcd")
+    plotImpacts("cards/impacts_eplus_qcd.json",       "impacts_eplus_lepEta_qcd")
 
 if doWpT:
     MakePostPlot("cards/datacard_muplus_lepEta_bin0_WpT.root", "muplus", "WpT", showPULL)
