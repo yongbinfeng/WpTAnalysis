@@ -1,1 +1,0 @@
-/eos/cms/store/group/phys_smp/arapyan/Production_13TeV/AntiWenu/ntuples/we1_select.root
