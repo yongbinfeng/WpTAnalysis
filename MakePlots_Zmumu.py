@@ -11,7 +11,7 @@ import pickle
 from SampleManager import DrawConfig, Sample, SampleManager
 
 ROOT.gROOT.SetBatch(True)
-ROOT.ROOT.EnableImplicitMT(10)
+ROOT.ROOT.EnableImplicitMT(4)
 
 dotest = 1
 VetoB = False
@@ -53,30 +53,35 @@ def main():
         sampMan = SampleManager(DataSamp, [DYSamp, TTbarSamp, WWSamp, WZSamp, ZZSamp, ZXXSamp, TT1LepSamp, TT0LepSamp])
     else:
         sampMan = SampleManager(DataSamp, [DYSamp, TTbarSamp])
+
+    #sampMan.SetDefaultWeightStr("weight_WoVpt_WoEff")
     #sampMan.groupMCs(["WW", "WZ", "ZZ", "ZXX"], "EWK", 216, "EWK")
     #sampMan.groupMCs(["ttbar2lep", "ttbar1lep", "ttbar0lep"], "ttbar", 96, "t#bar{t}")
     # this need fix!!!!
-    DYSamp.ApplyCut("nMuon>=2")
+    #DYSamp.ApplyCut("nMuon>=2")
     ##sampMan.groupMCs(["WW", "WZ", "ZZ", "ZXX"], "EWK", 216, "EWK")
     ##sampMan.groupMCs(["ttbar2lep", "ttbar1lep", "ttbar0lep"], "ttbar", 96, "t#bar{t}")
     sampMan.DefineAll("lep1_corr", "VLep(Muon_corrected_pt[0], Muon_eta[0], Muon_phi[0], 0.)")
     sampMan.DefineAll("lep2_corr", "VLep(Muon_corrected_pt[1], Muon_eta[1], Muon_phi[1], 0.)")
     sampMan.DefineAll("Z", "(lep1_corr + lep2_corr)")
     sampMan.DefineAll("zmass", "Z.M()")
+
+    sampMan.ApplyCutAll("passSelection > 0")
     sampMan.ApplyCutAll("zmass > 60.0 && zmass < 120.0")
+    sampMan.ApplyCutAll("Muon_pfRelIso04_all[0] < 0.15 && Muon_pfRelIso04_all[1] < 0.15")
 
     sampMan.DefineAll("zpt", "Z.Pt()")
     sampMan.DefineAll("zy",  "Z.Rapidity()")
     sampMan.DefineAll("zeta",  "Z.Rapidity()")
     sampMan.DefineAll("zphi", "Z.Phi()")
 
-    sampMan.DefineAll("urawvec", "UVec(zpt, zphi, MET_pt, MET_phi)")
+    sampMan.DefineAll("urawvec", "UVec(zpt, zphi, RawMET_pt, RawMET_phi)")
     sampMan.DefineAll("uraw_pt",  "urawvec.Mod()")
     sampMan.DefineAll("uraw_phi", "urawvec.Phi()")
     sampMan.DefineAll("uraw1",    "uraw_pt * TMath::Cos(uraw_phi + TMath::Pi() - zphi)")
     sampMan.DefineAll("uraw2",    "uraw_pt * TMath::Sin(uraw_phi + TMath::Pi() - zphi)")
 
-    sampMan.DefineAll("uvec", "UVec(zpt, zphi, MET_corrected_pt, MET_corrected_phi)")
+    sampMan.DefineAll("uvec", "UVec(zpt, zphi, RawMET_corrected_pt, RawMET_corrected_phi)")
     sampMan.DefineAll("u_pt",  "uvec.Mod()")
     sampMan.DefineAll("u_phi", "uvec.Phi()")
     sampMan.DefineAll("ucor1",    "u_pt * TMath::Cos(u_phi + TMath::Pi() - zphi)")
@@ -89,6 +94,13 @@ def main():
 
     #DYSamp.Define("u_pt_corr_central", "TMath::Sqrt(u1_corr_central*u1_corr_central + u2_corr_central*u2_corr_central)")
     #sampMan.DefineAll("u1_corr_central",     "u1"  , excludes=['DY'])
+
+    # some weights for the systematics
+    sampMan.DefineAll("weight_hlt", "weight_WoVpt_WoEff * lepsfweight_hlt")
+    sampMan.DefineAll("weight_fsr", "weight_WoVpt_WoEff * lepsfweight_fsr")
+    sampMan.DefineAll("weight_mc",  "weight_WoVpt_WoEff * lepsfweight_mc")
+    sampMan.DefineAll("weight_tag", "weight_WoVpt_WoEff * lepsfweight_tag")
+    sampMan.DefineAll("weight_prefire", "weight_WoVpt_WoEff / PrefireWeight * PrefireWeight_Up")
 
 
     met_pt_bins = np.array([0., 2.0, 4., 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 33, 36, 39, 42, 45, 48, 51, 55, 60, 65, 70, 75, 80, 90, 100, 110, 120, 135, 150, 165, 180, 200])
@@ -103,24 +115,30 @@ def main():
     mass_bins = np.concatenate((np.linspace(70, 76, 3),np.linspace(78,86,5), np.linspace(87, 96, 10), np.linspace(98,104,5), np.linspace(106, 110, 2)))
     u_bins = np.concatenate((np.linspace(0, 20, 11),np.linspace(24,80,15), np.linspace(85, 109, 4), np.linspace(120,150,3)))
 
+    systematics = ['weight_hlt', 'weight_fsr', 'weight_mc', 'weight_tag', 'weight_prefire']
+    #systematics = ['weight_hlt', 'weight_prefire']
+
     # z pt befor and after pt reweighting
-    sampMan.cacheDraw("zpt",   "histo_zjets_zpt_WoZptWeight_mumu", u_bins, DrawConfig(xmin=0, xmax=150, xlabel='p_{T}^{#mu#mu} [GeV]'), weightname="weight_WoVpt")
-    sampMan.cacheDraw("zmass", "histo_zjets_zmass_mumu", mass_bins, DrawConfig(xmin=70, xmax=110, xlabel='m_{#mu#mu} [GeV]'))
-    sampMan.cacheDraw("zeta",  "histo_zjets_zeta_mumu", eta_bins, DrawConfig(xmin=-2.5, xmax=2.5, xlabel='#eta_{#mu#mu} [GeV]', ymax=1e7, ylabel='Events / 1'))
-    sampMan.cacheDraw("zy",    "histo_zjets_zrapidity_mumu", eta_bins, DrawConfig(xmin=-2.5, xmax=2.5, xlabel='y_{#mu#mu} [GeV]', ymax=1e7, ylabel='Events / 1'))
+    sampMan.cacheDraw("zpt",   "histo_zjets_zpt_WoZptWeight_mumu", u_bins, DrawConfig(xmin=0, xmax=150, xlabel='p_{T}^{#mu#mu} [GeV]'), systematics=systematics)
+    sampMan.cacheDraw("zmass", "histo_zjets_zmass_mumu", mass_bins, DrawConfig(xmin=70, xmax=110, xlabel='m_{#mu#mu} [GeV]'), systematics=systematics)
+    sampMan.cacheDraw("zeta",  "histo_zjets_zeta_mumu", eta_bins, DrawConfig(xmin=-2.5, xmax=2.5, xlabel='#eta_{#mu#mu} [GeV]', ymax=1e7, ylabel='Events / 1'), systematics=systematics)
+    #sampMan.cacheDraw("zeta",  "histo_zjets_zeta_mumu", eta_bins, DrawConfig(xmin=-2.5, xmax=2.5, xlabel='#eta_{#mu#mu} [GeV]', ymax=1e7, ylabel='Events / 1'))
+    sampMan.cacheDraw("zy",    "histo_zjets_zrapidity_mumu", eta_bins, DrawConfig(xmin=-2.5, xmax=2.5, xlabel='y_{#mu#mu} [GeV]', ymax=1e7, ylabel='Events / 1'), systematics=systematics)
 
     #sampMan.cacheDraw("nPV", "histo_nPV_mumu", 10, 0, 10, DrawConfig(xmin=0, xmax=10, xlabel='# PV', ylabel='Events / 1'))
 
-    sampMan.cacheDraw("LeadMuon_pt", "histo_leadMuon_pt_mumu", pt_bins, DrawConfig(xmin=20, xmax=70, xlabel='p_{T}(Leading #mu) [GeV]'))
-    sampMan.cacheDraw("LeadMuon_eta", "histo_leadMuon_eta_mumu", eta_bins, DrawConfig(xmin=-2.6, xmax=2.6, xlabel='#eta (Leading #mu) [GeV]', ymax=1e7, ylabel='Events / 1'))
-    sampMan.cacheDraw("SubleadMuon_pt", "histo_subleadMuon_pt_mumu", pt_bins, DrawConfig(xmin=20, xmax=70, xlabel='p_{T}(Subleading #mu) [GeV]'))
-    sampMan.cacheDraw("SubleadMuon_eta", "histo_subleadMuon_eta_mumu", eta_bins, DrawConfig(xmin=-2.6, xmax=2.6, xlabel='#eta (Subleading #mu) [GeV]', ymax=1e7, ylabel='Events / 1'))
+    sampMan.cacheDraw("LeadMuon_pt", "histo_leadMuon_pt_mumu", pt_bins, DrawConfig(xmin=20, xmax=70, xlabel='p_{T}(Leading #mu) [GeV]'), systematics=systematics)
+    sampMan.cacheDraw("LeadMuon_eta", "histo_leadMuon_eta_mumu", eta_bins, DrawConfig(xmin=-2.6, xmax=2.6, xlabel='#eta (Leading #mu) [GeV]', ymax=1e7, ylabel='Events / 1'), systematics=systematics)
+    #sampMan.cacheDraw("LeadMuon_eta", "histo_leadMuon_eta_mumu", eta_bins, DrawConfig(xmin=-2.6, xmax=2.6, xlabel='#eta (Leading #mu) [GeV]', ymax=1e7, ylabel='Events / 1'))
+    sampMan.cacheDraw("SubleadMuon_pt", "histo_subleadMuon_pt_mumu", pt_bins, DrawConfig(xmin=20, xmax=70, xlabel='p_{T}(Subleading #mu) [GeV]'), systematics=systematics)
+    sampMan.cacheDraw("SubleadMuon_eta", "histo_subleadMuon_eta_mumu", eta_bins, DrawConfig(xmin=-2.6, xmax=2.6, xlabel='#eta (Subleading #mu) [GeV]', ymax=1e7, ylabel='Events / 1'), systematics=systematics)
+    #sampMan.cacheDraw("SubleadMuon_eta", "histo_subleadMuon_eta_mumu", eta_bins, DrawConfig(xmin=-2.6, xmax=2.6, xlabel='#eta (Subleading #mu) [GeV]', ymax=1e7, ylabel='Events / 1'))
 
-    sampMan.cacheDraw("MET_pt", "histo_zjets_mumu_pfmet_pt", met_pt_bins, DrawConfig(xmin=0, xmax=100, xlabel='PF MET [GeV]'))
-    sampMan.cacheDraw("MET_phi", "histo_zjets_mumu_pfmet_phi", 30, phimin, phimax, DrawConfig(xmin=phimin, xmax=phimax, xlabel='PF MET #phi'))
+    sampMan.cacheDraw("RawMET_pt", "histo_zjets_mumu_pfmet_pt", met_pt_bins, DrawConfig(xmin=0, xmax=100, xlabel='PF MET [GeV]'))
+    sampMan.cacheDraw("RawMET_phi", "histo_zjets_mumu_pfmet_phi", 30, phimin, phimax, DrawConfig(xmin=phimin, xmax=phimax, xlabel='PF MET #phi'))
 
-    sampMan.cacheDraw("MET_corrected_pt", "histo_zjets_mumu_pfmet_corrected_pt", met_pt_bins, DrawConfig(xmin=0, xmax=100, xlabel='PF MET [GeV]'))
-    sampMan.cacheDraw("MET_corrected_phi", "histo_zjets_mumu_pfmet_corrected_phi", 30, phimin, phimax, DrawConfig(xmin=phimin, xmax=phimax, xlabel='PF MET #phi'))
+    sampMan.cacheDraw("RawMET_corrected_pt", "histo_zjets_mumu_pfmet_corrected_pt", met_pt_bins, DrawConfig(xmin=0, xmax=100, xlabel='PF MET [GeV]'))
+    sampMan.cacheDraw("RawMET_corrected_phi", "histo_zjets_mumu_pfmet_corrected_phi", 30, phimin, phimax, DrawConfig(xmin=phimin, xmax=phimax, xlabel='PF MET #phi'))
 
     sampMan.cacheDraw("uraw1", "histo_zjets_mumu_pfmet_uraw1_pt", u1_bins, DrawConfig(xmin=-20.0, xmax=100.0, xlabel="Raw u_{#parallel} [GeV]", extraText='#mu#mu channel'))
     sampMan.cacheDraw("uraw2", "histo_zjets_mumu_pfmet_uraw2_pt", u2_bins, DrawConfig(xmin=-30.0, xmax=30.0, xlabel= "Raw u_{#perp  } [GeV]", extraText='#mu#mu channel'))

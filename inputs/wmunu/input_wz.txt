@@ -1,1 +1,4 @@
-/eos/cms/store/group/phys_smp/arapyan/Production_13TeV/Wmunu_old/ntuples/wz_select.raw.root
+root://cmseos.fnal.gov//store/user/yofeng/LowPU_Skimmed/Wmnu/WZTo3LNu_TuneCP5_13TeV-powheg-pythia8/NanoAOD_0302/NanoAOD_MC_1_Skim.root
+root://cmseos.fnal.gov//store/user/yofeng/LowPU_Skimmed/Wmnu/WZTo3LNu_TuneCP5_13TeV-powheg-pythia8/NanoAOD_0302/NanoAOD_MC_2_Skim.root
+root://cmseos.fnal.gov//store/user/yofeng/LowPU_Skimmed/Wmnu/WZTo3LNu_TuneCP5_13TeV-powheg-pythia8/NanoAOD_0302/NanoAOD_MC_3_Skim.root
+root://cmseos.fnal.gov//store/user/yofeng/LowPU_Skimmed/Wmnu/WZTo3LNu_TuneCP5_13TeV-powheg-pythia8/NanoAOD_0302/NanoAOD_MC_4_Skim.root

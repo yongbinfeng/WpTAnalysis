@@ -1,1 +1,0 @@
-/eos/cms/store/group/phys_smp/arapyan/Production_13TeV/Wmunu_old/ntuples/zxx_select.raw.root

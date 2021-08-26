@@ -10,7 +10,8 @@ import numpy as np
 import sys
 from collections import OrderedDict
 sys.path.append("/uscms_data/d3/yfeng/CMSPLOTS")
-from myFunction import DrawHistos
+from myFunction import DrawHistos, THStack2TH1
+import math
 
 MINMASS = 60
 MAXMASS = 120
@@ -348,20 +349,30 @@ class SampleManager(object):
         else:
             raise ValueError('The argument is problematic. It has to be either 4 or 6')
 
-    def cacheDraw_fb(self, varname, hname, nbins, xmin, xmax, drawconfigs, weightname="weight_WoVpt"):
+    def cacheDraw_fb(self, varname, hname, nbins, xmin, xmax, drawconfigs, weightname="weight_WoVpt", systematics=[]):
         """ 
         cache the var to be drawn.
         But do not launch the action by the 'lazy action' in RDataFrame
         """
         h_data = self.data.rdf.Histo1D( (hname+"_data", hname, nbins, xmin, xmax), varname, weightname )
         h_mcs = []
+
         for imc in xrange(len(self.mcs)):
             mc = self.mcs[imc]
             h_mcs.append( mc.rdf.Histo1D( (hname+"_mc_"+str(imc), hname, nbins, xmin, xmax), varname, weightname) )
 
-        self.to_draw[hname] = (h_data, h_mcs, drawconfigs)
+        # deal with systematics
+        h_mcs_sys = []
+        for sys in systematics:
+            h_mcs_isys = []
+            for imc in xrange(len(self.mcs)):
+                mc = self.mcs[imc]
+                h_mcs_isys.append(mc.rdf.Histo1D( (hname+"_mc_"+str(imc)+"_SysShift_{}".format(sys), hname, nbins, xmin, xmax), varname, "{}".format(sys)) )
+            h_mcs_sys.append(h_mcs_isys)
 
-    def cacheDraw_vb(self, varname, hname, xbins, drawconfigs, weightname="weight_WoVpt"):
+        self.to_draw[hname] = (h_data, h_mcs, h_mcs_sys, drawconfigs)
+
+    def cacheDraw_vb(self, varname, hname, xbins, drawconfigs, weightname="weight_WoVpt", systematics=[]):
         """
         cache the var to be drawn.
         But do not launch the action by the 'lazy action' in RDataFrame
@@ -370,13 +381,23 @@ class SampleManager(object):
         nbins = xbins.size - 1
         h_data = self.data.rdf.Histo1D( (hname+"_data", hname, nbins, xbins), varname, weightname )
         h_mcs = []
+
         for imc in xrange(len(self.mcs)):
             mc = self.mcs[imc]
             h_mcs.append( mc.rdf.Histo1D( (hname+"_mc_"+str(imc), hname, nbins, xbins), varname, weightname) )
 
-        self.to_draw[hname] = (h_data, h_mcs, drawconfigs)
+        # deal with systematic variations:
+        h_mcs_sys = []
+        for sys in systematics:
+            h_mcs_isys = []
+            for imc in xrange(len(self.mcs)):
+                mc = self.mcs[imc]
+                h_mcs_isys.append(mc.rdf.Histo1D( (hname+"_mc_"+str(imc)+"_SysShift_{}".format(sys), hname, nbins, xbins), varname, "{}".format(sys)) )
+            h_mcs_sys.append(h_mcs_isys)
 
-    def _DrawPlot(self, h_data, h_mcs, drawconfigs, hname):
+        self.to_draw[hname] = (h_data, h_mcs, h_mcs_sys, drawconfigs)
+
+    def _DrawPlot(self, h_data, h_mcs, h_mcs_sys, drawconfigs, hname):
         legends = []
 
         h_data.Scale(1.0)
@@ -391,49 +412,55 @@ class SampleManager(object):
         if docounting:
             self.counts.append(h_data.Integral(0, h_data.GetNbinsX()+1))
 
-        hgroupedmcs = OrderedDict()
-        group_to_renormalize = ""
-        for imc in xrange(len(h_mcs)):
-            # scale the MC to the xsec
-            h_mcs[imc].Scale( self.normfactors[imc] )
-            if self.mcs[imc].renormalizefactor!=1.0:
-                print "renormalize MC {} with a factor or {}".format(self.mcs[imc].name, self.mcs[imc].renormalizefactor)
-                h_mcs[imc].Scale( self.mcs[imc].renormalizefactor )
+        def processMC(hmcs, postfix=""):
+            hgroupedmcs = OrderedDict()
+            group_to_renormalize = ""
+            for imc in xrange(len(hmcs)):
+                # scale the MC to the xsec
+                hmcs[imc].Scale( self.normfactors[imc] )
+                if self.mcs[imc].renormalizefactor!=1.0:
+                    print "renormalize MC {} with a factor or {}".format(self.mcs[imc].name, self.mcs[imc].renormalizefactor)
+                    hmcs[imc].Scale( self.mcs[imc].renormalizefactor )
 
-            if docounting:
-                self.counts.append( h_mcs[imc].Integral(0, h_mcs[imc].GetNbinsX()+1) )
+                if docounting:
+                    self.counts.append( hmcs[imc].Integral(0, hmcs[imc].GetNbinsX()+1) )
     
-            groupname = self.mcs[imc].groupname
-            if groupname not in hgroupedmcs:
-                hgroupedmcs[groupname] = h_mcs[imc].Clone(h_mcs[imc].GetName().replace("_mc_","_grouped_"+groupname))
-                hgroupedmcs[groupname].SetLineColor( self.mcs[imc].groupcolor )
-                hgroupedmcs[groupname].SetFillColor( self.mcs[imc].groupcolor )
+                groupname = self.mcs[imc].groupname
+                if groupname not in hgroupedmcs:
+                    hgroupedmcs[groupname] = hmcs[imc].Clone(hmcs[imc].GetName().replace("_mc_","_grouped_"+groupname))
+                    hgroupedmcs[groupname].SetLineColor( self.mcs[imc].groupcolor )
+                    hgroupedmcs[groupname].SetFillColor( self.mcs[imc].groupcolor )
 
-                legends.append( self.mcs[imc].grouplegend )
+                    legends.append( self.mcs[imc].grouplegend )
 
-                if self.mcs[imc].renormalize:
-                    group_to_renormalize = groupname
-            else:
-                # group mc already exist. Add to the histogram
-                hgroupedmcs[groupname].Add( h_mcs[imc].GetValue() )
+                    if self.mcs[imc].renormalize:
+                        group_to_renormalize = groupname
+                else:
+                    # group mc already exist. Add to the histogram
+                    hgroupedmcs[groupname].Add( hmcs[imc].GetValue() )
 
-        if group_to_renormalize:
-            ndata = h_data.Integral(0, h_data.GetNbinsX()+1)
-            nmc=0
-            for gname, ghisto in hgroupedmcs.iteritems():
-                if gname!=group_to_renormalize:
-                    nmc += ghisto.Integral(0, ghisto.GetNbinsX()+1)
-            weight = float(ndata-nmc) / hgroupedmcs[group_to_renormalize].Integral(0, hgroupedmcs[group_to_renormalize].GetNbinsX()+1)
-            print "Renormalize group for {}, with {} data, {} MC and weight {}".format(group_to_renormalize, ndata, nmc, weight)
-            hgroupedmcs[group_to_renormalize].Scale(weight)
+            if group_to_renormalize:
+                ndata = h_data.Integral(0, h_data.GetNbinsX()+1)
+                nmc=0
+                for gname, ghisto in hgroupedmcs.iteritems():
+                    if gname!=group_to_renormalize:
+                        nmc += ghisto.Integral(0, ghisto.GetNbinsX()+1)
+                weight = float(ndata-nmc) / hgroupedmcs[group_to_renormalize].Integral(0, hgroupedmcs[group_to_renormalize].GetNbinsX()+1)
+                print "Renormalize group for {}, with {} data, {} MC and weight {}".format(group_to_renormalize, ndata, nmc, weight)
+                hgroupedmcs[group_to_renormalize].Scale(weight)
 
-        hsname = "hs_" + drawconfigs.outputname
-        hs_gmc = ROOT.THStack( hsname, hsname)
-        for h_gmc in reversed(hgroupedmcs.values()):
-            if drawconfigs.donormalizebin:
-                # scale to bin width
-                h_gmc.Scale(1.0, "width")
-            hs_gmc.Add( h_gmc )
+            hsname = "hs_" + drawconfigs.outputname + postfix
+            hs_gmc = ROOT.THStack( hsname, hsname)
+            for h_gmc in reversed(hgroupedmcs.values()):
+                if drawconfigs.donormalizebin:
+                    # scale to bin width
+                    h_gmc.Scale(1.0, "width")
+                hs_gmc.Add( h_gmc )
+
+            return hs_gmc
+
+        hs_gmc = processMC(h_mcs)
+        hmctotal = THStack2TH1(hs_gmc)
 
         if not drawconfigs.legends:
             drawconfigs.legends = legends
@@ -444,10 +471,33 @@ class SampleManager(object):
 
         if drawconfigs.donormalizebin:
             h_data.Scale(1.0, "width")
+
+        # sum in quadrature the systematic variations
+        hmctotal_sys = []
+        for isys in range(len(h_mcs_sys)):
+            h_mcs_isys = h_mcs_sys[isys]
+            hs_gmc_isys = processMC(h_mcs_isys, "_sys{}".format(str(isys)))
+
+            hmctotal_isys = THStack2TH1(hs_gmc_isys)
+            hmctotal_isys.Scale( hmctotal.Integral() / hmctotal_isys.Integral() )
+            hmctotal_sys.append(hmctotal_isys)
+
+        # calculate the ratio of mc_sys/mc
+        # and take that as the ratio uncertainty
+        hratio_pannel = None
+        if hmctotal_sys:
+            hratio_pannel = h_data.Clone( "hratio_sys_" + drawconfigs.outputname )
+            for ibin in xrange(1, hratio_pannel.GetNbinsX()+1):
+                diff2 = 0.
+                for hmctotal_isys in hmctotal_sys:
+                    diff2 += (hmctotal_isys.GetBinContent(ibin) / hmctotal.GetBinContent(ibin) - 1.0)**2.0
+                hratio_pannel.SetBinContent(ibin, 1.0)
+                hratio_pannel.SetBinError(ibin, math.sqrt(diff2))
+                print("bin ", ibin, " val ", hratio_pannel.GetBinContent(ibin), " error ", hratio_pannel.GetBinError(ibin))
         
         self.hdatas[ drawconfigs.outputname] = h_data
         self.hsmcs[  drawconfigs.outputname] = hs_gmc
-        self.hratios[drawconfigs.outputname] = DrawHistos( [h_data, hs_gmc], drawconfigs.legends, drawconfigs.xmin, drawconfigs.xmax, drawconfigs.xlabel, drawconfigs.ymin, drawconfigs.ymax, drawconfigs.ylabel, drawconfigs.outputname, dology=drawconfigs.dology, dologx=drawconfigs.dologx, showratio=drawconfigs.showratio, yrmax = drawconfigs.yrmax, yrmin = drawconfigs.yrmin, yrlabel = drawconfigs.yrlabel, donormalize=drawconfigs.donormalize, ratiobase=drawconfigs.ratiobase, legendPos = drawconfigs.legendPos, redrawihist = drawconfigs.redrawihist, extraText = drawconfigs.extraText, noCMS = drawconfigs.noCMS, addOverflow = drawconfigs.addOverflow, addUnderflow = drawconfigs.addUnderflow, nMaxDigits = drawconfigs.nMaxDigits)
+        self.hratios[drawconfigs.outputname] = DrawHistos( [h_data, hs_gmc], drawconfigs.legends, drawconfigs.xmin, drawconfigs.xmax, drawconfigs.xlabel, drawconfigs.ymin, drawconfigs.ymax, drawconfigs.ylabel, drawconfigs.outputname, dology=drawconfigs.dology, dologx=drawconfigs.dologx, showratio=drawconfigs.showratio, yrmax = drawconfigs.yrmax, yrmin = drawconfigs.yrmin, yrlabel = drawconfigs.yrlabel, donormalize=drawconfigs.donormalize, ratiobase=drawconfigs.ratiobase, legendPos = drawconfigs.legendPos, redrawihist = drawconfigs.redrawihist, extraText = drawconfigs.extraText, noCMS = drawconfigs.noCMS, addOverflow = drawconfigs.addOverflow, addUnderflow = drawconfigs.addUnderflow, nMaxDigits = drawconfigs.nMaxDigits, hratiopannel = hratio_pannel)
         
 
     def launchDraw(self):
@@ -456,7 +506,7 @@ class SampleManager(object):
         """
         print "starting drawing"
         for hname, plotinfo in self.to_draw.iteritems():
-            self._DrawPlot( plotinfo[0], plotinfo[1], plotinfo[2], hname)
+            self._DrawPlot( plotinfo[0], plotinfo[1], plotinfo[2], plotinfo[3], hname)
         self.to_draw.clear()
         print "finished drawing.."
 

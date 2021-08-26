@@ -54,7 +54,7 @@ def main():
     else:
         sampMan = SampleManager(DataSamp, [DYSamp, TTbarSamp])
     # this need fix!!!!
-    DYSamp.ApplyCut("nElectron>=2")
+    #DYSamp.ApplyCut("nElectron>=2")
     ##sampMan.groupMCs(["WW", "WZ", "ZZ", "ZXX"], "EWK", 216, "EWK")
     ##sampMan.groupMCs(["ttbar2lep", "ttbar1lep", "ttbar0lep"], "ttbar", 96, "t#bar{t}")
     sampMan.DefineAll("lep1_corr", "VLep(Electron_pt[0], Electron_eta[0], Electron_phi[0], 0.)")
@@ -102,29 +102,29 @@ def main():
     u_bins = np.concatenate((np.linspace(0, 20, 11),np.linspace(24,80,15), np.linspace(85, 109, 4), np.linspace(120,150,3)))
 
     # z pt befor and after pt reweighting
-    sampMan.cacheDraw("zpt",   "histo_zjets_ee_zpt_WoZptWeight", u_bins, DrawConfig(xmin=0, xmax=150, xlabel='p_{T}^{ee} [GeV]'), weightname="weight_WoVpt")
-    sampMan.cacheDraw("zmass", "histo_zjets_ee_zmass", mass_bins, DrawConfig(xmin=70, xmax=110, xlabel='m_{ee} [GeV]'))
-    sampMan.cacheDraw("zeta",  "histo_zjets_ee_zeta", eta_bins, DrawConfig(xmin=-2.5, xmax=2.5, xlabel='#eta_{ee} [GeV]', ymax=1e7, ylabel='Events / 1'))
-    sampMan.cacheDraw("zy",    "histo_zjets_ee_zrapidity", eta_bins, DrawConfig(xmin=-2.5, xmax=2.5, xlabel='y_{ee} [GeV]', ymax=1e7, ylabel='Events / 1'))
+    sampMan.cacheDraw("zpt",   "histo_zjets_ee_zpt_WoZptWeight", u_bins, DrawConfig(xmin=0, xmax=150, xlabel='p_{T}^{ee} [GeV]'), weightname="weight_WoVpt_WoEff")
+    sampMan.cacheDraw("zmass", "histo_zjets_ee_zmass", mass_bins, DrawConfig(xmin=70, xmax=110, xlabel='m_{ee} [GeV]'), weightname="weight_WoVpt_WoEff")
+    sampMan.cacheDraw("zeta",  "histo_zjets_ee_zeta", eta_bins, DrawConfig(xmin=-2.5, xmax=2.5, xlabel='#eta_{ee} [GeV]', ymax=1e7, ylabel='Events / 1'), weightname="weight_WoVpt_WoEff")
+    sampMan.cacheDraw("zy",    "histo_zjets_ee_zrapidity", eta_bins, DrawConfig(xmin=-2.5, xmax=2.5, xlabel='y_{ee} [GeV]', ymax=1e7, ylabel='Events / 1'), weightname="weight_WoVpt_WoEff")
 
     ##sampMan.cacheDraw("nPV", "histo_nPV", 10, 0, 10, DrawConfig(xmin=0, xmax=10, xlabel='# PV', ylabel='Events / 1'))
 
-    sampMan.cacheDraw("LeadElec_pt", "histo_leadElec_ee_pt", pt_bins, DrawConfig(xmin=20, xmax=70, xlabel='p_{T}(Leading e) [GeV]'))
-    sampMan.cacheDraw("LeadElec_eta", "histo_leadElec_ee_eta", eta_bins, DrawConfig(xmin=-2.6, xmax=2.6, xlabel='#eta (Leading e) [GeV]', ymax=1e7, ylabel='Events / 1'))
-    sampMan.cacheDraw("SubleadElec_pt", "histo_subleadElec_ee_pt", pt_bins, DrawConfig(xmin=20, xmax=70, xlabel='p_{T}(Subleading e) [GeV]'))
-    sampMan.cacheDraw("SubleadElec_eta", "histo_subleadElec_ee_eta", eta_bins, DrawConfig(xmin=-2.6, xmax=2.6, xlabel='#eta (Subleading e) [GeV]', ymax=1e7, ylabel='Events / 1'))
+    sampMan.cacheDraw("LeadElec_pt", "histo_leadElec_ee_pt", pt_bins, DrawConfig(xmin=20, xmax=70, xlabel='p_{T}(Leading e) [GeV]'), weightname="weight_WoVpt_WoEff")
+    sampMan.cacheDraw("LeadElec_eta", "histo_leadElec_ee_eta", eta_bins, DrawConfig(xmin=-2.6, xmax=2.6, xlabel='#eta (Leading e) [GeV]', ymax=1e7, ylabel='Events / 1'), weightname="weight_WoVpt_WoEff")
+    sampMan.cacheDraw("SubleadElec_pt", "histo_subleadElec_ee_pt", pt_bins, DrawConfig(xmin=20, xmax=70, xlabel='p_{T}(Subleading e) [GeV]'), weightname="weight_WoVpt_WoEff")
+    sampMan.cacheDraw("SubleadElec_eta", "histo_subleadElec_ee_eta", eta_bins, DrawConfig(xmin=-2.6, xmax=2.6, xlabel='#eta (Subleading e) [GeV]', ymax=1e7, ylabel='Events / 1'), weightname="weight_WoVpt_WoEff")
 
-    sampMan.cacheDraw("MET_pt", "histo_zjets_ee_pfmet_pt", met_pt_bins, DrawConfig(xmin=0, xmax=100, xlabel='Raw PF MET [GeV]'))
-    sampMan.cacheDraw("MET_phi", "histo_zjets_ee_pfmet_phi", 30, phimin, phimax, DrawConfig(xmin=phimin, xmax=phimax, xlabel='Raw PF MET #phi'))
+    sampMan.cacheDraw("MET_pt", "histo_zjets_ee_pfmet_pt", met_pt_bins, DrawConfig(xmin=0, xmax=100, xlabel='Raw PF MET [GeV]'), weightname="weight_WoVpt_WoEff")
+    sampMan.cacheDraw("MET_phi", "histo_zjets_ee_pfmet_phi", 30, phimin, phimax, DrawConfig(xmin=phimin, xmax=phimax, xlabel='Raw PF MET #phi'), weightname="weight_WoVpt_WoEff")
 
-    sampMan.cacheDraw("MET_corrected_pt", "histo_zjets_ee_pfmet_corrected_pt", met_pt_bins, DrawConfig(xmin=0, xmax=100, xlabel='PF MET [GeV]'))
-    sampMan.cacheDraw("MET_corrected_phi", "histo_zjets_ee_pfmet_corrected_phi", 30, phimin, phimax, DrawConfig(xmin=phimin, xmax=phimax, xlabel='PF MET #phi'))
+    sampMan.cacheDraw("MET_corrected_pt", "histo_zjets_ee_pfmet_corrected_pt", met_pt_bins, DrawConfig(xmin=0, xmax=100, xlabel='PF MET [GeV]'), weightname="weight_WoVpt_WoEff")
+    sampMan.cacheDraw("MET_corrected_phi", "histo_zjets_ee_pfmet_corrected_phi", 30, phimin, phimax, DrawConfig(xmin=phimin, xmax=phimax, xlabel='PF MET #phi'), weightname="weight_WoVpt_WoEff")
 
-    sampMan.cacheDraw("uraw1", "histo_zjets_ee_pfmet_uraw1_pt", u1_bins, DrawConfig(xmin=-20.0, xmax=100.0, xlabel="Raw u_{#parallel} [GeV]", extraText='ee channel'))
-    sampMan.cacheDraw("uraw2", "histo_zjets_ee_pfmet_uraw2_pt", u2_bins, DrawConfig(xmin=-30.0, xmax=30.0, xlabel= "Raw u_{#perp  } [GeV]", extraText='ee channel'))
+    sampMan.cacheDraw("uraw1", "histo_zjets_ee_pfmet_uraw1_pt", u1_bins, DrawConfig(xmin=-20.0, xmax=100.0, xlabel="Raw u_{#parallel} [GeV]", extraText='ee channel'), weightname="weight_WoVpt_WoEff")
+    sampMan.cacheDraw("uraw2", "histo_zjets_ee_pfmet_uraw2_pt", u2_bins, DrawConfig(xmin=-30.0, xmax=30.0, xlabel= "Raw u_{#perp  } [GeV]", extraText='ee channel'), weightname="weight_WoVpt_WoEff")
 
-    sampMan.cacheDraw("ucor1", "histo_zjets_ee_pfmet_ucor1_pt", u1_bins, DrawConfig(xmin=-20.0, xmax=100.0, xlabel="u_{#parallel} [GeV]", extraText='ee channel'))
-    sampMan.cacheDraw("ucor2", "histo_zjets_ee_pfmet_ucor2_pt", u2_bins, DrawConfig(xmin=-30.0, xmax=30.0, xlabel= "u_{#perp  } [GeV]", extraText='ee channel'))
+    sampMan.cacheDraw("ucor1", "histo_zjets_ee_pfmet_ucor1_pt", u1_bins, DrawConfig(xmin=-20.0, xmax=100.0, xlabel="u_{#parallel} [GeV]", extraText='ee channel'), weightname="weight_WoVpt_WoEff")
+    sampMan.cacheDraw("ucor2", "histo_zjets_ee_pfmet_ucor2_pt", u2_bins, DrawConfig(xmin=-30.0, xmax=30.0, xlabel= "u_{#perp  } [GeV]", extraText='ee channel'), weightname="weight_WoVpt_WoEff")
 
     sampMan.launchDraw()
 

@@ -1,1 +1,13 @@
-/eos/cms/store/group/phys_smp/arapyan/Production_13TeV/Wmunu_old/ntuples/wm2_select.raw.root
+root://cmseos.fnal.gov//store/user/yofeng/LowPU_Skimmed/Wmnu/WJetsToLNu_2J_TuneCP5_13TeV-amcatnloFXFX-pythia8/NanoAOD_0302/NanoAOD_MC_10_Skim.root
+root://cmseos.fnal.gov//store/user/yofeng/LowPU_Skimmed/Wmnu/WJetsToLNu_2J_TuneCP5_13TeV-amcatnloFXFX-pythia8/NanoAOD_0302/NanoAOD_MC_11_Skim.root
+root://cmseos.fnal.gov//store/user/yofeng/LowPU_Skimmed/Wmnu/WJetsToLNu_2J_TuneCP5_13TeV-amcatnloFXFX-pythia8/NanoAOD_0302/NanoAOD_MC_12_Skim.root
+root://cmseos.fnal.gov//store/user/yofeng/LowPU_Skimmed/Wmnu/WJetsToLNu_2J_TuneCP5_13TeV-amcatnloFXFX-pythia8/NanoAOD_0302/NanoAOD_MC_13_Skim.root
+root://cmseos.fnal.gov//store/user/yofeng/LowPU_Skimmed/Wmnu/WJetsToLNu_2J_TuneCP5_13TeV-amcatnloFXFX-pythia8/NanoAOD_0302/NanoAOD_MC_1_Skim.root
+root://cmseos.fnal.gov//store/user/yofeng/LowPU_Skimmed/Wmnu/WJetsToLNu_2J_TuneCP5_13TeV-amcatnloFXFX-pythia8/NanoAOD_0302/NanoAOD_MC_2_Skim.root
+root://cmseos.fnal.gov//store/user/yofeng/LowPU_Skimmed/Wmnu/WJetsToLNu_2J_TuneCP5_13TeV-amcatnloFXFX-pythia8/NanoAOD_0302/NanoAOD_MC_3_Skim.root
+root://cmseos.fnal.gov//store/user/yofeng/LowPU_Skimmed/Wmnu/WJetsToLNu_2J_TuneCP5_13TeV-amcatnloFXFX-pythia8/NanoAOD_0302/NanoAOD_MC_4_Skim.root
+root://cmseos.fnal.gov//store/user/yofeng/LowPU_Skimmed/Wmnu/WJetsToLNu_2J_TuneCP5_13TeV-amcatnloFXFX-pythia8/NanoAOD_0302/NanoAOD_MC_5_Skim.root
+root://cmseos.fnal.gov//store/user/yofeng/LowPU_Skimmed/Wmnu/WJetsToLNu_2J_TuneCP5_13TeV-amcatnloFXFX-pythia8/NanoAOD_0302/NanoAOD_MC_6_Skim.root
+root://cmseos.fnal.gov//store/user/yofeng/LowPU_Skimmed/Wmnu/WJetsToLNu_2J_TuneCP5_13TeV-amcatnloFXFX-pythia8/NanoAOD_0302/NanoAOD_MC_7_Skim.root
+root://cmseos.fnal.gov//store/user/yofeng/LowPU_Skimmed/Wmnu/WJetsToLNu_2J_TuneCP5_13TeV-amcatnloFXFX-pythia8/NanoAOD_0302/NanoAOD_MC_8_Skim.root
+root://cmseos.fnal.gov//store/user/yofeng/LowPU_Skimmed/Wmnu/WJetsToLNu_2J_TuneCP5_13TeV-amcatnloFXFX-pythia8/NanoAOD_0302/NanoAOD_MC_9_Skim.root
