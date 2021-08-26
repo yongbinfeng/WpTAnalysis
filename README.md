@@ -6,7 +6,7 @@ The scripts needs RDataFrame. Tested under `CMSSW_10_6_0` environment and it wor
 
 ```
 git clone git@github.com:yongbinfeng/WpTAnalysis.git
-git checkout master
+git checkout NanoLowPt
 ```
 
 And compile the `Functions.cc` for the first time:
