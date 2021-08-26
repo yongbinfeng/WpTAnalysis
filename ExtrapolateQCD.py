@@ -112,14 +112,14 @@ def ExtrapolateQCD(fname, oname, channel, wptbin, etabins, fname_scaled=None):
     save the statistical and systematic variations for HComb, and
     make some shape comparison plots
     """
-    fqcd = ROOT.TFile(fname)
+    fqcd = ROOT.TFile.Open(fname)
     if fname_scaled:
         # qcd templates with scaled MC subtraction
-        fqcd_scaled = ROOT.TFile(fname_scaled)
+        fqcd_scaled = ROOT.TFile.Open(fname_scaled)
 
     if not os.path.exists("root/QCD"):
         os.makedirs("root/QCD")
-    ofile = ROOT.TFile("root/QCD/"+oname, "recreate")
+    ofile = ROOT.TFile.Open("root/QCD/"+oname, "recreate")
     
     for etabin in etabins:
         # hard code some isolation parameters
