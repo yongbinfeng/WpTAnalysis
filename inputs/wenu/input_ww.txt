@@ -1,1 +1,1 @@
-/eos/cms/store/group/phys_smp/arapyan/Production_13TeV/Wenu_old/ntuples/ww_select.root
+root://eoscms.cern.ch//eos/cms/store/group/phys_smp/arapyan/Production_13TeV/Wenu_old/ntuples/ww_select.root

@@ -130,7 +130,7 @@ class Sample(object):
             if fname.startswith('#'):
                 continue
             print fname
-            ifile = ROOT.TFile(fname)
+            ifile = ROOT.TFile.Open(fname)
             hist = ifile.Get("hGenWeights")
             Nevt = hist.Integral()
             ifile.Close()
