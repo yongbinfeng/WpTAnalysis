@@ -122,7 +122,7 @@ class Sample(object):
 
         #self.rdf_org = ROOT.ROOT.RDataFrame( self.tree )
         self.rdf_temp = ROOT.ROOT.RDataFrame( self.tree )
-        self.rdf_org = self.rdf_temp.Filter('if(tdfentry_ == 0) {cout << "Running evtloop" << endl; return true; } return false; ')
+        self.rdf_org = self.rdf_temp.Filter('if(tdfentry_ == 0) {cout << "Running evtloop" << endl; } return true; ')
         #print self.rdf_org.Count().GetValue()
 
     def getNMCEvt(self, inputfiles):
