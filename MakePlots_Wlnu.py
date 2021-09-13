@@ -172,7 +172,7 @@ def main():
     
     # sample weight
     # 0 is the central one with all corrections
-    for i in [0, 1, 2, 3, 4, 6, 7]:
+    for i in [0, 1, 2, 3, 4, 6, 7, 8, 9, 10, 11]:
         for wpt in wptbins:
             for lepeta in etabins:
                 sampMan.DefineMC("weight_{}_{}_{}".format(str(i), wpt, lepeta), "evtWeight[{}] * mcnorm * {} * {}".format(str(i), wpt, lepeta))
@@ -250,7 +250,7 @@ def main():
                             
 
         # variation on the scale factors and sample weights
-        for i in [0, 1, 2, 3, 4, 6, 7]:
+        for i in [0, 1, 2, 3, 4, 6, 7, 8, 9, 10, 11]:
             for wpt in wptbins:
                 for lepeta in etabins:
                     sampMan.cacheDraw("mT_1", "histo_wjets_{}_mtcorr_weight_{}_{}_{}".format(chg, str(i), wpt, lepeta),  nbins, xmin, xmax, DrawConfig(xmin=xmin, xmax=xmax, xlabel="m_{T} [GeV]", dology=False, ymax=ymaxs[chg], donormalizebin=False, addOverflow=False, addUnderflow=False), weightname = "weight_{}_{}_{}_{}".format(chg, str(i), wpt, lepeta))
@@ -267,6 +267,9 @@ def main():
     # Draw all these histograms
     sampMan.launchDraw()
     sampMan.dumpCounts()
+
+    #sampMan.cacheDraw("WpT", "histo_wjets_"+lepname+"minus_wpt_test",   300, 0,  300, DrawConfig(xmin=0, xmax=300, xlabel="p^{W}_{T} [GeV]", dology=True, ymax=1e6, ymin=1e1), weightname="weight_"+lepname+"minus_0_WpT_bin0_lepEta_bin0")
+    #sampMan.launchDraw()
 
     # 
     # merge the signal MC histograms in different samples
@@ -351,7 +354,7 @@ def main():
                             hdn.Write()
 
                     # weights/corrections
-                    for i in [0, 1, 2, 3, 4, 6, 7]:
+                    for i in [0, 1, 2, 3, 4, 6, 7, 8, 9, 10, 11]:
                         if wpttruth == "MCTemplates":
                             hsmcs_up = sampMan.hsmcs["histo_wjets_{}_mtcorr_weight_{}_{}_{}".format(chg, str(i), wpt, lepeta)]
                             hlists_up = list(hsmcs_up.GetHists())
@@ -363,10 +366,11 @@ def main():
                             # loop over different processes
                             hcen = hlists_central[ih]
                             hup  = hlists_up[ih]
-                            if i<=6:
+                            if i<=6 or i==8 or i==10:
                                 hup.SetName("{}_SysWeight{}Up".format(hcen.GetName(), str(i)))
                             else:
-                                hup.SetName("{}_SysWeight6Down".format(hcen.GetName()))
+                                hup.SetName("{}_SysWeight{}Down".format(hcen.GetName(), str(i-1)))
+
 
                             if i<6:
                                 # for prefire, the up and down weights are calculated seperately

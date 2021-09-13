@@ -15,7 +15,8 @@ MINMASS = 60
 MAXMASS = 120
 LEPPTMIN = 25.0
 LEPETA = 2.4
-LUMI = 199.27
+#LUMI = 199.27
+LUMI = 200.87
 
 ROOT.ROOT.EnableImplicitMT()
 ROOT.gSystem.Load("Functions_cc.so")
@@ -136,6 +137,11 @@ class Sample(object):
             hist = ifile.Get("hGenWeights")
             Nevt = hist.Integral()
             ifile.Close()
+            if Nevt > 0:
+                # the histograms saved in other files of the same dataset
+                # is copied from the same mother histogram, so only needs the
+                # first histogram, to get the total number of events before selection
+                break;
         print "total number of events: {}".format(Nevt)
         return Nevt
 
