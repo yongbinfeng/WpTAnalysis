@@ -90,9 +90,9 @@ class Sample(object):
         self.isMC = isMC
         self.legend = legend
         self.name = name
-        if self.name == "wl0":
-            # missing two file, scale the nmcEvts down
-            self.nmcevt = self.nmcevt * (1-0.039409405)
+        #if self.name == "wl0":
+        #    # missing two file, scale the nmcEvts down
+        #    self.nmcevt = self.nmcevt * (1-0.039409405)
         self.isZSR = isZSR
         if isWSR:
             # can not be ZSR and WSR at the same time

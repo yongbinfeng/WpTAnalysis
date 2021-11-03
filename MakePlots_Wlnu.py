@@ -172,10 +172,13 @@ def main():
     
     # sample weight
     # 0 is the central one with all corrections
-    for i in [0, 1, 2, 3, 4, 6, 7, 8, 9, 10, 11]:
+    for i in [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]:
         for wpt in wptbins:
             for lepeta in etabins:
-                sampMan.DefineMC("weight_{}_{}_{}".format(str(i), wpt, lepeta), "evtWeight[{}] * mcnorm * {} * {}".format(str(i), wpt, lepeta))
+                if i!= 5:
+                    sampMan.DefineMC("weight_{}_{}_{}".format(str(i), wpt, lepeta), "evtWeight[{}] * mcnorm * {} * {}".format(str(i), wpt, lepeta))
+                else:
+                    sampMan.DefineMC("weight_{}_{}_{}".format(str(i), wpt, lepeta), "(evtWeight[0] + TMath::Sqrt(TMath::Abs(evtWeight[{}]))) * mcnorm * {} * {}".format(str(i), wpt, lepeta))
                 DataSamp.Define("weight_{}_{}_{}".format(str(i), wpt, lepeta),  "1.0 * {} * {}".format(wpt, lepeta))
 
                 for chg in chgbins:
@@ -250,7 +253,7 @@ def main():
                             
 
         # variation on the scale factors and sample weights
-        for i in [0, 1, 2, 3, 4, 6, 7, 8, 9, 10, 11]:
+        for i in [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]:
             for wpt in wptbins:
                 for lepeta in etabins:
                     sampMan.cacheDraw("mT_1", "histo_wjets_{}_mtcorr_weight_{}_{}_{}".format(chg, str(i), wpt, lepeta),  nbins, xmin, xmax, DrawConfig(xmin=xmin, xmax=xmax, xlabel="m_{T} [GeV]", dology=False, ymax=ymaxs[chg], donormalizebin=False, addOverflow=False, addUnderflow=False), weightname = "weight_{}_{}_{}_{}".format(chg, str(i), wpt, lepeta))
@@ -342,9 +345,16 @@ def main():
                             # loop over different simulated processes
                             hcen = hlists_central[ih]
                             hup  = hlists_up[ih]
-                            hup.SetName("{}_SysRecoil{}Up".format(hcen.GetName(), str(i)))
+                            #if not doMuon and i !=2 and i!=3:
+                            #if i!=2 and i!=3:
+                            #    suffix = lepname + "_" + lepeta + "_" + wpt + "_SysRecoil" + str(i)
+                            #else:
+                            #    suffix = lepname + "_" + "SysRecoil" + str(i)
+                            suffix = "SysRecoil" + str(i)
 
-                            hdn  = hcen.Clone("{}_SysRecoil{}Down".format(hcen.GetName(), str(i)))
+                            hup.SetName("{}_{}Up".format(hcen.GetName(), suffix))
+
+                            hdn  = hcen.Clone("{}_{}Down".format(hcen.GetName(), suffix))
                             for ibin in xrange(1, hup.GetNbinsX()+1):
                                 hdn.SetBinContent(ibin, 2*hcen.GetBinContent(ibin) - hup.GetBinContent(ibin))
 
@@ -354,7 +364,7 @@ def main():
                             hdn.Write()
 
                     # weights/corrections
-                    for i in [0, 1, 2, 3, 4, 6, 7, 8, 9, 10, 11]:
+                    for i in [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]:
                         if wpttruth == "MCTemplates":
                             hsmcs_up = sampMan.hsmcs["histo_wjets_{}_mtcorr_weight_{}_{}_{}".format(chg, str(i), wpt, lepeta)]
                             hlists_up = list(hsmcs_up.GetHists())
@@ -366,15 +376,25 @@ def main():
                             # loop over different processes
                             hcen = hlists_central[ih]
                             hup  = hlists_up[ih]
+                            prefix = ""
+                            if i == 2 or i==3 or i==4:
+                                # the systematics that should be decorrelated between lepton flavors
+                                prefix = lepname + "_"
                             if i<=6 or i==8 or i==10:
-                                hup.SetName("{}_SysWeight{}Up".format(hcen.GetName(), str(i)))
+                                suffix = prefix + "SysWeight" + str(i) + "Up"
+                                #hup.SetName("{}_SysWeight{}Up".format(hcen.GetName(), str(i)))
+                                hup.SetName("{}_{}".format(hcen.GetName(), suffix))
                             else:
-                                hup.SetName("{}_SysWeight{}Down".format(hcen.GetName(), str(i-1)))
+                                suffix = prefix + "SysWeight" + str(i-1) + "Down"
+                                #hup.SetName("{}_SysWeight{}Down".format(hcen.GetName(), str(i-1)))
+                                hup.SetName("{}_{}".format(hcen.GetName(), suffix))
 
 
                             if i<6:
                                 # for prefire, the up and down weights are calculated seperately
-                                hdn  = hcen.Clone("{}_SysWeight{}Down".format(hcen.GetName(), str(i)))
+                                suffix = prefix + "SysWeight" + str(i) + "Down"
+                                #hdn  = hcen.Clone("{}_SysWeight{}Down".format(hcen.GetName(), str(i)))
+                                hdn  = hcen.Clone("{}_{}".format(hcen.GetName(), suffix))
                                 for ibin in xrange(1, hup.GetNbinsX()+1):
                                     hdn.SetBinContent(ibin, 2*hcen.GetBinContent(ibin) - hup.GetBinContent(ibin))
                             

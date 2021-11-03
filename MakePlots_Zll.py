@@ -15,7 +15,6 @@ ROOT.ROOT.EnableImplicitMT(10)
 
 dotest = 0
 VetoB = False
-doSys = False
 
 doMuon = False
 
@@ -53,15 +52,15 @@ def main():
         input_zxx     = "inputs/zee/input_zxx.txt"
 
     DataSamp  = Sample(input_data, isMC=False, legend="Data", name="Data", bjetVeto=VetoB)
-    DYSamp    = Sample(input_dy,    xsec = 6077.22*1e3,      color=92,  reweightzpt = True, legend="Z#rightarrow#mu#mu", name="DY", bjetVeto=VetoB, nmcevt=311461009200.830078 / 128007. * 126620.8)
-    TTbarSamp = Sample(input_ttbar, xsec = 831.76*0.105*1e3, color=46, reweightzpt = False, legend="t#bar{t}", name="ttbar2lep", bjetVeto=VetoB, nmcevt=360411094.548295 / 335.0*325.0)
+    DYSamp    = Sample(input_dy,    xsec = 6077.22*1e3,      color=92,  reweightzpt = True, legend="Z#rightarrow#mu#mu", name="DY", bjetVeto=VetoB)
+    TTbarSamp = Sample(input_ttbar, xsec = 831.76*0.105*1e3, color=46, reweightzpt = False, legend="t#bar{t}", name="ttbar2lep", bjetVeto=VetoB)
     if not dotest:
-        WWSamp  = Sample(input_ww,  xsec = 12.178*1e3,       color=38, reweightzpt = False, legend="WW2L",     name="WW",  bjetVeto=VetoB, nmcevt=1000000.0 )
-        WZSamp  = Sample(input_wz,  xsec = 5.26*1e3,         color=39, reweightzpt = False, legend="WZ3L",     name="WZ",  bjetVeto=VetoB, nmcevt=885000.00 )
-        ZZSamp  = Sample(input_zz,  xsec = 0.564*1e3,        color=37, reweightzpt = False, legend="ZZ2L",     name="ZZ",  bjetVeto=VetoB, nmcevt=1000000.0)
-        ZXXSamp = Sample(input_zxx, xsec = 1.0,              color=40, reweightzpt = False, legend="ZXX",      name="ZXX",   bjetVeto=VetoB, nmcevt=3.1146101e+11)
-        TT1LepSamp = Sample(input_ttbar_1lep,  xsec = 831.76*0.219*1e3, color=47, reweightzpt = False, legend="t#bar{t}", name="ttbar1lep", bjetVeto=VetoB, nmcevt=1.2561491e+09 / 335.0 * 325.0)
-        TT0LepSamp = Sample(input_ttbar_0lep,  xsec = 831.76*0.219*1e3, color=48, reweightzpt = False, legend="t#bar{t}", name="ttbar0lep", bjetVeto=VetoB, nmcevt=6.2414786e+09 / 335.0 * 325)
+        WWSamp  = Sample(input_ww,  xsec = 12.178*1e3,       color=38, reweightzpt = False, legend="WW2L",     name="WW",  bjetVeto=VetoB)
+        WZSamp  = Sample(input_wz,  xsec = 5.26*1e3,         color=39, reweightzpt = False, legend="WZ3L",     name="WZ",  bjetVeto=VetoB)
+        ZZSamp  = Sample(input_zz,  xsec = 0.564*1e3,        color=37, reweightzpt = False, legend="ZZ2L",     name="ZZ",  bjetVeto=VetoB)
+        ZXXSamp = Sample(input_zxx, xsec = 1.0,              color=40, reweightzpt = False, legend="ZXX",      name="ZXX",   bjetVeto=VetoB)
+        TT1LepSamp = Sample(input_ttbar_1lep,  xsec = 831.76*0.219*1e3, color=47, reweightzpt = False, legend="t#bar{t}", name="ttbar1lep", bjetVeto=VetoB)
+        TT0LepSamp = Sample(input_ttbar_0lep,  xsec = 831.76*0.219*1e3, color=48, reweightzpt = False, legend="t#bar{t}", name="ttbar0lep", bjetVeto=VetoB)
 
     if not dotest:
         sampMan = SampleManager(DataSamp, [DYSamp, TTbarSamp, WWSamp, WZSamp, ZZSamp, ZXXSamp, TT1LepSamp, TT0LepSamp])
@@ -104,14 +103,20 @@ def main():
     #sampMan.DefineAll("u1_corr_central",     "u1"  , excludes=['DY'])
 
     # sample weights
-    for i in [0, 1, 2, 3, 4, 6, 7, 8, 9, 10, 11]:
-        sampMan.DefineMC("weight_{}".format(str(i)), "evtWeight[{}] * mcnorm".format(str(i)))
+    for i in [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]:
+        if i!=5:
+            sampMan.DefineMC("weight_{}".format(str(i)), "evtWeight[{}] * mcnorm".format(str(i)))
+        else:
+            # stat unc of weights
+            sampMan.DefineMC("weight_{}".format(str(i)), "(evtWeight[0] + TMath::Sqrt(TMath::Abs(evtWeight[{}]))) * mcnorm".format(str(i)))
         DataSamp.Define("weight_{}".format(str(i)),  "1.0")
 
     if doMuon:
         lepname = "mumu"
+        leplabel = "#mu"
     else:
         lepname = "ee"
+        leplabel = "e"
 
 
 
@@ -128,20 +133,20 @@ def main():
     u_bins = np.concatenate((np.linspace(0, 20, 11),np.linspace(24,80,15), np.linspace(85, 109, 4), np.linspace(120,150,3)))
 
     # z pt befor and after pt reweighting
-    sampMan.cacheDraw("zpt",   "histo_zjets_zpt_WoZptWeight_" + lepname, u_bins, DrawConfig(xmin=0, xmax=150, xlabel='p_{T}^{#mu#mu} [GeV]'), weightname="weight_WoVpt")
-    sampMan.cacheDraw("zmass", "histo_zjets_zmass_" + lepname, mass_bins, DrawConfig(xmin=70, xmax=110, xlabel='m_{#mu#mu} [GeV]'))
-    sampMan.cacheDraw("zeta",  "histo_zjets_zeta_" + lepname, eta_bins, DrawConfig(xmin=-2.5, xmax=2.5, xlabel='#eta_{#mu#mu} [GeV]', ymax=1e7, ylabel='Events / 1'))
-    sampMan.cacheDraw("zy",    "histo_zjets_zrapidity_" + lepname, eta_bins, DrawConfig(xmin=-2.5, xmax=2.5, xlabel='y_{#mu#mu} [GeV]', ymax=1e7, ylabel='Events / 1'))
+    sampMan.cacheDraw("zpt",   "histo_zjets_zpt_WoZptWeight_" + lepname, u_bins, DrawConfig(xmin=0, xmax=150, xlabel='p_{{T}}^{{{leplabel}{leplabel}}} [GeV]'.format(leplabel=leplabel)), weightname="weight_WoVpt")
+    sampMan.cacheDraw("zmass", "histo_zjets_zmass_" + lepname, mass_bins, DrawConfig(xmin=70, xmax=110, xlabel='m_{{{leplabel}{leplabel}}} [GeV]'.format(leplabel=leplabel)))
+    sampMan.cacheDraw("zeta",  "histo_zjets_zeta_" + lepname, eta_bins, DrawConfig(xmin=-2.5, xmax=2.5, xlabel='#eta_{{{leplabel}{leplabel}}} [GeV]'.format(leplabel=leplabel), ymax=1e7, ylabel='Events / 1'))
+    sampMan.cacheDraw("zy",    "histo_zjets_zrapidity_" + lepname, eta_bins, DrawConfig(xmin=-2.5, xmax=2.5, xlabel='y_{{{leplabel}{leplabel}}} [GeV]'.format(leplabel=leplabel), ymax=1e7, ylabel='Events / 1'))
 
     sampMan.cacheDraw("nPV", "histo_nPV_" + lepname, 10, 0, 10, DrawConfig(xmin=0, xmax=10, xlabel='# PV', ylabel='Events / 1'))
 
-    sampMan.cacheDraw("LeadMuon_pt", "histo_leadMuon_pt_" + lepname, pt_bins, DrawConfig(xmin=20, xmax=70, xlabel='p_{T}(Leading #mu) [GeV]'))
-    sampMan.cacheDraw("LeadMuon_eta", "histo_leadMuon_eta_" + lepname, eta_bins, DrawConfig(xmin=-2.6, xmax=2.6, xlabel='#eta (Leading #mu) [GeV]', ymax=1e7, ylabel='Events / 1'))
-    sampMan.cacheDraw("SubleadMuon_pt", "histo_subleadMuon_pt_" + lepname, pt_bins, DrawConfig(xmin=20, xmax=70, xlabel='p_{T}(Subleading #mu) [GeV]'))
-    sampMan.cacheDraw("SubleadMuon_eta", "histo_subleadMuon_eta_" + lepname, eta_bins, DrawConfig(xmin=-2.6, xmax=2.6, xlabel='#eta (Subleading #mu) [GeV]', ymax=1e7, ylabel='Events / 1'))
+    sampMan.cacheDraw("LeadMuon_pt", "histo_leadMuon_pt_" + lepname, pt_bins, DrawConfig(xmin=20, xmax=70, xlabel='p_{{T}}(Leading {leplabel}) [GeV]'.format(leplabel=leplabel)))
+    sampMan.cacheDraw("LeadMuon_eta", "histo_leadMuon_eta_" + lepname, eta_bins, DrawConfig(xmin=-2.6, xmax=2.6, xlabel='#eta (Leading {leplabel}) [GeV]'.format(leplabel=leplabel), ymax=1e7, ylabel='Events / 1'))
+    sampMan.cacheDraw("SubleadMuon_pt", "histo_subleadMuon_pt_" + lepname, pt_bins, DrawConfig(xmin=20, xmax=70, xlabel='p_{{T}}(Subleading {leplabel}) [GeV]'.format(leplabel=leplabel)))
+    sampMan.cacheDraw("SubleadMuon_eta", "histo_subleadMuon_eta_" + lepname, eta_bins, DrawConfig(xmin=-2.6, xmax=2.6, xlabel='#eta (Subleading {leplabel}) [GeV]'.format(leplabel=leplabel), ymax=1e7, ylabel='Events / 1'))
 
-    #sampMan.cacheDraw("met", "histo_zjets_mumu_pfmet_pt", met_pt_bins, DrawConfig(xmin=0, xmax=100, xlabel='PF MET [GeV]'))
-    #sampMan.cacheDraw("metPhi", "histo_zjets_mumu_pfmet_phi", 30, phimin, phimax, DrawConfig(xmin=phimin, xmax=phimax, xlabel='PF MET #phi'))
+    sampMan.cacheDraw("met", "histo_zjets_mumu_pfmet_pt", met_pt_bins, DrawConfig(xmin=0, xmax=100, xlabel='PF MET [GeV]'))
+    sampMan.cacheDraw("metPhi", "histo_zjets_mumu_pfmet_phi", 30, phimin, phimax, DrawConfig(xmin=phimin, xmax=phimax, xlabel='PF MET #phi'))
 
     #sampMan.cacheDraw("met_raw_pt", "histo_zjets_mumu_pfmet_raw_pt", met_pt_bins, DrawConfig(xmin=0, xmax=100, xlabel='Raw PF MET [GeV]'))
     #sampMan.cacheDraw("met_raw_phi", "histo_zjets_mumu_pfmet_raw_phi", 30, phimin, phimax, DrawConfig(xmin=phimin, xmax=phimax, xlabel='Raw PF MET #phi'))
@@ -158,9 +163,9 @@ def main():
     #sampMan.cacheDraw("ucor1", "histo_zjets_mumu_pfmet_ucor1_pt", u1_bins, DrawConfig(xmin=-20.0, xmax=100.0, xlabel="u_{#parallel} [GeV]", extraText='#mu#mu channel'))
     #sampMan.cacheDraw("ucor2", "histo_zjets_mumu_pfmet_ucor2_pt", u2_bins, DrawConfig(xmin=-30.0, xmax=30.0, xlabel= "u_{#perp  } [GeV]", extraText='#mu#mu channel'))
 
-    sampMan.cacheDraw("zmass", "histo_zjets_zmass_" + lepname, mass_bins, DrawConfig(xmin=70, xmax=110, xlabel='m_{#mu#mu} [GeV]'))
-    for i in [0, 1, 2, 3, 4, 6, 7, 8, 9, 10, 11]:
-        sampMan.cacheDraw("zmass", "histo_zjets_zmass_{}_weight_{}".format(lepname, str(i)),  15, 60, 120, DrawConfig(xmin=60, xmax=120, xlabel="m_{#mu#mu} [GeV]", dology=True, donormalizebin=False, addOverflow=False, addUnderflow=False), weightname = "weight_{}".format(str(i)))
+    sampMan.cacheDraw("zmass", "histo_zjets_zmass_" + lepname, mass_bins, DrawConfig(xmin=70, xmax=110, xlabel='m_{{{leplabel}{leplabel}}} [GeV]'.format(leplabel=leplabel)))
+    for i in [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]:
+        sampMan.cacheDraw("zmass", "histo_zjets_zmass_{}_weight_{}".format(lepname, str(i)),  15, 60, 120, DrawConfig(xmin=60, xmax=120, xlabel="m_{{{leplabel}{leplabel}}} [GeV]".format(leplabel=leplabel), dology=True, donormalizebin=False, addOverflow=False, addUnderflow=False), weightname = "weight_{}".format(str(i)))
 
     sampMan.launchDraw()
 
@@ -187,23 +192,48 @@ def main():
         hcen.SetDirectory(odir)
         hcen.Write()
 
+    if lepname == "mumu":
+        channel = "mu"
+    else:
+        channel = "e"
     # weights/corrections
-    for i in [1, 2, 3, 4, 6, 7, 8, 9, 10, 11]:
+    for i in [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]:
         hsmcs_up = sampMan.hsmcs["histo_zjets_zmass_{}_weight_{}".format(lepname, str(i))]
         hlists_up = list(hsmcs_up.GetHists())
         for ih in xrange(len(hlists_up)):
             # loop over different processes
             hcen = hlists_central[ih]
             hup  = hlists_up[ih]
-            if i<=6 or i==8 or i==10:
-                hup.SetName("{}_SysWeight{}Up".format(hcen.GetName(), str(i)))
+
+            prefix = ""
+            if i == 2 or i==3 or i==4:
+                # the systematics that should be decorrelated between lepton flavors
+                prefix = channel + "_"
+
+            if  i<=6 or i==8 or i==10:
+                suffix = prefix + "SysWeight{}Up".format(str(i))
             else:
-                hup.SetName("{}_SysWeight{}Down".format(hcen.GetName(), str(i-1)))
+                suffix = prefix + "SysWeight{}Down".format(str(i-1))
+
+            #if i==5:
+            #    # need to uncorrelated statistical uncertainties (weight5)
+            #    hup.SetName("{}_{}_SysWeight{}Up".format(hcen.GetName(), lepname, str(i)))
+            #elif i<=6 or i==8 or i==10:
+            #    hup.SetName("{}_{}_SysWeight{}Up".format(hcen.GetName(), lepname, str(i)))
+            #else:
+            #    hup.SetName("{}_{}_SysWeight{}Down".format(hcen.GetName(), lepname, str(i-1)))
+            hup.SetName("{}_{}".format(hcen.GetName(), suffix))
 
 
+            #if i==5:
+            #    # need to uncorrelated statistical uncertainties (weight5)
+            #    hdn  = hcen.Clone("{}_{}_SysWeight{}Down".format(hcen.GetName(), lepname, str(i)))
+            #elif i<6:
+            #    # for prefire, the up and down weights are calculated seperately
+            #    hdn  = hcen.Clone("{}_{}_SysWeight{}Down".format(hcen.GetName(), lepname, str(i)))
             if i<6:
-                # for prefire, the up and down weights are calculated seperately
-                hdn  = hcen.Clone("{}_SysWeight{}Down".format(hcen.GetName(), str(i)))
+                suffix = prefix + "SysWeight{}Down".format(str(i))
+                hdn  = hcen.Clone("{}_{}".format(hcen.GetName(), suffix))
                 for ibin in xrange(1, hup.GetNbinsX()+1):
                     hdn.SetBinContent(ibin, 2*hcen.GetBinContent(ibin) - hup.GetBinContent(ibin))
 
