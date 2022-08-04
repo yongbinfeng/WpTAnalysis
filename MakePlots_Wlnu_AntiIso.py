@@ -21,41 +21,66 @@ doMuon = False
 doWpT = False
 
 # boolean flag. if set to true, scale the MC cross section by 30%
-applyScaling = False
+applyScaling = True
+
+# analyze the 5TeV data
+# if set to false will analyze the 13TeV data
+do5TeV = True
 
 def main():
     print "Program start..."
 
-    if doMuon:
-        input_antiiso_data    = "inputs/awmunu/input_data.txt"
-        input_antiiso_wl0     = "inputs/awmunu/input_wm0.txt"
-        input_antiiso_wl1     = "inputs/awmunu/input_wm1.txt"
-        input_antiiso_wl2     = "inputs/awmunu/input_wm2.txt"
-        input_antiiso_ttbar   = "inputs/awmunu/input_ttbar_dilepton.txt"
-        input_antiiso_ttbar_1lep = "inputs/awmunu/input_ttbar_singlelepton.txt"
-        input_antiiso_ttbar_0lep = "inputs/awmunu/input_ttbar_hadronic.txt"
-        input_antiiso_ww      = "inputs/awmunu/input_ww.txt"
-        input_antiiso_wz      = "inputs/awmunu/input_wz.txt"
-        input_antiiso_zz      = "inputs/awmunu/input_zz.txt"
-        input_antiiso_zxx     = "inputs/awmunu/input_zxx.txt"
-        input_antiiso_wx0     = "inputs/awmunu/input_wx0.txt"
-        input_antiiso_wx1     = "inputs/awmunu/input_wx1.txt"
-        input_antiiso_wx2     = "inputs/awmunu/input_wx2.txt"
+    if not do5TeV:
+        if doMuon:
+            input_antiiso_data    = "inputs/awmunu/input_data.txt"
+            input_antiiso_wl0     = "inputs/awmunu/input_wm0.txt"
+            input_antiiso_wl1     = "inputs/awmunu/input_wm1.txt"
+            input_antiiso_wl2     = "inputs/awmunu/input_wm2.txt"
+            input_antiiso_ttbar   = "inputs/awmunu/input_ttbar_dilepton.txt"
+            input_antiiso_ttbar_1lep = "inputs/awmunu/input_ttbar_singlelepton.txt"
+            input_antiiso_ttbar_0lep = "inputs/awmunu/input_ttbar_hadronic.txt"
+            input_antiiso_ww      = "inputs/awmunu/input_ww.txt"
+            input_antiiso_wz      = "inputs/awmunu/input_wz.txt"
+            input_antiiso_zz      = "inputs/awmunu/input_zz.txt"
+            input_antiiso_zxx     = "inputs/awmunu/input_zxx.txt"
+            input_antiiso_wx0     = "inputs/awmunu/input_wx0.txt"
+            input_antiiso_wx1     = "inputs/awmunu/input_wx1.txt"
+            input_antiiso_wx2     = "inputs/awmunu/input_wx2.txt"
+        else:
+            input_antiiso_data    = "inputs/awenu/input_data.txt"
+            input_antiiso_wl0     = "inputs/awenu/input_we0.txt"
+            input_antiiso_wl1     = "inputs/awenu/input_we1.txt"
+            input_antiiso_wl2     = "inputs/awenu/input_we2.txt"
+            input_antiiso_ttbar   = "inputs/awenu/input_ttbar_dilepton.txt"
+            input_antiiso_ttbar_1lep = "inputs/awenu/input_ttbar_singlelepton.txt"
+            input_antiiso_ttbar_0lep = "inputs/awenu/input_ttbar_hadronic.txt"
+            input_antiiso_ww      = "inputs/awenu/input_ww.txt"
+            input_antiiso_wz      = "inputs/awenu/input_wz.txt"
+            input_antiiso_zz      = "inputs/awenu/input_zz.txt"
+            input_antiiso_zxx     = "inputs/awenu/input_zxx.txt"
+            input_antiiso_wx0     = "inputs/awenu/input_wx0.txt"
+            input_antiiso_wx1     = "inputs/awenu/input_wx1.txt"
+            input_antiiso_wx2     = "inputs/awenu/input_wx2.txt"
     else:
-        input_antiiso_data    = "inputs/awenu/input_data.txt"
-        input_antiiso_wl0     = "inputs/awenu/input_we0.txt"
-        input_antiiso_wl1     = "inputs/awenu/input_we1.txt"
-        input_antiiso_wl2     = "inputs/awenu/input_we2.txt"
-        input_antiiso_ttbar   = "inputs/awenu/input_ttbar_dilepton.txt"
-        input_antiiso_ttbar_1lep = "inputs/awenu/input_ttbar_singlelepton.txt"
-        input_antiiso_ttbar_0lep = "inputs/awenu/input_ttbar_hadronic.txt"
-        input_antiiso_ww      = "inputs/awenu/input_ww.txt"
-        input_antiiso_wz      = "inputs/awenu/input_wz.txt"
-        input_antiiso_zz      = "inputs/awenu/input_zz.txt"
-        input_antiiso_zxx     = "inputs/awenu/input_zxx.txt"
-        input_antiiso_wx0     = "inputs/awenu/input_wx0.txt"
-        input_antiiso_wx1     = "inputs/awenu/input_wx1.txt"
-        input_antiiso_wx2     = "inputs/awenu/input_wx2.txt"
+        # analyze 5TeV data
+        if doMuon:
+            input_antiiso_data    = "inputs_5TeV/awmunu/input_data.txt"
+            input_antiiso_wl      = "inputs_5TeV/awmunu/input_wm.txt"
+            input_antiiso_ttbar   = "inputs_5TeV/awmunu/input_ttbar.txt"
+            input_antiiso_ww      = "inputs_5TeV/awmunu/input_ww.txt"
+            input_antiiso_wz      = "inputs_5TeV/awmunu/input_wz.txt"
+            input_antiiso_zz      = "inputs_5TeV/awmunu/input_zz.txt"
+            input_antiiso_zxx     = "inputs_5TeV/awmunu/input_zxx.txt"
+            input_antiiso_wx      = "inputs_5TeV/awmunu/input_wx.txt"
+        else:   
+            input_antiiso_data    = "inputs_5TeV/awmunu/input_data.txt"
+            input_antiiso_wl      = "inputs_5TeV/awenu/input_we.txt"
+            input_antiiso_ttbar   = "inputs_5TeV/awenu/input_ttbar.txt"
+            input_antiiso_ww      = "inputs_5TeV/awenu/input_ww.txt"
+            input_antiiso_wz      = "inputs_5TeV/awenu/input_wz.txt"
+            input_antiiso_zz      = "inputs_5TeV/awenu/input_zz.txt"
+            input_antiiso_zxx     = "inputs_5TeV/awenu/input_zxx.txt"
+            input_antiiso_wx      = "inputs_5TeV/awenu/input_wx.txt"
 
     ## for the QCD background estimation (data-driven)
     qcdnorm = 1.0
@@ -64,30 +89,50 @@ def main():
         # scale up the MC for 30%
         mcscale = 1.3
     DataAisoSamp  = Sample(input_antiiso_data, isMC=False, name="Data_aiso", isWSR=True, additionalnorm = qcdnorm, legend = 'QCD', color='226')
-    # W -> lnu
-    Wl0AisoSamp   = Sample(input_antiiso_wl0, isMC=True, name = "wl0_aiso", isWSR=True, additionalnorm= qcdnorm * mcscale)
-    Wl1AisoSamp   = Sample(input_antiiso_wl1, isMC=True, name = "wl1_aiso", isWSR=True, additionalnorm= qcdnorm * mcscale)
-    Wl2AisoSamp   = Sample(input_antiiso_wl2, isMC=True, name = "wl2_aiso", isWSR=True, additionalnorm= qcdnorm * mcscale)
-    # ttbar
-    TTbarAisoSamp  = Sample(input_antiiso_ttbar, isMC=True, name = "ttbar_dilepton_aiso",     isWSR=True, additionalnorm= qcdnorm * mcscale)
-    TT1LepAisoSamp = Sample(input_antiiso_ttbar_1lep, isMC=True, name = "ttbar_1lepton_aiso", isWSR=True, additionalnorm= qcdnorm * mcscale)
-    TT0LepAisoSamp = Sample(input_antiiso_ttbar_0lep, isMC=True, name = "ttbar_0lepton_aiso", isWSR=True, additionalnorm= qcdnorm * mcscale)
-    ## dibosons
-    WWAisoSamp = Sample(input_antiiso_ww, isMC=True, name = "WW_aiso", isWSR=True, additionalnorm= qcdnorm * mcscale)
-    WZAisoSamp = Sample(input_antiiso_wz, isMC=True, name = "WZ_aiso", isWSR=True, additionalnorm= qcdnorm * mcscale)
-    ZZAisoSamp = Sample(input_antiiso_zz, isMC=True, name = "ZZ_aiso", isWSR=True, additionalnorm= qcdnorm * mcscale)
-    # tau
-    ZXXAisoSamp = Sample(input_antiiso_zxx, isMC=True, name = "ZXX_aiso", isWSR=True, additionalnorm= qcdnorm * mcscale)
-    Wx0AisoSamp = Sample(input_antiiso_wx0, isMC=True, name = "wx0_aiso", isWSR=True, additionalnorm= qcdnorm * mcscale)
-    Wx1AisoSamp = Sample(input_antiiso_wx1, isMC=True, name = "wx1_aiso", isWSR=True, additionalnorm= qcdnorm * mcscale)
-    Wx2AisoSamp = Sample(input_antiiso_wx2, isMC=True, name = "wx2_aiso", isWSR=True, additionalnorm= qcdnorm * mcscale)
 
-    sampMan = SampleManager(DataAisoSamp, [Wl0AisoSamp, Wl1AisoSamp, Wl2AisoSamp, TTbarAisoSamp, TT1LepAisoSamp, TT0LepAisoSamp, WWAisoSamp, WZAisoSamp, ZZAisoSamp, ZXXAisoSamp, Wx0AisoSamp, Wx1AisoSamp, Wx2AisoSamp])
+    if not do5TeV:
+        # W -> lnu
+        Wl0AisoSamp   = Sample(input_antiiso_wl0, isMC=True, name = "wl0_aiso", isWSR=True, additionalnorm= qcdnorm * mcscale)
+        Wl1AisoSamp   = Sample(input_antiiso_wl1, isMC=True, name = "wl1_aiso", isWSR=True, additionalnorm= qcdnorm * mcscale)
+        Wl2AisoSamp   = Sample(input_antiiso_wl2, isMC=True, name = "wl2_aiso", isWSR=True, additionalnorm= qcdnorm * mcscale)
+        # ttbar
+        TTbarAisoSamp  = Sample(input_antiiso_ttbar, isMC=True, name = "ttbar_dilepton_aiso",     isWSR=True, additionalnorm= qcdnorm * mcscale)
+        TT1LepAisoSamp = Sample(input_antiiso_ttbar_1lep, isMC=True, name = "ttbar_1lepton_aiso", isWSR=True, additionalnorm= qcdnorm * mcscale)
+        TT0LepAisoSamp = Sample(input_antiiso_ttbar_0lep, isMC=True, name = "ttbar_0lepton_aiso", isWSR=True, additionalnorm= qcdnorm * mcscale)
+        ## dibosons
+        WWAisoSamp = Sample(input_antiiso_ww, isMC=True, name = "WW_aiso", isWSR=True, additionalnorm= qcdnorm * mcscale)
+        WZAisoSamp = Sample(input_antiiso_wz, isMC=True, name = "WZ_aiso", isWSR=True, additionalnorm= qcdnorm * mcscale)
+        ZZAisoSamp = Sample(input_antiiso_zz, isMC=True, name = "ZZ_aiso", isWSR=True, additionalnorm= qcdnorm * mcscale)
+        # tau
+        ZXXAisoSamp = Sample(input_antiiso_zxx, isMC=True, name = "ZXX_aiso", isWSR=True, additionalnorm= qcdnorm * mcscale)
+        Wx0AisoSamp = Sample(input_antiiso_wx0, isMC=True, name = "wx0_aiso", isWSR=True, additionalnorm= qcdnorm * mcscale)
+        Wx1AisoSamp = Sample(input_antiiso_wx1, isMC=True, name = "wx1_aiso", isWSR=True, additionalnorm= qcdnorm * mcscale)
+        Wx2AisoSamp = Sample(input_antiiso_wx2, isMC=True, name = "wx2_aiso", isWSR=True, additionalnorm= qcdnorm * mcscale)
 
-    sampMan.groupMCs(["WW_aiso", "WZ_aiso", "ZZ_aiso", "ZXX_aiso", "wx0_aiso", "wx1_aiso", "wx2_aiso"], "EWK", 216, "EWK")
-    sampMan.groupMCs(["ttbar_dilepton_aiso", "ttbar_1lepton_aiso", "ttbar_0lepton_aiso"], "ttbar", 96, "t#bar{t}")
-    label = "W#rightarrow#mu#nu" if doMuon else "W#rightarrow e#nu"
-    sampMan.groupMCs(['wl0_aiso', 'wl1_aiso', 'wl2_aiso'], "wlnu", 92, label)
+        sampMan = SampleManager(DataAisoSamp, [Wl0AisoSamp, Wl1AisoSamp, Wl2AisoSamp, TTbarAisoSamp, TT1LepAisoSamp, TT0LepAisoSamp, WWAisoSamp, WZAisoSamp, ZZAisoSamp, ZXXAisoSamp, Wx0AisoSamp, Wx1AisoSamp, Wx2AisoSamp])
+
+        sampMan.groupMCs(["WW_aiso", "WZ_aiso", "ZZ_aiso", "ZXX_aiso", "wx0_aiso", "wx1_aiso", "wx2_aiso"], "EWK", 216, "EWK")
+        sampMan.groupMCs(["ttbar_dilepton_aiso", "ttbar_1lepton_aiso", "ttbar_0lepton_aiso"], "ttbar", 96, "t#bar{t}")
+        label = "W#rightarrow#mu#nu" if doMuon else "W#rightarrow e#nu"
+        sampMan.groupMCs(['wl0_aiso', 'wl1_aiso', 'wl2_aiso'], "wlnu", 92, label)
+
+    else:
+        # W -> lnu
+        label = "W#rightarrow#mu#nu" if doMuon else "W#rightarrow e#nu"
+        WlAisoSamp   = Sample(input_antiiso_wl, isMC=True, name = "wlnu", isWSR=True, additionalnorm= qcdnorm * mcscale, is5TeV = True, color=92, legend=label)
+        # ttbar
+        TTbarAisoSamp  = Sample(input_antiiso_ttbar, isMC=True, name = "ttbar",     isWSR=True, additionalnorm= qcdnorm * mcscale, is5TeV = True, color=96, legend="t#bar{t}")
+        ## dibosons
+        WWAisoSamp = Sample(input_antiiso_ww, isMC=True, name = "WW_aiso", isWSR=True, additionalnorm= qcdnorm * mcscale, is5TeV = True)
+        WZAisoSamp = Sample(input_antiiso_wz, isMC=True, name = "WZ_aiso", isWSR=True, additionalnorm= qcdnorm * mcscale, is5TeV = True)
+        ZZAisoSamp = Sample(input_antiiso_zz, isMC=True, name = "ZZ_aiso", isWSR=True, additionalnorm= qcdnorm * mcscale, is5TeV = True)
+        # tau
+        ZXXAisoSamp = Sample(input_antiiso_zxx, isMC=True, name = "ZXX_aiso", isWSR=True, additionalnorm= qcdnorm * mcscale, is5TeV = True)
+        WxAisoSamp  = Sample(input_antiiso_wx,  isMC=True, name = "wx_aiso",  isWSR=True, additionalnorm= qcdnorm * mcscale, is5TeV = True)
+
+        sampMan = SampleManager(DataAisoSamp, [WlAisoSamp, TTbarAisoSamp, WWAisoSamp, WZAisoSamp, ZZAisoSamp, ZXXAisoSamp, WxAisoSamp], is5TeV = True)
+
+        sampMan.groupMCs(["WW_aiso", "WZ_aiso", "ZZ_aiso", "ZXX_aiso", "wx_aiso", ], "EWK", 216, "EWK")
 
     sampMan.DefineAll("Lep_pt", "lep.Pt()")
     sampMan.ApplyCutAll("Lep_pt > 25.0")
@@ -110,7 +155,8 @@ def main():
         # separate the EB and EE and correct the electron isolation
         # based on the EB and EE (because of a bug in the code)
         sampMan.DefineAll("isEB",   "fabs(Lep_eta) <= 1.4442")
-        sampMan.DefineAll("RelIso", "isEB ? (relIso + 0.0287 - 0.0478) : (relIso + 0.0445 - 0.0658)")
+        #sampMan.DefineAll("RelIso", "isEB ? (relIso + 0.0287 - 0.0478) : (relIso + 0.0445 - 0.0658)")
+        sampMan.DefineAll("RelIso", "(pfCombIso/lep.Pt() + 0.05)")
         sampMan.DefineAll("w_iso4", "(RelIso > 0.15 && RelIso < 0.20)")
         sampMan.DefineAll("w_iso5", "(RelIso > 0.20 && RelIso < 0.25)")
         sampMan.DefineAll("w_iso6", "(RelIso > 0.25 && RelIso < 0.30)")
@@ -217,11 +263,13 @@ def main():
                     #hetas_mtCut_comp[strname] = sampMan.hdatas[outputname]
                     #hetas_mtCut_comp[strname].SetName(outputname)
 
+    postfix = lepname + "nu"
     if applyScaling:
-        postfix = "nu_applyScaling.root"
-    else:
-        postfix = "nu.root"
-    outfile = ROOT.TFile.Open("root/output_qcdshape_fullrange_"+lepname+postfix, "recreate")
+        postfix += "_applyScaling"
+    if do5TeV:
+        postfix += "_5TeV"
+    postfix += ".root"
+    outfile = ROOT.TFile.Open("root/output_qcdshape_fullrange_"+postfix, "recreate")
 
     for wpt in wptbins:
         odir = outfile.mkdir(wpt)
@@ -238,6 +286,8 @@ def main():
                     outputname = "histo_wjetsAntiIso_fullrange_mtcorr_" + strname
 
                     hcenter = hmts_comp[strname]
+                    # shape uncertaintis are using the shape difference from the neighboring bins
+                    # used in the original qcd background predictions
                     hup = hmts_comp[strname_next].Clone(outputname+"_shapeUp")
                     hdown = hmts_comp[strname_next].Clone(outputname+"_shapeDown")
 
