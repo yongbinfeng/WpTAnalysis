@@ -239,7 +239,7 @@ draw histograms with the CMS tdr style
 '''
 
 
-def DrawHistos(myhistos, mylabels, xmin, xmax, xlabel, ymin, ymax, ylabel, outputname, dology=True, showratio=False, dologx=False, lheader="", donormalize=False, binomialratio=False, yrmax=2.0, yrmin=0.0, yrlabel=None, MCOnly=False, leftlegend=False, mycolors=[], legendPos=[], legendNCols=1, linestyles=[], markerstyles=[], showpull=False, doNewman=False, doPearson=False, ignoreHistError=False, ypullmin=-2.99, ypullmax=2.99, drawashist=False, padsize=(2, 0.9, 1.1), setGridx=False, setGridy=False, drawoptions=[], legendoptions=[], ratiooptions=[], dologz=False, doth2=False, ratiobase=0, redrawihist=-1, extraText=None, noCMS=False, nMaxDigits=None, addOverflow=False, addUnderflow=False, plotdiff=False, hratiopannel = None, doratios=None, hpulls=None, W_ref = 600):
+def DrawHistos(myhistos, mylabels, xmin, xmax, xlabel, ymin, ymax, ylabel, outputname, dology=True, showratio=False, dologx=False, lheader="", donormalize=False, binomialratio=False, yrmax=2.0, yrmin=0.0, yrlabel=None, MCOnly=False, leftlegend=False, mycolors=[], legendPos=[], legendNCols=1, linestyles=[], markerstyles=[], showpull=False, doNewman=False, doPearson=False, ignoreHistError=False, ypullmin=-2.99, ypullmax=2.99, drawashist=False, padsize=(2, 0.9, 1.1), setGridx=False, setGridy=False, drawoptions=[], legendoptions=[], ratiooptions=[], dologz=False, doth2=False, ratiobase=0, redrawihist=-1, extraText=None, noCMS=False, noLumi=False, nMaxDigits=None, addOverflow=False, addUnderflow=False, plotdiff=False, hratiopannel = None, doratios=None, hpulls=None, W_ref = 600):
     # set the tdr style
     tdrstyle.setTDRStyle()
 
@@ -475,7 +475,8 @@ def DrawHistos(myhistos, mylabels, xmin, xmax, xlabel, ymin, ymax, ylabel, outpu
     if MCOnly:
         iPeriod = 0
     if showratio or showpull:
-        CMS_lumi.CMS_lumi(pad1, iPeriod, iPosX, plotCMS = plotCMS)
+        if not noLumi:
+            CMS_lumi.CMS_lumi(pad1, iPeriod, iPosX, plotCMS = plotCMS)
         pad1.Update()
         pad1.RedrawAxis()
         frame = pad1.GetFrame()
@@ -485,7 +486,8 @@ def DrawHistos(myhistos, mylabels, xmin, xmax, xlabel, ymin, ymax, ylabel, outpu
         pad1.Update()
 
     else:
-        CMS_lumi.CMS_lumi(canvas, iPeriod, iPosX, plotCMS = plotCMS)
+        if not noLumi:
+            CMS_lumi.CMS_lumi(canvas, iPeriod, iPosX, plotCMS = plotCMS)
         canvas.cd()
         canvas.Update()
         canvas.RedrawAxis()
