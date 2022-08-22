@@ -15,7 +15,8 @@ MINMASS = 60
 MAXMASS = 120
 LEPPTMIN = 25.0
 LEPETA = 2.4
-LUMI = 199.27
+#LUMI = 199.27
+LUMI = 200.87
 
 ROOT.ROOT.EnableImplicitMT()
 ROOT.gSystem.Load("Functions_cc.so")
@@ -89,6 +90,9 @@ class Sample(object):
         self.isMC = isMC
         self.legend = legend
         self.name = name
+        #if self.name == "wl0":
+        #    # missing two file, scale the nmcEvts down
+        #    self.nmcevt = self.nmcevt * (1-0.039409405)
         self.isZSR = isZSR
         if isWSR:
             # can not be ZSR and WSR at the same time
@@ -120,7 +124,9 @@ class Sample(object):
             print fname
             self.tree.Add( fname )
 
-        self.rdf_org = ROOT.ROOT.RDataFrame( self.tree )
+        #self.rdf_org = ROOT.ROOT.RDataFrame( self.tree )
+        self.rdf_temp = ROOT.ROOT.RDataFrame( self.tree )
+        self.rdf_org = self.rdf_temp.Filter('if(tdfentry_ == 0) {cout << "Running evtloop" << endl; } return true; ')
         #print self.rdf_org.Count().GetValue()
 
     def getNMCEvt(self, inputfiles):
@@ -134,6 +140,11 @@ class Sample(object):
             hist = ifile.Get("hGenWeights")
             Nevt = hist.Integral()
             ifile.Close()
+            if Nevt > 0:
+                # the histograms saved in other files of the same dataset
+                # is copied from the same mother histogram, so only needs the
+                # first histogram, to get the total number of events before selection
+                break;
         print "total number of events: {}".format(Nevt)
         return Nevt
 
@@ -154,11 +165,9 @@ class Sample(object):
         So use rdf_org to hold the pre-selected one.
         """
         if self.isZSR:
-            self.rdf_temp = self.rdf_org.Filter("category==1 || category==2 || category==3") \
+            self.rdf_temp2 = self.rdf_org.Filter("category==1 || category==2 || category==3") \
                                 .Filter("abs(lep1.Eta()) < 2.4 && abs(lep2.Eta()) < 2.4") \
-                                .Define("lep1_corr", "VLep(lep1_corrected_pt, lep1.Eta(), lep1.Phi(), lep1.M())") \
-                                .Define("lep2_corr", "VLep(lep2_corrected_pt, lep2.Eta(), lep2.Phi(), lep2.M())") \
-                                .Define("Z", "(lep1_corr + lep2_corr)") \
+                                .Define("Z", "(lep1 + lep2)") \
                                 .Define("ZMass", "Z.M()") \
                                 .Filter("ZMass > {MINMASS} && ZMass < {MAXMASS}".format(MINMASS=MINMASS, MAXMASS=MAXMASS))
                                 #.Filter("Muon.pt[0] > {} && Muon.pt[1] > {}".format(LEPPTMIN, LEPPTMIN))  \
@@ -166,9 +175,9 @@ class Sample(object):
                                 #.Filter("lep_n==2")
                                 #.Filter("Z_pt < 40.0")
             if self.bjetVeto:
-                self.rdf = self.rdf_temp.Filter("jet_CSVLoose_n<1")
+                self.rdf = self.rdf_temp2.Filter("jet_CSVLoose_n<1")
             else:
-                self.rdf = self.rdf_temp
+                self.rdf = self.rdf_temp2
         elif self.isWSR:
             self.rdf = self.rdf_org.Filter("abs(lep.Eta())<2.4") \
                                    .Filter("lep.Pt()>25.0")
@@ -194,10 +203,7 @@ class Sample(object):
         if self.isMC:
             print(str(LUMI/self.nmcevt))
             self.rdf_org = self.rdf_org.Define("mcnorm", str(LUMI/self.nmcevt * self.additionalnorm))
-            if self.isZSR:
-                self.rdf_org = self.rdf_org.Define("weight_WoVpt_WoEff", "scale1fb * prefireWeight * mcnorm") \
-                                       .Define("weight_WoVpt", "scale1fb * mcnorm * prefireWeight * lepsfweight")
-            elif self.isWSR:
+            if self.isWSR or self.isZSR:
                 self.rdf_org = self.rdf_org.Define("weight_WoVpt", "evtWeight[0] * mcnorm")
         else:
             self.rdf_org = self.rdf_org.Define("weight_WoVpt", str(self.additionalnorm))
