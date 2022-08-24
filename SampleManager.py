@@ -17,6 +17,7 @@ LEPPTMIN = 25.0
 LEPETA = 2.4
 #LUMI = 199.27
 LUMI = 200.87
+LUMI_5TeV = 298.0
 
 ROOT.ROOT.EnableImplicitMT()
 ROOT.gSystem.Load("Functions_cc.so")
@@ -67,7 +68,7 @@ class DrawConfig(object):
 
 class Sample(object):
     def __init__(self, inputfiles, isMC=True, xsec=1.0, color=1, reweightzpt = False, legend="", name="", 
-                 isZSR=True, isWSR=False, applySF=True, bjetVeto=False, nmcevt=-1, additionalnorm=1.0):
+                 isZSR=True, isWSR=False, applySF=True, bjetVeto=False, nmcevt=-1, additionalnorm=1.0, is5TeV = False):
         if isMC:
             if nmcevt>0:
                 self.nmcevt = nmcevt
@@ -79,6 +80,7 @@ class Sample(object):
             #self.normfactor = LUMI * self.mcxsec / self.nmcevt
             self.normfactor = 1.0
             self.reweightzpt = reweightzpt
+            self.is5TeV = is5TeV
         else:
             self.nmcevt = 0
             self.mcxsec = 0
@@ -201,8 +203,11 @@ class Sample(object):
         #elif self.isMC:
         #    self.rdf_org = self.rdf_org.Define("weight_WoVpt", "( PUWeight * NLOWeight )")
         if self.isMC:
-            print(str(LUMI/self.nmcevt))
-            self.rdf_org = self.rdf_org.Define("mcnorm", str(LUMI/self.nmcevt * self.additionalnorm))
+            lumi = LUMI
+            if self.is5TeV:
+                lumi = LUMI_5TeV
+            print("lumi {}, weight {}".format(lumi, str(lumi/self.nmcevt)))
+            self.rdf_org = self.rdf_org.Define("mcnorm", str(lumi/self.nmcevt * self.additionalnorm))
             if self.isWSR or self.isZSR:
                 self.rdf_org = self.rdf_org.Define("weight_WoVpt", "evtWeight[0] * mcnorm")
         else:
@@ -244,12 +249,19 @@ class Sample(object):
 
 
 class SampleManager(object):
-    def __init__(self, data, mcs=[]):
+    def __init__(self, data, mcs=[], is5TeV = False):
         self.data = data
         self.mcs = mcs
         self.to_draw = OrderedDict()
         self.getNormFactors()
         self.initGroups()
+
+        self.is5TeV = is5TeV
+        # sanity check: 
+        # if samplemanager is at 5Tev, then all MC samples should be at 5Tev
+        # also true for the opposite
+        for mc in self.mcs:
+            assert self.is5TeV == mc.is5TeV, "for MC {} is at 5TeV? {}, inconsistent with the samplemanager {}".format(mc.name, mc.is5TeV, self.is5TeV)
 
         self.hdatas  = {}
         self.hsmcs   = {}
@@ -326,6 +338,12 @@ class SampleManager(object):
         if mcnames_to_be_grouped:
             from termcolor import colored
             print colored('some somples are not grouped yet, please check the names...: {}'.format(mcnames_to_be_grouped), 'red')
+
+    def getMCByName(self, mcname):
+        for mc in self.mcs:
+            if mc.name == mcname:
+                return mc
+        raise Exception('can not find the mcname {}'.format(mcname))
 
     def cacheDraw(self, *args, **kwds):
         if len(args) == 6:
@@ -434,7 +452,7 @@ class SampleManager(object):
         
         self.hdatas[ drawconfigs.outputname] = h_data
         self.hsmcs[  drawconfigs.outputname] = hs_gmc
-        self.hratios[drawconfigs.outputname] = DrawHistos( [h_data, hs_gmc], drawconfigs.legends, drawconfigs.xmin, drawconfigs.xmax, drawconfigs.xlabel, drawconfigs.ymin, drawconfigs.ymax, drawconfigs.ylabel, drawconfigs.outputname, dology=drawconfigs.dology, dologx=drawconfigs.dologx, showratio=drawconfigs.showratio, yrmax = drawconfigs.yrmax, yrmin = drawconfigs.yrmin, yrlabel = drawconfigs.yrlabel, donormalize=drawconfigs.donormalize, ratiobase=drawconfigs.ratiobase, legendPos = drawconfigs.legendPos, redrawihist = drawconfigs.redrawihist, extraText = drawconfigs.extraText, noCMS = drawconfigs.noCMS, addOverflow = drawconfigs.addOverflow, addUnderflow = drawconfigs.addUnderflow, nMaxDigits = drawconfigs.nMaxDigits)
+        self.hratios[drawconfigs.outputname] = DrawHistos( [h_data, hs_gmc], drawconfigs.legends, drawconfigs.xmin, drawconfigs.xmax, drawconfigs.xlabel, drawconfigs.ymin, drawconfigs.ymax, drawconfigs.ylabel, drawconfigs.outputname, dology=drawconfigs.dology, dologx=drawconfigs.dologx, showratio=drawconfigs.showratio, yrmax = drawconfigs.yrmax, yrmin = drawconfigs.yrmin, yrlabel = drawconfigs.yrlabel, donormalize=drawconfigs.donormalize, ratiobase=drawconfigs.ratiobase, legendPos = drawconfigs.legendPos, redrawihist = drawconfigs.redrawihist, extraText = drawconfigs.extraText, noCMS = drawconfigs.noCMS, addOverflow = drawconfigs.addOverflow, addUnderflow = drawconfigs.addUnderflow, nMaxDigits = drawconfigs.nMaxDigits, is5TeV = self.is5TeV)
         
 
     def launchDraw(self):

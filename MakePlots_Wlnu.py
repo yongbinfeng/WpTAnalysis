@@ -17,80 +17,128 @@ doTest = False
 # boolean flag to bin in different W pt bins
 doWpT = False
 
+# analyze the 5TeV data
+# if set to false will analyze the 13TeV data
+do5TeV = True
+
 def main():
     print "Program start..."
 
     #ROOT.gROOT.ProcessLine('TFile* f_zpt = TFile::Open("results/zpt_weight.root")')
     #ROOT.gROOT.ProcessLine('TH1D* h_zpt_ratio  = (TH1D*)f_zpt->Get("h_zpt_ratio")')
 
-    if doMuon:
-        input_data    = "inputs/wmunu/input_data.txt"
-        input_wl0     = "inputs/wmunu/input_wm0.txt"
-        input_wl1     = "inputs/wmunu/input_wm1.txt"
-        input_wl2     = "inputs/wmunu/input_wm2.txt"
-        input_ttbar   = "inputs/wmunu/input_ttbar_dilepton.txt"
-        input_ttbar_1lep = "inputs/wmunu/input_ttbar_singlelepton.txt"
-        input_ttbar_0lep = "inputs/wmunu/input_ttbar_hadronic.txt"
-        input_ww      = "inputs/wmunu/input_ww.txt"
-        input_wz      = "inputs/wmunu/input_wz.txt"
-        input_zz      = "inputs/wmunu/input_zz.txt"
-        input_zxx     = "inputs/wmunu/input_zxx.txt"
-        input_wx0     = "inputs/wmunu/input_wx0.txt"
-        input_wx1     = "inputs/wmunu/input_wx1.txt"
-        input_wx2     = "inputs/wmunu/input_wx2.txt"
+    if not do5TeV:
+        if doMuon:
+            input_data    =    "inputs/wmunu/input_data.txt"
+            input_wl0     =    "inputs/wmunu/input_wm0.txt"
+            input_wl1     =    "inputs/wmunu/input_wm1.txt"
+            input_wl2     =    "inputs/wmunu/input_wm2.txt"
+            input_ttbar   =    "inputs/wmunu/input_ttbar_dilepton.txt"
+            input_ttbar_1lep = "inputs/wmunu/input_ttbar_singlelepton.txt"
+            input_ttbar_0lep = "inputs/wmunu/input_ttbar_hadronic.txt"
+            input_ww      =    "inputs/wmunu/input_ww.txt"
+            input_wz      =    "inputs/wmunu/input_wz.txt"
+            input_zz      =    "inputs/wmunu/input_zz.txt"
+            input_zxx     =    "inputs/wmunu/input_zxx.txt"
+            input_wx0     =    "inputs/wmunu/input_wx0.txt"
+            input_wx1     =    "inputs/wmunu/input_wx1.txt"
+            input_wx2     =    "inputs/wmunu/input_wx2.txt"
+        else:
+            input_data    = "inputs/wenu/input_data.txt"
+            input_wl0     = "inputs/wenu/input_we0.txt"
+            input_wl1     = "inputs/wenu/input_we1.txt"
+            input_wl2     = "inputs/wenu/input_we2.txt"
+            input_ttbar   = "inputs/wenu/input_ttbar_dilepton.txt"
+            input_ttbar_1lep = "inputs/wenu/input_ttbar_singlelepton.txt"
+            input_ttbar_0lep = "inputs/wenu/input_ttbar_hadronic.txt"
+            input_ww      = "inputs/wenu/input_ww.txt"
+            input_wz      = "inputs/wenu/input_wz.txt"
+            input_zz      = "inputs/wenu/input_zz.txt"
+            input_zxx     = "inputs/wenu/input_zxx.txt"
+            input_wx0     = "inputs/wenu/input_wx0.txt"
+            input_wx1     = "inputs/wenu/input_wx1.txt"
+            input_wx2     = "inputs/wenu/input_wx2.txt"
     else:
-        input_data    = "inputs/wenu/input_data.txt"
-        input_wl0     = "inputs/wenu/input_we0.txt"
-        input_wl1     = "inputs/wenu/input_we1.txt"
-        input_wl2     = "inputs/wenu/input_we2.txt"
-        input_ttbar   = "inputs/wenu/input_ttbar_dilepton.txt"
-        input_ttbar_1lep = "inputs/wenu/input_ttbar_singlelepton.txt"
-        input_ttbar_0lep = "inputs/wenu/input_ttbar_hadronic.txt"
-        input_ww      = "inputs/wenu/input_ww.txt"
-        input_wz      = "inputs/wenu/input_wz.txt"
-        input_zz      = "inputs/wenu/input_zz.txt"
-        input_zxx     = "inputs/wenu/input_zxx.txt"
-        input_wx0     = "inputs/wenu/input_wx0.txt"
-        input_wx1     = "inputs/wenu/input_wx1.txt"
-        input_wx2     = "inputs/wenu/input_wx2.txt"
+        if doMuon:
+            input_data    =    "inputs_5TeV/wmunu/input_data.txt"
+            input_wl      =    "inputs_5TeV/wmunu/input_wm.txt"
+            input_ttbar   =    "inputs_5TeV/wmunu/input_ttbar.txt"
+            input_ww      =    "inputs_5TeV/wmunu/input_ww.txt"
+            input_wz      =    "inputs_5TeV/wmunu/input_wz.txt"
+            input_zz      =    "inputs_5TeV/wmunu/input_zz.txt"
+            input_zxx     =    "inputs_5TeV/wmunu/input_zxx.txt"
+            input_wx      =    "inputs_5TeV/wmunu/input_wx.txt"
+        else:
+            input_data    = "inputs_5TeV/wenu/input_data.txt"
+            input_wl      = "inputs_5TeV/wenu/input_we.txt"
+            input_ttbar   = "inputs_5TeV/wenu/input_ttbar.txt"
+            input_ww      = "inputs_5TeV/wenu/input_ww.txt"
+            input_wz      = "inputs_5TeV/wenu/input_wz.txt"
+            input_zz      = "inputs_5TeV/wenu/input_zz.txt"
+            input_zxx     = "inputs_5TeV/wenu/input_zxx.txt"
+            input_wx      = "inputs_5TeV/wenu/input_wx.txt"
 
     DataSamp  = Sample(input_data, isMC=False, legend="Data", name="Data", isWSR=True)
-    # W -> munu
-    #wjetsnorm = 1.06
-    wjetsnorm = 1.0
-    Wl0Samp   = Sample(input_wl0, isMC=True, name = "wl0", isWSR=True, additionalnorm = wjetsnorm)
-    Wl1Samp   = Sample(input_wl1, isMC=True, name = "wl1", isWSR=True, additionalnorm = wjetsnorm)
-    Wl2Samp   = Sample(input_wl2, isMC=True, name = "wl2", isWSR=True, additionalnorm = wjetsnorm)
-    # ttbar
-    TTbarSamp  = Sample(input_ttbar, isMC=True, name = "ttbar_dilepton", isWSR=True)
-    TT1LepSamp = Sample(input_ttbar_1lep, isMC=True, name = "ttbar_1lepton", isWSR=True)
-    TT0LepSamp = Sample(input_ttbar_0lep, isMC=True, name = "ttbar_0lepton", isWSR=True)
-    ## dibosons
-    WWSamp = Sample(input_ww, isMC=True, name = "WW", isWSR=True)
-    WZSamp = Sample(input_wz, isMC=True, name = "WZ", isWSR=True)
-    ZZSamp = Sample(input_zz, isMC=True, name = "ZZ", isWSR=True)
-    # tau
-    ZXXSamp = Sample(input_zxx, isMC=True, name = "ZXX", isWSR=True)
-    Wx0Samp = Sample(input_wx0, isMC=True, name = "wx0", isWSR=True)
-    Wx1Samp = Sample(input_wx1, isMC=True, name = "wx1", isWSR=True)
-    Wx2Samp = Sample(input_wx2, isMC=True, name = "wx2", isWSR=True)
+    if not do5TeV:
+        # W -> munu
+        #wjetsnorm = 1.06
+        wjetsnorm = 1.0
+        Wl0Samp   = Sample(input_wl0, isMC=True, name = "wl0", isWSR=True, additionalnorm = wjetsnorm)
+        Wl1Samp   = Sample(input_wl1, isMC=True, name = "wl1", isWSR=True, additionalnorm = wjetsnorm)
+        Wl2Samp   = Sample(input_wl2, isMC=True, name = "wl2", isWSR=True, additionalnorm = wjetsnorm)
+        # ttbar
+        TTbarSamp  = Sample(input_ttbar, isMC=True, name = "ttbar_dilepton", isWSR=True)
+        TT1LepSamp = Sample(input_ttbar_1lep, isMC=True, name = "ttbar_1lepton", isWSR=True)
+        TT0LepSamp = Sample(input_ttbar_0lep, isMC=True, name = "ttbar_0lepton", isWSR=True)
+        ## dibosons
+        WWSamp = Sample(input_ww, isMC=True, name = "WW", isWSR=True)
+        WZSamp = Sample(input_wz, isMC=True, name = "WZ", isWSR=True)
+        ZZSamp = Sample(input_zz, isMC=True, name = "ZZ", isWSR=True)
+        # tau
+        ZXXSamp = Sample(input_zxx, isMC=True, name = "ZXX", isWSR=True)
+        Wx0Samp = Sample(input_wx0, isMC=True, name = "wx0", isWSR=True)
+        Wx1Samp = Sample(input_wx1, isMC=True, name = "wx1", isWSR=True)
+        Wx2Samp = Sample(input_wx2, isMC=True, name = "wx2", isWSR=True)
 
-    if not doTest:
-        sampMan = SampleManager(DataSamp, [Wl0Samp, Wl1Samp, Wl2Samp, TTbarSamp, TT1LepSamp, TT0LepSamp, WWSamp, WZSamp, ZZSamp, ZXXSamp, Wx0Samp, Wx1Samp, Wx2Samp])
-    else:
-        sampMan = SampleManager(DataSamp, [Wl1Samp, Wl2Samp])
-    sampMan.groupMCs(["wx0", "wx1", "wx2"], 'wx', 216, 'wx')
-    sampMan.groupMCs(["WW", "WZ", "ZZ"], 'vv', 216, 'vv')
-    sampMan.groupMCs(["ttbar_dilepton", "ttbar_1lepton", "ttbar_0lepton"], "ttbar", 96, "t#bar{t}")
-    label = "W#rightarrow#mu#nu" if doMuon else "W#rightarrow e#nu"
-    sampMan.groupMCs(['wl0', 'wl1', 'wl2'], "wlnu", 92,"W#rightarrow#mu#nu")
+        if not doTest:
+            sampMan = SampleManager(DataSamp, [Wl0Samp, Wl1Samp, Wl2Samp, TTbarSamp, TT1LepSamp, TT0LepSamp, WWSamp, WZSamp, ZZSamp, ZXXSamp, Wx0Samp, Wx1Samp, Wx2Samp])
+        else:
+            sampMan = SampleManager(DataSamp, [Wl1Samp, Wl2Samp])
+        sampMan.groupMCs(["wx0", "wx1", "wx2"], 'wx', 216, 'wx')
+        sampMan.groupMCs(["WW", "WZ", "ZZ"], 'vv', 216, 'vv')
+        sampMan.groupMCs(["ttbar_dilepton", "ttbar_1lepton", "ttbar_0lepton"], "ttbar", 96, "t#bar{t}")
+        label = "W#rightarrow#mu#nu" if doMuon else "W#rightarrow e#nu"
+        sampMan.groupMCs(['wl0', 'wl1', 'wl2'], "wlnu", 92,"W#rightarrow#mu#nu")
 
-    # for the signal samples
-    if not doTest:
-        signalSamps = [Wl0Samp, Wl1Samp, Wl2Samp]
+        # for the signal samples
+        if not doTest:
+            signalSamps = [Wl0Samp, Wl1Samp, Wl2Samp]
+        else:
+            signalSamps = [Wl1Samp, Wl2Samp]
+        signalSampnames = [samp.name for samp in signalSamps]
+
     else:
-        signalSamps = [Wl1Samp, Wl2Samp]
-    signalSampnames = [samp.name for samp in signalSamps]
+        # for the 5TeV files
+        # W -> munu
+        wjetsnorm = 1.0
+        WlSamp     = Sample(input_wl, isMC=True, name = "wlnu", color = 92, legend = "W#rightarrow#mu#nu", isWSR=True, additionalnorm = wjetsnorm, is5TeV = True)
+        # ttbar
+        TTbarSamp  = Sample(input_ttbar, isMC=True, name = "ttbar", color = 86, legend = "t#bar{t}", isWSR=True, is5TeV = True)
+        ## dibosons
+        WWSamp = Sample(input_ww, isMC=True, name = "WW", isWSR=True, is5TeV = True)
+        WZSamp = Sample(input_wz, isMC=True, name = "WZ", isWSR=True, is5TeV = True)
+        ZZSamp = Sample(input_zz, isMC=True, name = "ZZ", isWSR=True, is5TeV = True)
+        # tau
+        ZXXSamp = Sample(input_zxx, isMC=True, name = "ZXX", isWSR=True, is5TeV = True)
+        WxSamp = Sample(input_wx, isMC=True, name = "wx", color = 216, legend = "wx", isWSR=True, is5TeV = True)
+
+        sampMan = SampleManager(DataSamp, [WlSamp, TTbarSamp, WWSamp, WZSamp, ZZSamp, ZXXSamp, WxSamp], is5TeV = True)
+        sampMan.groupMCs(["WW", "WZ", "ZZ"], 'vv', 216, 'vv')
+        label = "W#rightarrow#mu#nu" if doMuon else "W#rightarrow e#nu"
+
+        # for the signal samples
+        signalSamps = [WlSamp]
+        signalSampnames = [samp.name for samp in signalSamps]
     print("signal sample names: ", signalSampnames)
     h_sigs = OrderedDict()
 
@@ -98,7 +146,7 @@ def main():
     sampMan.DefineAll("Lep_pt",  "lep.Pt()")
     sampMan.DefineAll("Lep_eta", "lep.Eta()")
     sampMan.DefineAll("Lep_phi", "lep.Phi()")
-    for i in [1, 2, 3, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]:
+    for i in [1, 2, 3, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16]:
         # variations on the recoil correction
         sampMan.DefineMC("met_{}_pt".format(str(i)),  "metVars[{}]".format(str(i))) 
         sampMan.DefineMC("met_{}_phi".format(str(i)), "metVarsPhi[{}]".format(str(i)))
@@ -172,13 +220,14 @@ def main():
     
     # sample weight
     # 0 is the central one with all corrections
-    for i in [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]:
+    for i in [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]:
         for wpt in wptbins:
             for lepeta in etabins:
-                if i!= 5:
-                    sampMan.DefineMC("weight_{}_{}_{}".format(str(i), wpt, lepeta), "evtWeight[{}] * mcnorm * {} * {}".format(str(i), wpt, lepeta))
-                else:
-                    sampMan.DefineMC("weight_{}_{}_{}".format(str(i), wpt, lepeta), "(evtWeight[0] + TMath::Sqrt(TMath::Abs(evtWeight[{}]))) * mcnorm * {} * {}".format(str(i), wpt, lepeta))
+                #if i!= 5:
+                #    sampMan.DefineMC("weight_{}_{}_{}".format(str(i), wpt, lepeta), "evtWeight[{}] * mcnorm * {} * {}".format(str(i), wpt, lepeta))
+                #else:
+                #    sampMan.DefineMC("weight_{}_{}_{}".format(str(i), wpt, lepeta), "(evtWeight[0] + TMath::Sqrt(TMath::Abs(evtWeight[{}]))) * mcnorm * {} * {}".format(str(i), wpt, lepeta))
+                sampMan.DefineMC("weight_{}_{}_{}".format(str(i), wpt, lepeta), "(TMath::IsNaN(evtWeight[{}]) ? 0.: evtWeight[{}]) * mcnorm * {} * {}".format(str(i), str(i), wpt, lepeta))
                 DataSamp.Define("weight_{}_{}_{}".format(str(i), wpt, lepeta),  "1.0 * {} * {}".format(wpt, lepeta))
 
                 for chg in chgbins:
@@ -238,7 +287,7 @@ def main():
     #
     for chg in chgbins:
         # variation on recoil corections
-        for i in [1, 2, 3, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]:
+        for i in [1, 2, 3, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16]:
             for wpt in wptbins:
                 for lepeta in etabins:
                     sampMan.cacheDraw("mT_{}".format(str(i)), "histo_wjets_{}_mT_{}_{}_{}".format(chg, str(i), wpt, lepeta),  nbins, xmin, xmax, DrawConfig(xmin=xmin, xmax=xmax, xlabel="m_{T} [GeV]", dology=False, ymax=ymaxs[chg], donormalizebin=False, addOverflow=False, addUnderflow=False), weightname = "weight_{}_0_{}_{}".format(chg, wpt, lepeta))
@@ -253,7 +302,7 @@ def main():
                             
 
         # variation on the scale factors and sample weights
-        for i in [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]:
+        for i in [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]:
             for wpt in wptbins:
                 for lepeta in etabins:
                     sampMan.cacheDraw("mT_1", "histo_wjets_{}_mtcorr_weight_{}_{}_{}".format(chg, str(i), wpt, lepeta),  nbins, xmin, xmax, DrawConfig(xmin=xmin, xmax=xmax, xlabel="m_{T} [GeV]", dology=False, ymax=ymaxs[chg], donormalizebin=False, addOverflow=False, addUnderflow=False), weightname = "weight_{}_{}_{}_{}".format(chg, str(i), wpt, lepeta))
@@ -294,8 +343,11 @@ def main():
     #
     # write out mT histograms for combine
     #
-    postfix = "_WpT" if doWpT else ""
-    outfile = ROOT.TFile.Open("root/output_shapes_"+lepname+postfix+".root", "recreate")
+    postfix = lepname + "_WpT" if doWpT else lepname
+    if do5TeV:
+        postfix += "_5TeV"
+    postfix += ".root"
+    outfile = ROOT.TFile.Open("root/output_shapes_"+postfix, "recreate")
 
     # Data
     odir = outfile.mkdir("Data")
@@ -332,7 +384,7 @@ def main():
                         hcen.Write()
 
                     # recoil systematics
-                    for i in [2, 3, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]:
+                    for i in [2, 3, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16]:
                         if wpttruth == "MCTemplates":
                             hsmcs_up = sampMan.hsmcs["histo_wjets_{}_mT_{}_{}_{}".format(chg, str(i), wpt, lepeta)]
                             hlists_up = list(hsmcs_up.GetHists())
@@ -364,7 +416,7 @@ def main():
                             hdn.Write()
 
                     # weights/corrections
-                    for i in [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]:
+                    for i in [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]:
                         if wpttruth == "MCTemplates":
                             hsmcs_up = sampMan.hsmcs["histo_wjets_{}_mtcorr_weight_{}_{}_{}".format(chg, str(i), wpt, lepeta)]
                             hlists_up = list(hsmcs_up.GetHists())
@@ -377,10 +429,10 @@ def main():
                             hcen = hlists_central[ih]
                             hup  = hlists_up[ih]
                             prefix = ""
-                            if i == 2 or i==3 or i==4:
+                            if i == 2 or i==3 or i==4 or i==5 or i==12 or i==13:
                                 # the systematics that should be decorrelated between lepton flavors
                                 prefix = lepname + "_"
-                            if i<=6 or i==8 or i==10:
+                            if i<=6 or i==8 or i==10 or i==12 or i==13:
                                 suffix = prefix + "SysWeight" + str(i) + "Up"
                                 #hup.SetName("{}_SysWeight{}Up".format(hcen.GetName(), str(i)))
                                 hup.SetName("{}_{}".format(hcen.GetName(), suffix))
@@ -390,7 +442,7 @@ def main():
                                 hup.SetName("{}_{}".format(hcen.GetName(), suffix))
 
 
-                            if i<6:
+                            if i<6 or i==12 or i==13:
                                 # for prefire, the up and down weights are calculated seperately
                                 suffix = prefix + "SysWeight" + str(i) + "Down"
                                 #hdn  = hcen.Clone("{}_SysWeight{}Down".format(hcen.GetName(), str(i)))
@@ -400,7 +452,7 @@ def main():
                             
                             hup.SetDirectory(odir)
                             hup.Write()
-                            if i<6:
+                            if i<6 or i==12 or i==13:
                                 hdn.SetDirectory(odir)
                                 hdn.Write()
 
