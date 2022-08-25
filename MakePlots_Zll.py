@@ -2,10 +2,10 @@ import ROOT
 import numpy as np
 from collections import OrderedDict
 import sys
-sys.path.append("/afs/cern.ch/work/y/yofeng/public/CMSPLOTS")
-from tdrstyle import setTDRStyle
-from myFunction import DrawHistos, THStack2TH1
-import CMS_lumi
+#sys.path.append("/afs/cern.ch/work/y/yofeng/public/CMSPLOTS")
+from CMSPLOTS.tdrstyle import setTDRStyle
+from CMSPLOTS.myFunction import DrawHistos, THStack2TH1
+import CMSPLOTS.CMS_lumi
 import pickle
 
 from SampleManager import DrawConfig, Sample, SampleManager
@@ -16,11 +16,11 @@ ROOT.ROOT.EnableImplicitMT(10)
 dotest = 0
 VetoB = False
 
-doMuon = False
+doMuon = True
 
 # analyze the 5TeV data
 # if set to false will analyze the 13TeV data
-do5TeV = True
+do5TeV = False
 
 def main():
     print "Program start..."
@@ -29,7 +29,6 @@ def main():
         if doMuon:
             if dotest:
                 input_data    = "inputs/zmumu/input_data.txt"
-                input_dy      = "inputs/zmumu/input_zjets.txt"
                 input_ttbar   = "inputs/zmumu/input_ttbar_dilepton.txt"
             else:
                 input_data    = "inputs/zmumu/input_data.txt"
@@ -59,7 +58,8 @@ def main():
             input_ttbar   = "inputs_5TeV/zmumu/input_ttbar.txt"
             input_ww      = "inputs_5TeV/zmumu/input_ww.txt"
             input_wz      = "inputs_5TeV/zmumu/input_wz.txt"
-            input_zz      = "inputs_5TeV/zmumu/input_zz.txt"
+            input_zz2l    = "inputs_5TeV/zmumu/input_zz2l.txt"
+            input_zz4l    = "inputs_5TeV/zmumu/input_zz4l.txt"
             input_zxx     = "inputs_5TeV/zmumu/input_zxx.txt"
         else:
             input_data    = "inputs_5TeV/zee/input_data.txt"
@@ -67,42 +67,52 @@ def main():
             input_ttbar   = "inputs_5TeV/zee/input_ttbar.txt"
             input_ww      = "inputs_5TeV/zee/input_ww.txt"
             input_wz      = "inputs_5TeV/zee/input_wz.txt"
+            ## to be fixed to z->ee at 5TeV
             input_zz      = "inputs_5TeV/zee/input_zz.txt"
+            #input_zz2l    = "inputs_5TeV/zee/input_zz2l.txt"
+            #input_zz4l    = "inputs_5TeV/zee/input_zz4l.txt"
             input_zxx     = "inputs_5TeV/zee/input_zxx.txt"
 
-    DataSamp  = Sample(input_data, isMC=False, legend="Data", name="Data", bjetVeto=VetoB)
-    lepchannel = "Z#rightarrow#mu#mu" if doMuon else "Z#rightarrow ee"
+    DataSamp  = Sample(input_data, isMC=False, legend="Data", name="Data")
+    lepchannel = "Z#rightarrow#mu^{+}#mu^{-}" if doMuon else "Z#rightarrow e^{+}e^{-}"
     if not do5TeV:
-        # xsecs are not really used here
-        DYSamp    = Sample(input_dy,    xsec = 6077.22*1e3,      color=92,  reweightzpt = True, legend=lepchannel, name="DY", bjetVeto=VetoB)
-        TTbarSamp = Sample(input_ttbar, xsec = 831.76*0.105*1e3, color=46, reweightzpt = False, legend="t#bar{t}", name="ttbar2lep", bjetVeto=VetoB)
+        TTbarSamp = Sample(input_ttbar, color=46,  legend="t#bar{t}", name="ttbar2lep")
         if not dotest:
-            WWSamp  = Sample(input_ww,  xsec = 12.178*1e3,       color=38, reweightzpt = False, legend="WW2L",     name="WW",  bjetVeto=VetoB)
-            WZSamp  = Sample(input_wz,  xsec = 5.26*1e3,         color=39, reweightzpt = False, legend="WZ3L",     name="WZ",  bjetVeto=VetoB)
-            ZZSamp  = Sample(input_zz,  xsec = 0.564*1e3,        color=37, reweightzpt = False, legend="ZZ2L",     name="ZZ",  bjetVeto=VetoB)
-            ZXXSamp = Sample(input_zxx, xsec = 1.0,              color=40, reweightzpt = False, legend="ZXX",      name="ZXX",   bjetVeto=VetoB)
-            TT1LepSamp = Sample(input_ttbar_1lep,  xsec = 831.76*0.219*1e3, color=47, reweightzpt = False, legend="t#bar{t}", name="ttbar1lep", bjetVeto=VetoB)
-            TT0LepSamp = Sample(input_ttbar_0lep,  xsec = 831.76*0.219*1e3, color=48, reweightzpt = False, legend="t#bar{t}", name="ttbar0lep", bjetVeto=VetoB)
+            DYSamp    = Sample(input_dy,    color=92,  legend=lepchannel, name="DY")
+            WWSamp  = Sample(input_ww,  color=38,  legend="WW2L",     name="WW")
+            WZSamp  = Sample(input_wz,  color=39,  legend="WZ3L",     name="WZ")
+            ZZSamp  = Sample(input_zz,  color=37,  legend="ZZ2L",     name="ZZ")
+            ZXXSamp = Sample(input_zxx, color=40,  legend="ZXX",      name="ZXX")
+            TT1LepSamp = Sample(input_ttbar_1lep,  color=47, legend="t#bar{t}", name="ttbar1lep")
+            TT0LepSamp = Sample(input_ttbar_0lep,  color=48, legend="t#bar{t}", name="ttbar0lep")
 
         if not dotest:
             sampMan = SampleManager(DataSamp, [DYSamp, TTbarSamp, WWSamp, WZSamp, ZZSamp, ZXXSamp, TT1LepSamp, TT0LepSamp])
         else:
-            sampMan = SampleManager(DataSamp, [DYSamp, TTbarSamp])
+            sampMan = SampleManager(DataSamp, [TTbarSamp])
         sampMan.groupMCs(["WW", "WZ", "ZZ", "ZXX"], "EWK", 216, "EWK")
         sampMan.groupMCs(["ttbar2lep", "ttbar1lep", "ttbar0lep"], "ttbar", 96, "t#bar{t}")
     else:
         #
         # 5TeV dataset
         #
-        DYSamp    = Sample(input_dy,    xsec = 6077.22*1e3,      color=92, reweightzpt = True,  legend=lepchannel, name="DY", bjetVeto=VetoB, is5TeV = True)
-        TTbarSamp = Sample(input_ttbar, xsec = 831.76*0.105*1e3, color=96, reweightzpt = False, legend="t#bar{t}", name="ttbar", bjetVeto=VetoB, is5TeV = True)
-        WWSamp    = Sample(input_ww,    xsec = 12.178*1e3,       color=38, reweightzpt = False, legend="WW2L",     name="WW",  bjetVeto=VetoB, is5TeV = True)
-        WZSamp    = Sample(input_wz,    xsec = 5.26*1e3,         color=39, reweightzpt = False, legend="WZ3L",     name="WZ",  bjetVeto=VetoB, is5TeV = True)
-        ZZSamp    = Sample(input_zz,    xsec = 0.564*1e3,        color=37, reweightzpt = False, legend="ZZ2L",     name="ZZ",  bjetVeto=VetoB, is5TeV = True)
-        ZXXSamp   = Sample(input_zxx,   xsec = 1.0,              color=40, reweightzpt = False, legend="ZXX",      name="ZXX",   bjetVeto=VetoB, is5TeV = True)
+        DYSamp    = Sample(input_dy,    color=92, legend=lepchannel, name="DY",    is5TeV = True)
+        TTbarSamp = Sample(input_ttbar, color=96, legend="t#bar{t}", name="ttbar", is5TeV = True)
+        WWSamp    = Sample(input_ww,    color=38, legend="WW2L",     name="WW",    is5TeV = True)
+        WZSamp    = Sample(input_wz,    color=39, legend="WZ3L",     name="WZ",    is5TeV = True)
+        if not doMuon:
+            ZZSamp    = Sample(input_zz,    color=37, legend="ZZ",       name="ZZ",    is5TeV = True)
+        else:
+            ZZ2LSamp  = Sample(input_zz2l,  color=37, legend="ZZ2L",     name="ZZ2L",  is5TeV = True)
+            ZZ4LSamp  = Sample(input_zz4l,  color=37, legend="ZZ4L",     name="ZZ4L",  is5TeV = True)
+        ZXXSamp   = Sample(input_zxx,   color=40, legend="ZXX",      name="ZXX",   is5TeV = True)
 
-        sampMan = SampleManager(DataSamp, [DYSamp, TTbarSamp, WWSamp, WZSamp, ZZSamp, ZXXSamp], is5TeV = True)
-        sampMan.groupMCs(["WW", "WZ", "ZZ", "ZXX"], "EWK", 216, "EWK")
+        if doMuon:
+            sampMan = SampleManager(DataSamp, [DYSamp, TTbarSamp, WWSamp, WZSamp, ZZ2LSamp, ZZ4LSamp, ZXXSamp], is5TeV = True)
+            sampMan.groupMCs(["WW", "WZ", "ZZ2L", "ZZ4L", "ZXX"], "EWK", 216, "EWK")
+        else:
+            sampMan = SampleManager(DataSamp, [DYSamp, TTbarSamp, WWSamp, WZSamp, ZZSamp, ZXXSamp], is5TeV = True)
+            sampMan.groupMCs(["WW", "WZ", "ZZ", "ZXX"], "EWK", 216, "EWK")
 
     sampMan.DefineAll("zpt", "Z.Pt()")
     sampMan.DefineAll("zmass", "ZMass")
@@ -137,14 +147,13 @@ def main():
 
     # sample weights
     for i in [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]:
-        if i!=5:
-            sampMan.DefineMC("weight_{}_tmp".format(str(i)), "evtWeight[{}] * mcnorm".format(str(i)))
-        else:
-            # stat unc of weights
-            sampMan.DefineMC("weight_{}_tmp".format(str(i)), "(evtWeight[0] + TMath::Sqrt(TMath::Abs(evtWeight[{}]))) * mcnorm".format(str(i)))
+        sampMan.DefineMC("weight_{}_tmp".format(str(i)), "evtWeight[{}] * mcnorm".format(str(i)))
         # fix a few very rare nan cases
         sampMan.DefineMC("weight_{}".format(str(i)), "TMath::IsNaN(weight_{}_tmp) ? 0.: weight_{}_tmp".format(str(i), str(i)))
         DataSamp.Define("weight_{}".format(str(i)),  "1.0")
+
+    sampMan.DefineAll("weight_noEcal", "prefireEcal == 0 ? 1 : (weight_0 / prefireEcal)")
+    sampMan.DefineAll("weight_noMuon", "prefireMuon == 0 ? 1 : (weight_0 / prefireMuon)")
 
     if doMuon:
         lepname = "mumu"
@@ -152,7 +161,6 @@ def main():
     else:
         lepname = "ee"
         leplabel = "e"
-
 
 
     met_pt_bins = np.array([0., 2.0, 4., 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 33, 36, 39, 42, 45, 48, 51, 55, 60, 65, 70, 75, 80, 90, 100, 110, 120, 135, 150, 165, 180, 200])
@@ -170,30 +178,40 @@ def main():
     # z pt befor and after pt reweighting
     sampMan.cacheDraw("zpt",   "histo_zjets_zpt_WoZptWeight_" + lepname, u_bins, DrawConfig(xmin=0, xmax=150, xlabel='p_{{T}}^{{{leplabel}{leplabel}}} [GeV]'.format(leplabel=leplabel), yrmax=1.19, yrmin=0.81), weightname="weight_WoVpt")
     sampMan.cacheDraw("zmass", "histo_zjets_zmass_" + lepname, mass_bins, DrawConfig(xmin=70, xmax=110, xlabel='m_{{{leplabel}{leplabel}}} [GeV]'.format(leplabel=leplabel)))
+
     # z eta with prefiring variations
-    sampMan.cacheDraw("zeta",  "histo_zjets_zeta_" + lepname, eta_bins, DrawConfig(xmin=-2.5, xmax=2.5, xlabel='#eta_{{{leplabel}{leplabel}}} [GeV]'.format(leplabel=leplabel), ymax=1e7, ylabel='Events / 1', yrmax=1.19, yrmin=0.81))
-    sampMan.cacheDraw("zeta",  "histo_zjets_zetaPrefUp_" + lepname, eta_bins, DrawConfig(xmin=-2.5, xmax=2.5, xlabel='#eta_{{{leplabel}{leplabel}}} [GeV]'.format(leplabel=leplabel), ymax=1e7, ylabel='Events / 1', yrmax=1.19, yrmin=0.81), weightname = "weight_6")
-    sampMan.cacheDraw("zeta",  "histo_zjets_zetaPrefDown_" + lepname, eta_bins, DrawConfig(xmin=-2.5, xmax=2.5, xlabel='#eta_{{{leplabel}{leplabel}}} [GeV]'.format(leplabel=leplabel), ymax=1e7, ylabel='Events / 1', yrmax=1.19, yrmin=0.81), weightname = "weight_7")
-    sampMan.cacheDraw("zeta",  "histo_zjets_zetaEcalPrefUp_" + lepname, eta_bins, DrawConfig(xmin=-2.5, xmax=2.5, xlabel='#eta_{{{leplabel}{leplabel}}} [GeV]'.format(leplabel=leplabel), ymax=1e7, ylabel='Events / 1', yrmax=1.19, yrmin=0.81), weightname = "weight_8")
-    sampMan.cacheDraw("zeta",  "histo_zjets_zetaEcalPrefDown_" + lepname, eta_bins, DrawConfig(xmin=-2.5, xmax=2.5, xlabel='#eta_{{{leplabel}{leplabel}}} [GeV]'.format(leplabel=leplabel), ymax=1e7, ylabel='Events / 1', yrmax=1.19, yrmin=0.81), weightname = "weight_9")
+    sampMan.cacheDraw("zeta",  "histo_zjets_zeta_" + lepname, eta_bins, DrawConfig(xmin=-2.5, xmax=2.5, xlabel='#eta_{{{leplabel}{leplabel}}}'.format(leplabel=leplabel), ymax=1e7, ylabel='Events / 1', yrmax=1.19, yrmin=0.81))
+    #sampMan.cacheDraw("zeta",  "histo_zjets_zetaPrefUp_" + lepname, eta_bins, DrawConfig(xmin=-2.5, xmax=2.5, xlabel='#eta_{{{leplabel}{leplabel}}}'.format(leplabel=leplabel), ymax=1e7, ylabel='Events / 1', yrmax=1.19, yrmin=0.81), weightname = "weight_6")
+    #sampMan.cacheDraw("zeta",  "histo_zjets_zetaPrefDown_" + lepname, eta_bins, DrawConfig(xmin=-2.5, xmax=2.5, xlabel='#eta_{{{leplabel}{leplabel}}}'.format(leplabel=leplabel), ymax=1e7, ylabel='Events / 1', yrmax=1.19, yrmin=0.81), weightname = "weight_7")
+    #sampMan.cacheDraw("zeta",  "histo_zjets_zetaEcalPrefUp_" + lepname, eta_bins, DrawConfig(xmin=-2.5, xmax=2.5, xlabel='#eta_{{{leplabel}{leplabel}}}'.format(leplabel=leplabel), ymax=1e7, ylabel='Events / 1', yrmax=1.19, yrmin=0.81), weightname = "weight_8")
+    #sampMan.cacheDraw("zeta",  "histo_zjets_zetaEcalPrefDown_" + lepname, eta_bins, DrawConfig(xmin=-2.5, xmax=2.5, xlabel='#eta_{{{leplabel}{leplabel}}}'.format(leplabel=leplabel), ymax=1e7, ylabel='Events / 1', yrmax=1.19, yrmin=0.81), weightname = "weight_9")
+    #sampMan.cacheDraw("zeta",  "histo_zjets_zetaMuonPrefUp_" + lepname, eta_bins, DrawConfig(xmin=-2.5, xmax=2.5, xlabel='#eta_{{{leplabel}{leplabel}}}'.format(leplabel=leplabel), ymax=1e7, ylabel='Events / 1', yrmax=1.19, yrmin=0.81), weightname = "weight_10")
+    #sampMan.cacheDraw("zeta",  "histo_zjets_zetaMuonPrefDown_" + lepname, eta_bins, DrawConfig(xmin=-2.5, xmax=2.5, xlabel='#eta_{{{leplabel}{leplabel}}}'.format(leplabel=leplabel), ymax=1e7, ylabel='Events / 1', yrmax=1.19, yrmin=0.81), weightname = "weight_11")
+
     # z y with prefiring variations
-    sampMan.cacheDraw("zy",    "histo_zjets_zrapidity_" + lepname, eta_bins, DrawConfig(xmin=-2.5, xmax=2.5, xlabel='y_{{{leplabel}{leplabel}}} [GeV]'.format(leplabel=leplabel), ymax=1e7, ylabel='Events / 1', yrmin=0.81, yrmax=1.19))
-    sampMan.cacheDraw("zy",    "histo_zjets_zrapidityPrefUp_" + lepname, eta_bins, DrawConfig(xmin=-2.5, xmax=2.5, xlabel='y_{{{leplabel}{leplabel}}} [GeV]'.format(leplabel=leplabel), ymax=1e7, ylabel='Events / 1', yrmin=0.81, yrmax=1.19), weightname="weight_6")
-    sampMan.cacheDraw("zy",    "histo_zjets_zrapidityPrefDown_" + lepname, eta_bins, DrawConfig(xmin=-2.5, xmax=2.5, xlabel='y_{{{leplabel}{leplabel}}} [GeV]'.format(leplabel=leplabel), ymax=1e7, ylabel='Events / 1', yrmin=0.81, yrmax=1.19), weightname="weight_7")
+    sampMan.cacheDraw("zy",    "histo_zjets_zrapidity_" + lepname, eta_bins, DrawConfig(xmin=-2.5, xmax=2.5, xlabel='y_{{{leplabel}{leplabel}}}'.format(leplabel=leplabel), ymax=1e7, ylabel='Events / 1', yrmin=0.81, yrmax=1.19))
+    sampMan.cacheDraw("zy",    "histo_zjets_zrapidityPrefUp_" + lepname, eta_bins, DrawConfig(xmin=-2.5, xmax=2.5, xlabel='y_{{{leplabel}{leplabel}}}'.format(leplabel=leplabel), ymax=1e7, ylabel='Events / 1', yrmin=0.81, yrmax=1.19), weightname="weight_6")
+    sampMan.cacheDraw("zy",    "histo_zjets_zrapidityPrefDown_" + lepname, eta_bins, DrawConfig(xmin=-2.5, xmax=2.5, xlabel='y_{{{leplabel}{leplabel}}}'.format(leplabel=leplabel), ymax=1e7, ylabel='Events / 1', yrmin=0.81, yrmax=1.19), weightname="weight_7")
+    sampMan.cacheDraw("zy",    "histo_zjets_zrapidityEcalPrefUp_" + lepname, eta_bins, DrawConfig(xmin=-2.5, xmax=2.5, xlabel='y_{{{leplabel}{leplabel}}}'.format(leplabel=leplabel), ymax=1e7, ylabel='Events / 1', yrmin=0.81, yrmax=1.19), weightname="weight_8")
+    sampMan.cacheDraw("zy",    "histo_zjets_zrapidityEcalPrefDown_" + lepname, eta_bins, DrawConfig(xmin=-2.5, xmax=2.5, xlabel='y_{{{leplabel}{leplabel}}}'.format(leplabel=leplabel), ymax=1e7, ylabel='Events / 1', yrmin=0.81, yrmax=1.19), weightname="weight_9")
+    sampMan.cacheDraw("zy",    "histo_zjets_zrapidityMuonPrefUp_" + lepname, eta_bins, DrawConfig(xmin=-2.5, xmax=2.5, xlabel='y_{{{leplabel}{leplabel}}}'.format(leplabel=leplabel), ymax=1e7, ylabel='Events / 1', yrmin=0.81, yrmax=1.19), weightname="weight_10")
+    sampMan.cacheDraw("zy",    "histo_zjets_zrapidityMuonPrefDown_" + lepname, eta_bins, DrawConfig(xmin=-2.5, xmax=2.5, xlabel='y_{{{leplabel}{leplabel}}}'.format(leplabel=leplabel), ymax=1e7, ylabel='Events / 1', yrmin=0.81, yrmax=1.19), weightname="weight_11")
+    sampMan.cacheDraw("zy",    "histo_zjets_zrapidityWoEcalPrefire_" + lepname, eta_bins, DrawConfig(xmin=-2.5, xmax=2.5, xlabel='y_{{{leplabel}{leplabel}}}'.format(leplabel=leplabel), ymax=1e7, ylabel='Events / 1', yrmin=0.81, yrmax=1.19), weightname="weight_noEcal")
+    sampMan.cacheDraw("zy",    "histo_zjets_zrapidityWoMuonPrefire_" + lepname, eta_bins, DrawConfig(xmin=-2.5, xmax=2.5, xlabel='y_{{{leplabel}{leplabel}}}'.format(leplabel=leplabel), ymax=1e7, ylabel='Events / 1', yrmin=0.81, yrmax=1.19), weightname="weight_noMuon")
 
     sampMan.cacheDraw("nPV", "histo_nPV_" + lepname, 10, 0, 10, DrawConfig(xmin=0, xmax=10, xlabel='# PV', ylabel='Events / 1'))
 
     sampMan.cacheDraw("LeadMuon_pt", "histo_leadLep_pt_" + lepname, pt_bins, DrawConfig(xmin=20, xmax=70, xlabel='p_{{T}}(Leading {leplabel}) [GeV]'.format(leplabel=leplabel)))
     # leading lepton eta with prefiring variations
-    sampMan.cacheDraw("LeadMuon_eta", "histo_leadLep_eta_" + lepname, eta_bins, DrawConfig(xmin=-2.6, xmax=2.6, xlabel='#eta (Leading {leplabel}) [GeV]'.format(leplabel=leplabel), ymax=1e7, ylabel='Events / 1', yrmin=0.81, yrmax=1.19))
-    sampMan.cacheDraw("LeadMuon_eta", "histo_leadLep_etaPrefUp_" + lepname, eta_bins, DrawConfig(xmin=-2.6, xmax=2.6, xlabel='#eta (Leading {leplabel}) [GeV]'.format(leplabel=leplabel), ymax=1e7, ylabel='Events / 1', yrmin=0.81, yrmax=1.19), weightname="weight_6")
-    sampMan.cacheDraw("LeadMuon_eta", "histo_leadLep_etaPrefDown_" + lepname, eta_bins, DrawConfig(xmin=-2.6, xmax=2.6, xlabel='#eta (Leading {leplabel}) [GeV]'.format(leplabel=leplabel), ymax=1e7, ylabel='Events / 1', yrmin=0.81, yrmax=1.19), weightname="weight_7")
+    sampMan.cacheDraw("LeadMuon_eta", "histo_leadLep_eta_" + lepname, eta_bins, DrawConfig(xmin=-2.6, xmax=2.6, xlabel='#eta (Leading {leplabel})'.format(leplabel=leplabel), ymax=1e7, ylabel='Events / 1', yrmin=0.81, yrmax=1.19))
+    sampMan.cacheDraw("LeadMuon_eta", "histo_leadLep_etaPrefUp_" + lepname, eta_bins, DrawConfig(xmin=-2.6, xmax=2.6, xlabel='#eta (Leading {leplabel})'.format(leplabel=leplabel), ymax=1e7, ylabel='Events / 1', yrmin=0.81, yrmax=1.19), weightname="weight_6")
+    sampMan.cacheDraw("LeadMuon_eta", "histo_leadLep_etaPrefDown_" + lepname, eta_bins, DrawConfig(xmin=-2.6, xmax=2.6, xlabel='#eta (Leading {leplabel})'.format(leplabel=leplabel), ymax=1e7, ylabel='Events / 1', yrmin=0.81, yrmax=1.19), weightname="weight_7")
 
     sampMan.cacheDraw("SubleadLep_pt", "histo_subleadLep_pt_" + lepname, pt_bins, DrawConfig(xmin=20, xmax=70, xlabel='p_{{T}}(Subleading {leplabel}) [GeV]'.format(leplabel=leplabel)))
     # subleading lepton eta with prefiring variations
-    sampMan.cacheDraw("SubleadLep_eta", "histo_subleadLep_eta_" + lepname, eta_bins, DrawConfig(xmin=-2.6, xmax=2.6, xlabel='#eta (Subleading {leplabel}) [GeV]'.format(leplabel=leplabel), ymax=1e7, ylabel='Events / 1', yrmin=0.81, yrmax=1.19))
-    sampMan.cacheDraw("SubleadLep_eta", "histo_subleadLep_etaPrefUp_" + lepname, eta_bins, DrawConfig(xmin=-2.6, xmax=2.6, xlabel='#eta (Subleading {leplabel}) [GeV]'.format(leplabel=leplabel), ymax=1e7, ylabel='Events / 1', yrmin=0.81, yrmax=1.19), weightname="weight_6")
-    sampMan.cacheDraw("SubleadLep_eta", "histo_subleadLep_etaPrefDown_" + lepname, eta_bins, DrawConfig(xmin=-2.6, xmax=2.6, xlabel='#eta (Subleading {leplabel}) [GeV]'.format(leplabel=leplabel), ymax=1e7, ylabel='Events / 1', yrmin=0.81, yrmax=1.19), weightname="weight_7")
+    sampMan.cacheDraw("SubleadLep_eta", "histo_subleadLep_eta_" + lepname, eta_bins, DrawConfig(xmin=-2.6, xmax=2.6, xlabel='#eta (Subleading {leplabel})'.format(leplabel=leplabel), ymax=1e7, ylabel='Events / 1', yrmin=0.81, yrmax=1.19))
+    sampMan.cacheDraw("SubleadLep_eta", "histo_subleadLep_etaPrefUp_" + lepname, eta_bins, DrawConfig(xmin=-2.6, xmax=2.6, xlabel='#eta (Subleading {leplabel})'.format(leplabel=leplabel), ymax=1e7, ylabel='Events / 1', yrmin=0.81, yrmax=1.19), weightname="weight_6")
+    sampMan.cacheDraw("SubleadLep_eta", "histo_subleadLep_etaPrefDown_" + lepname, eta_bins, DrawConfig(xmin=-2.6, xmax=2.6, xlabel='#eta (Subleading {leplabel})'.format(leplabel=leplabel), ymax=1e7, ylabel='Events / 1', yrmin=0.81, yrmax=1.19), weightname="weight_7")
 
     sampMan.cacheDraw("met", "histo_zjets_pfmet_pt" + lepname, met_pt_bins, DrawConfig(xmin=0, xmax=100, xlabel='PF MET [GeV]'))
     sampMan.cacheDraw("metPhi", "histo_zjets_pfmet_phi" + lepname, 30, phimin, phimax, DrawConfig(xmin=phimin, xmax=phimax, xlabel='PF MET #phi'))
@@ -202,7 +220,7 @@ def main():
     sampMan.cacheDraw("met_phi_corr", "histo_zjets_pfmet_phi_corr_" + lepname, 30, phimin, phimax, DrawConfig(xmin=phimin, xmax=phimax, xlabel='Corrected PF MET #phi'))
 
     sampMan.cacheDraw("u1_corr", "histo_zjets_pfmet_u1_corr_" + lepname, u1_bins, DrawConfig(xmin=-20.0, xmax=50.0, xlabel='Corrected u_{#parallel} [GeV]'))
-    sampMan.cacheDraw("u2_corr", "histo_zjets_pfmet_u2_corr_" + lepname, u2_bins, DrawConfig(xmin=-40.0, xmax=40.0, xlabel='Corrected u_{#perp} [GeV]'))
+    sampMan.cacheDraw("u2_corr", "histo_zjets_pfmet_u2_corr_" + lepname, u2_bins, DrawConfig(xmin=-40.0, xmax=40.0, xlabel='Corrected u_{ #perp} [GeV]'))
 
     #sampMan.cacheDraw("ucor1", "histo_zjets_mumu_pfmet_ucor1_pt", u1_bins, DrawConfig(xmin=-20.0, xmax=100.0, xlabel="u_{#parallel} [GeV]", extraText='#mu#mu channel'))
     #sampMan.cacheDraw("ucor2", "histo_zjets_mumu_pfmet_ucor2_pt", u2_bins, DrawConfig(xmin=-30.0, xmax=30.0, xlabel= "u_{#perp  } [GeV]", extraText='#mu#mu channel'))
@@ -212,6 +230,21 @@ def main():
         sampMan.cacheDraw("zmass", "histo_zjets_zmass_{}_weight_{}".format(lepname, str(i)),  15, 60, 120, DrawConfig(xmin=60, xmax=120, xlabel="m_{{{leplabel}{leplabel}}} [GeV]".format(leplabel=leplabel), dology=True, donormalizebin=False, addOverflow=False, addUnderflow=False), weightname = "weight_{}".format(str(i)))
 
     sampMan.launchDraw()
+
+    # Draw the prefire correction histogram with uncertainty band
+    hname = "histo_zjets_zrapidity_" + lepname
+    hnameUp = "histo_zjets_zrapidityPrefUp_" + lepname
+    hnameDown = "histo_zjets_zrapidityPrefDown_" + lepname
+    hratiopanel = sampMan.hratios[hname][0]
+    hratiopanelUp = sampMan.hratios[hnameUp][0]
+    hratiopanelDown = sampMan.hratios[hnameDown][0]
+    print(hratiopanel.GetNbinsX())
+    for ibin in xrange(hratiopanel.GetNbinsX() + 1):
+        print("ibin {} bin content {} up {} down {}".format(ibin, hratiopanel.GetBinContent(ibin), hratiopanelUp.GetBinContent(ibin), hratiopanelDown.GetBinContent(ibin)))
+        hratiopanel.SetBinContent(ibin, 1.0)
+        hratiopanel.SetBinError(ibin, 0.5*abs(hratiopanelUp.GetBinContent(ibin) - hratiopanelDown.GetBinContent(ibin)))
+    drawconfigs = DrawConfig(xmin=-2.5, xmax=2.5, xlabel='y_{{{leplabel}{leplabel}}}'.format(leplabel=leplabel), ymax=1e7, ylabel='Events / 1', yrmin=0.81, yrmax=1.19, outputname = hname + "_withUnc")
+    DrawHistos([sampMan.hdatas[hname], sampMan.hsmcs[hname]], ["Data", lepchannel, "t#bar{t}", "EWK"], drawconfigs.xmin, drawconfigs.xmax, drawconfigs.xlabel, drawconfigs.ymin, drawconfigs.ymax, drawconfigs.ylabel, drawconfigs.outputname, is5TeV=do5TeV, hratiopanel = hratiopanel, dology=drawconfigs.dology, dologx=drawconfigs.dologx, showratio=drawconfigs.showratio, yrmax = drawconfigs.yrmax, yrmin = drawconfigs.yrmin, yrlabel = drawconfigs.yrlabel, donormalize=drawconfigs.donormalize, ratiobase=drawconfigs.ratiobase, legendPos = drawconfigs.legendPos, redrawihist = drawconfigs.redrawihist, extraText = drawconfigs.extraText, noCMS = drawconfigs.noCMS, addOverflow = drawconfigs.addOverflow, addUnderflow = drawconfigs.addUnderflow, nMaxDigits = drawconfigs.nMaxDigits)
 
     sampMan.dumpCounts()
 

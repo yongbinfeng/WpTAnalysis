@@ -133,6 +133,7 @@ class Sample(object):
 
     def getNMCEvt(self, inputfiles):
         print "count total number of MC events from:"
+        Nevt = 0.
         for line in open( inputfiles, "r"):
             fname = line.rstrip()
             if fname.startswith('#'):
@@ -140,13 +141,13 @@ class Sample(object):
             print fname
             ifile = ROOT.TFile.Open(fname)
             hist = ifile.Get("hGenWeights")
-            Nevt = hist.Integral()
+            Nevt += hist.Integral()
             ifile.Close()
-            if Nevt > 0:
-                # the histograms saved in other files of the same dataset
-                # is copied from the same mother histogram, so only needs the
-                # first histogram, to get the total number of events before selection
-                break;
+            #if Nevt > 0:
+            #    # the histograms saved in other files of the same dataset
+            #    # is copied from the same mother histogram, so only needs the
+            #    # first histogram, to get the total number of events before selection
+            #    break;
         print "total number of events: {}".format(Nevt)
         return Nevt
 

@@ -239,7 +239,7 @@ draw histograms with the CMS tdr style
 '''
 
 
-def DrawHistos(myhistos, mylabels, xmin, xmax, xlabel, ymin, ymax, ylabel, outputname, dology=True, showratio=False, dologx=False, lheader="", donormalize=False, binomialratio=False, yrmax=2.0, yrmin=0.0, yrlabel=None, MCOnly=False, leftlegend=False, mycolors=[], legendPos=[], legendNCols=1, linestyles=[], markerstyles=[], showpull=False, doNewman=False, doPearson=False, ignoreHistError=False, ypullmin=-2.99, ypullmax=2.99, drawashist=False, padsize=(2, 0.9, 1.1), setGridx=False, setGridy=False, drawoptions=[], legendoptions=[], ratiooptions=[], dologz=False, doth2=False, ratiobase=0, redrawihist=-1, extraText=None, noCMS=False, noLumi=False, nMaxDigits=None, addOverflow=False, addUnderflow=False, plotdiff=False, hratiopannel = None, doratios=None, hpulls=None, W_ref = 600):
+def DrawHistos(myhistos, mylabels, xmin, xmax, xlabel, ymin, ymax, ylabel, outputname, dology=True, showratio=False, dologx=False, lheader="", donormalize=False, binomialratio=False, yrmax=2.0, yrmin=0.0, yrlabel=None, MCOnly=False, leftlegend=False, mycolors=[], legendPos=[], legendNCols=1, linestyles=[], markerstyles=[], showpull=False, doNewman=False, doPearson=False, ignoreHistError=False, ypullmin=-2.99, ypullmax=2.99, drawashist=False, padsize=(2, 0.9, 1.1), setGridx=False, setGridy=False, drawoptions=[], legendoptions=[], ratiooptions=[], dologz=False, doth2=False, ratiobase=0, redrawihist=-1, extraText=None, noCMS=False, noLumi=False, nMaxDigits=None, addOverflow=False, addUnderflow=False, plotdiff=False, hratiopanel = None, doratios=None, hpulls=None, W_ref = 600, is5TeV = False):
     # set the tdr style
     tdrstyle.setTDRStyle()
 
@@ -438,7 +438,10 @@ def DrawHistos(myhistos, mylabels, xmin, xmax, xlabel, ymin, ymax, ylabel, outpu
         if idx >= len(drawoptions):
             drawoptions.append("")
         if idx >= len(legendoptions):
-            legendoptions.append("LE")
+            if isinstance(myhistos_clone[idx], ROOT.TH1) and myhistos_clone[idx].GetMarkerStyle() != 1:
+                legendoptions.append("LP")
+            else:
+                legendoptions.append("LE")
         if isinstance(myhistos_clone[idx], ROOT.THStack):
             drawoptions[idx] = 'HIST'
             legendoptions[idx] = "F"
@@ -471,7 +474,10 @@ def DrawHistos(myhistos, mylabels, xmin, xmax, xlabel, ymin, ymax, ylabel, outpu
         CMS_lumi.cmsText = ""
         #CMS_lumi.extraText = ""
         #iPosX = 11
-    iPeriod = 4
+    if not is5TeV:
+        iPeriod = 4
+    else:
+        iPeriod = 5
     if MCOnly:
         iPeriod = 0
     if showratio or showpull:
@@ -570,16 +576,16 @@ def DrawHistos(myhistos, mylabels, xmin, xmax, xlabel, ymin, ymax, ylabel, outpu
         h2.Draw()
 
         if showratio:
-            if hratiopannel:
-                print("draw hratiopannel")
-                #hratiopannel.SetFillColor(15)
-                hratiopannel.SetFillColorAlpha(15, 0.5)
-                hratiopannel.SetLineColor(2)
-                hratiopannel.SetMarkerSize(0)
-                hratiopannel.Draw("E2 same")
-                #hratiopannel.Draw("HIST same")
-                #for ibin in xrange(1, hratiopannel.GetNbinsX()+1):
-                #    print("bin content ", hratiopannel.GetBinContent(ibin), " error ", hratiopannel.GetBinError(ibin))
+            if hratiopanel:
+                print("draw hratiopanel")
+                #hratiopanel.SetFillColor(15)
+                hratiopanel.SetFillColorAlpha(15, 0.5)
+                hratiopanel.SetLineColor(2)
+                hratiopanel.SetMarkerSize(0)
+                hratiopanel.Draw("E2 same")
+                #hratiopanel.Draw("HIST same")
+                #for ibin in xrange(1, hratiopanel.GetNbinsX()+1):
+                #    print("bin content ", hratiopanel.GetBinContent(ibin), " error ", hratiopanel.GetBinError(ibin))
                 h2.Draw("same")
             idx = 0
             for hratio in hratios.values():
@@ -627,7 +633,7 @@ def DrawHistos(myhistos, mylabels, xmin, xmax, xlabel, ymin, ymax, ylabel, outpu
 
     # canvas.Update()
     print "save plot to plots/%s.pdf" % outputname
-    #canvas.Print("plots/%s.C"%outputname)
+    canvas.Print("plots/%s.C"%outputname)
     canvas.Print("plots/%s.pdf" % outputname)
     #canvas.Print("plots/%s.png" % outputname)
     #canvas.Print("plots/%s.root" % outputname)
