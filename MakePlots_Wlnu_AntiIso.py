@@ -12,6 +12,8 @@ from SampleManager import DrawConfig, Sample, SampleManager
 ROOT.gROOT.SetBatch(True)
 ROOT.ROOT.EnableImplicitMT(15)
 
+doTest = True
+
 # boolean flag to set either muon or electron channel
 # doMuon = False means the electron channel
 doMuon = True
@@ -27,10 +29,26 @@ applyScaling = False
 do5TeV = False
 
 def main():
-    print "Program start..."
+    print("Program start...")
 
     if not do5TeV:
-        if doMuon:
+        if doTest:
+            input_antiiso_data    = "inputs/awmunu_test/input_data.txt"
+            input_antiiso_wl0     = "inputs/awmunu_test/input_wm0.txt"
+            input_antiiso_wl1     = "inputs/awmunu_test/input_wm1.txt"
+            input_antiiso_wl2     = "inputs/awmunu_test/input_wm2.txt"
+            input_antiiso_ttbar   = "inputs/awmunu_test/input_ttbar_dilepton.txt"
+            input_antiiso_ttbar_1lep = "inputs/awmunu_test/input_ttbar_singlelepton.txt"
+            input_antiiso_ttbar_0lep = "inputs/awmunu_test/input_ttbar_hadronic.txt"
+            input_antiiso_ww      = "inputs/awmunu_test/input_ww.txt"
+            input_antiiso_wz      = "inputs/awmunu_test/input_wz.txt"
+            input_antiiso_zz      = "inputs/awmunu_test/input_zz.txt"
+            input_antiiso_zxx     = "inputs/awmunu_test/input_zxx.txt"
+            input_antiiso_wx0     = "inputs/awmunu_test/input_wx0.txt"
+            input_antiiso_wx1     = "inputs/awmunu_test/input_wx1.txt"
+            input_antiiso_wx2     = "inputs/awmunu_test/input_wx2.txt"
+            
+        elif doMuon:
             input_antiiso_data    = "inputs/awmunu/input_data.txt"
             input_antiiso_wl0     = "inputs/awmunu/input_wm0.txt"
             input_antiiso_wl1     = "inputs/awmunu/input_wm1.txt"
@@ -312,7 +330,7 @@ def main():
 
     sampMan.dumpCounts()
 
-    print "Program end..."
+    print("Program end...")
 
     raw_input()
     
