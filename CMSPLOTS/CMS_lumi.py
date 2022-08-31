@@ -110,7 +110,7 @@ def CMS_lumi(pad,  iPeriod,  iPosX, plotCMS = True):
 
     latex.DrawLatex(1-r,1-t+lumiTextOffset*t,lumiText)
 
-    print "outofFrame", outOfFrame
+    print("outofFrame", outOfFrame)
 
     if( outOfFrame and plotCMS ):
         latex.SetTextFont(cmsTextFont)

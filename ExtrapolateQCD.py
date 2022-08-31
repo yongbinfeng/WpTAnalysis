@@ -147,7 +147,7 @@ def ExtrapolateQCD(fname, oname, channel, wptbin, etabins, fname_scaled=None):
         # to the same normalization first
         histos_norm = {}
         histos_scaled_norm = {}
-        for iso in xrange(isomin, isomax):
+        for iso in range(isomin, isomax):
             hname = wptbin + "/histo_wjetsAntiIso_fullrange_mtcorr_weight_" + channel + "_iso" + str(iso) + "_" + wptbin + "_" + etabin
             h = fqcd.Get(hname)
             # set the overflow and underflow to zero
@@ -165,7 +165,7 @@ def ExtrapolateQCD(fname, oname, channel, wptbin, etabins, fname_scaled=None):
 
         href = histos_norm[isomin]
         counts = href.Integral()
-        for iso in xrange(isomin,isomax):
+        for iso in range(isomin,isomax):
             histos_norm[iso].Scale(counts / histos_norm[iso].Integral())
             if fname_scaled:
                 histos_scaled_norm[iso].Scale(counts / histos_scaled_norm[iso].Integral())
@@ -186,10 +186,10 @@ def ExtrapolateQCD(fname, oname, channel, wptbin, etabins, fname_scaled=None):
         #
         # run the linear extrapolation bin-by-bin
         #
-        for ibin in xrange(1, histos_norm[isomin].GetNbinsX()+1):
+        for ibin in range(1, histos_norm[isomin].GetNbinsX()+1):
             bincontents = []
             binerrors = []
-            for iso, hist in histos_norm.iteritems():
+            for iso, hist in histos_norm.items():
                 bincontents.append( hist.GetBinContent(ibin) )
                 binerrors.append( hist.GetBinError(ibin) )
 
@@ -198,7 +198,7 @@ def ExtrapolateQCD(fname, oname, channel, wptbin, etabins, fname_scaled=None):
             if fname_scaled:
                 bincontents_scaled = []
                 binerrors_scaled = []
-                for iso, hist in histos_scaled_norm.iteritems():
+                for iso, hist in histos_scaled_norm.items():
                     bincontents_scaled.append( hist.GetBinContent(ibin) )
                     binerrors_scaled.append( hist.GetBinError(ibin) )
 
@@ -231,7 +231,7 @@ def ExtrapolateQCD(fname, oname, channel, wptbin, etabins, fname_scaled=None):
         # set the bin-by-bin shape variation (stat.) for HComb
         hnew_ups = []
         hnew_downs = []
-        for ibin in xrange(1, histos_norm[isomin].GetNbinsX()+1):
+        for ibin in range(1, histos_norm[isomin].GetNbinsX()+1):
             val = max(vals_pol1_par1[ibin-1][0], 0.)
             err = vals_pol1_par1[ibin-1][1]
             hnew_up   = hnew.Clone("h_QCD_Extrapolated_"+channel+"_"+etabin+"_"+wptbin+"_bin{}shapeUp".format(str(ibin)))
@@ -247,7 +247,7 @@ def ExtrapolateQCD(fname, oname, channel, wptbin, etabins, fname_scaled=None):
         # pol2 as another systematic
         hnew_pol2.Scale(hnew.Integral() / hnew_pol2.Integral())
         hnew_pol2Dn = hnew_pol2.Clone("h_QCD_Extrapolated_" + channel + "_" + etabin + "_" + wptbin + "_Pol2shapeDown")
-        for ibin in xrange(1, hnew.GetNbinsX()+1):
+        for ibin in range(1, hnew.GetNbinsX()+1):
             hnew_pol2Dn.SetBinContent(ibin, 2*hnew.GetBinContent(ibin) - hnew_pol2.GetBinContent(ibin))
         hnew_ups.append(hnew_pol2)
         hnew_downs.append(hnew_pol2Dn)
@@ -256,7 +256,7 @@ def ExtrapolateQCD(fname, oname, channel, wptbin, etabins, fname_scaled=None):
         if fname_scaled:
             hnew_scaled.Scale(hnew.Integral() / hnew_scaled.Integral())
             hnew_scaledDn = hnew_scaled.Clone("h_QCD_Extrapolated_" + channel + "_" + etabin + "_" + wptbin + "_ScaledMCshapeDown")
-            for ibin in xrange(1, hnew.GetNbinsX()+1):
+            for ibin in range(1, hnew.GetNbinsX()+1):
                 hnew_scaledDn.SetBinContent(ibin, 2*hnew.GetBinContent(ibin) - hnew_scaled.GetBinContent(ibin))
             hnew_ups.append(hnew_scaled)
             hnew_downs.append(hnew_scaledDn)

@@ -123,7 +123,7 @@ class Sample(object):
             fname = line.rstrip()
             if fname.startswith('#'):
                 continue
-            print fname
+            print(fname)
             self.tree.Add( fname )
 
         #self.rdf_org = ROOT.ROOT.RDataFrame( self.tree )
@@ -132,13 +132,13 @@ class Sample(object):
         #print self.rdf_org.Count().GetValue()
 
     def getNMCEvt(self, inputfiles):
-        print "count total number of MC events from:"
+        print("count total number of MC events from:")
         Nevt = 0.
         for line in open( inputfiles, "r"):
             fname = line.rstrip()
             if fname.startswith('#'):
                 continue
-            print fname
+            print(fname)
             ifile = ROOT.TFile.Open(fname)
             hist = ifile.Get("hGenWeights")
             Nevt += hist.Integral()
@@ -148,7 +148,7 @@ class Sample(object):
             #    # is copied from the same mother histogram, so only needs the
             #    # first histogram, to get the total number of events before selection
             #    break;
-        print "total number of events: {}".format(Nevt)
+        print("total number of events: {}".format(Nevt))
         return Nevt
 
     def getNMCEvtFromBranch(self):
@@ -157,7 +157,7 @@ class Sample(object):
         h_evts = self.rdf_org.Histo1D( (hname, hname, 2, -2, 2), "EvtWeight")
         Npos = h_evts.GetBinContent(2)
         Nneg = h_evts.GetBinContent(1)
-        print "total number of events: {}, in which {} are positive, {} are negative".format(Npos+Nneg, Npos, Nneg)
+        print("total number of events: {}, in which {} are positive, {} are negative".format(Npos+Nneg, Npos, Nneg))
         return Npos-Nneg
 
     def select(self):
@@ -191,7 +191,7 @@ class Sample(object):
     def ApplyCut(self, cutstring):
         rdf_postcut = self.rdf.Filter( cutstring )
         self._garbagerdfs.append( self.rdf )
-        print "applied cut {} to Sample {}".format(cutstring, self.name)
+        print("applied cut {} to Sample {}".format(cutstring, self.name))
         self.rdf = rdf_postcut
 
     def Define(self, varname, formula):
@@ -207,7 +207,7 @@ class Sample(object):
             lumi = LUMI
             if self.is5TeV:
                 lumi = LUMI_5TeV
-            print("lumi {}, weight {}".format(lumi, str(lumi/self.nmcevt)))
+            print(("lumi {}, weight {}".format(lumi, str(lumi/self.nmcevt))))
             self.rdf_org = self.rdf_org.Define("mcnorm", str(lumi/self.nmcevt * self.additionalnorm))
             if self.isWSR or self.isZSR:
                 self.rdf_org = self.rdf_org.Define("weight_WoVpt", "evtWeight[0] * mcnorm")
@@ -279,10 +279,10 @@ class SampleManager(object):
     def ApplyCutSpecificMCs(self, cutstring, sampnames=[], sampgroupnames=[]):
         for mc in self.mcs:
             if mc.name in sampnames:
-                print "Apply Cut {} for sample {}".format(cutstring, mc.name)
+                print("Apply Cut {} for sample {}".format(cutstring, mc.name))
                 mc.ApplyCut(cutstring)
             elif mc.groupname in sampgroupnames:
-                print "Apply Cut {} for sample {} in grouped sample {}".format(cutstring, mc.name, mc.groupname)
+                print("Apply Cut {} for sample {} in grouped sample {}".format(cutstring, mc.name, mc.groupname))
                 mc.ApplyCut(cutstring)
 
     def DefineAll(self, varname, formula, excludes=[], excludeGroups=[]):
@@ -292,20 +292,20 @@ class SampleManager(object):
     def DefineMC(self, varname, formula, excludes=[], excludeGroups=[]):
         for mc in self.mcs:
             if mc.name in excludes:
-                print "Define {} with {}. Skip sample {}".format(varname, formula, mc.name)
+                print("Define {} with {}. Skip sample {}".format(varname, formula, mc.name))
                 continue
             if mc.groupname in excludeGroups:
-                print "Define {} with {}. Skip sample {} in grouped sample {}".format(varname, formula, mc.name, mc.groupname)
+                print("Define {} with {}. Skip sample {} in grouped sample {}".format(varname, formula, mc.name, mc.groupname))
                 continue
             mc.rdf = mc.rdf.Define(varname, formula)
 
     def DefineSpecificMCs(self, varname, formula, sampnames=[], sampgroupnames=[]):
         for mc in self.mcs:
             if mc.name in sampnames:
-                print "Define {} with {} for sample {}".format(varname, formula, mc.name)
+                print("Define {} with {} for sample {}".format(varname, formula, mc.name))
                 mc.rdf = mc.rdf.Define(varname, formula)
             elif mc.groupname in sampgroupnames:
-                print "Define {} with {} for sample {} in grouped sample {}".format(varname, formula, mc.name, mc.groupname)
+                print("Define {} with {} for sample {} in grouped sample {}".format(varname, formula, mc.name, mc.groupname))
                 mc.rdf = mc.rdf.Define(varname, formula)
 
     def DefineData(self, varname, formula):
@@ -315,7 +315,7 @@ class SampleManager(object):
         self.normfactors = []
         for mc in self.mcs:
             self.normfactors.append( mc.normfactor )
-        print "normalization factors ", self.normfactors
+        print("normalization factors ", self.normfactors)
 
     def initGroups(self):
         # default group information is the same as the sample itself
@@ -327,7 +327,7 @@ class SampleManager(object):
     def groupMCs(self, mcnames_to_be_grouped, groupname, groupcolor, grouplegend, renormalize=False, renormalizefactor=1.0):
         for mc in self.mcs:
             if mc.name in mcnames_to_be_grouped:
-                print "Group sample ", mc.name, " to ", groupname
+                print("Group sample ", mc.name, " to ", groupname)
                 mc.groupname = groupname
                 mc.groupcolor = groupcolor
                 mc.grouplegend = grouplegend
@@ -338,7 +338,7 @@ class SampleManager(object):
 
         if mcnames_to_be_grouped:
             from termcolor import colored
-            print colored('some somples are not grouped yet, please check the names...: {}'.format(mcnames_to_be_grouped), 'red')
+            print(colored('some somples are not grouped yet, please check the names...: {}'.format(mcnames_to_be_grouped), 'red'))
 
     def getMCByName(self, mcname):
         for mc in self.mcs:
@@ -361,7 +361,7 @@ class SampleManager(object):
         """
         h_data = self.data.rdf.Histo1D( (hname+"_data", hname, nbins, xmin, xmax), varname, weightname )
         h_mcs = []
-        for imc in xrange(len(self.mcs)):
+        for imc in range(len(self.mcs)):
             mc = self.mcs[imc]
             h_mcs.append( mc.rdf.Histo1D( (hname+"_mc_"+str(imc), hname, nbins, xmin, xmax), varname, weightname) )
 
@@ -376,7 +376,7 @@ class SampleManager(object):
         nbins = xbins.size - 1
         h_data = self.data.rdf.Histo1D( (hname+"_data", hname, nbins, xbins), varname, weightname )
         h_mcs = []
-        for imc in xrange(len(self.mcs)):
+        for imc in range(len(self.mcs)):
             mc = self.mcs[imc]
             h_mcs.append( mc.rdf.Histo1D( (hname+"_mc_"+str(imc), hname, nbins, xbins), varname, weightname) )
 
@@ -399,11 +399,11 @@ class SampleManager(object):
 
         hgroupedmcs = OrderedDict()
         group_to_renormalize = ""
-        for imc in xrange(len(h_mcs)):
+        for imc in range(len(h_mcs)):
             # scale the MC to the xsec
             h_mcs[imc].Scale( self.normfactors[imc] )
             if self.mcs[imc].renormalizefactor!=1.0:
-                print "renormalize MC {} with a factor or {}".format(self.mcs[imc].name, self.mcs[imc].renormalizefactor)
+                print("renormalize MC {} with a factor or {}".format(self.mcs[imc].name, self.mcs[imc].renormalizefactor))
                 h_mcs[imc].Scale( self.mcs[imc].renormalizefactor )
 
             if docounting:
@@ -426,16 +426,16 @@ class SampleManager(object):
         if group_to_renormalize:
             ndata = h_data.Integral(0, h_data.GetNbinsX()+1)
             nmc=0
-            for gname, ghisto in hgroupedmcs.iteritems():
+            for gname, ghisto in hgroupedmcs.items():
                 if gname!=group_to_renormalize:
                     nmc += ghisto.Integral(0, ghisto.GetNbinsX()+1)
             weight = float(ndata-nmc) / hgroupedmcs[group_to_renormalize].Integral(0, hgroupedmcs[group_to_renormalize].GetNbinsX()+1)
-            print "Renormalize group for {}, with {} data, {} MC and weight {}".format(group_to_renormalize, ndata, nmc, weight)
+            print("Renormalize group for {}, with {} data, {} MC and weight {}".format(group_to_renormalize, ndata, nmc, weight))
             hgroupedmcs[group_to_renormalize].Scale(weight)
 
         hsname = "hs_" + drawconfigs.outputname
         hs_gmc = ROOT.THStack( hsname, hsname)
-        for h_gmc in reversed(hgroupedmcs.values()):
+        for h_gmc in reversed(list(hgroupedmcs.values())):
             if drawconfigs.donormalizebin:
                 # scale to bin width
                 h_gmc.Scale(1.0, "width")
@@ -454,29 +454,31 @@ class SampleManager(object):
         self.hdatas[ drawconfigs.outputname] = h_data
         self.hsmcs[  drawconfigs.outputname] = hs_gmc
         self.hratios[drawconfigs.outputname] = DrawHistos( [h_data, hs_gmc], drawconfigs.legends, drawconfigs.xmin, drawconfigs.xmax, drawconfigs.xlabel, drawconfigs.ymin, drawconfigs.ymax, drawconfigs.ylabel, drawconfigs.outputname, dology=drawconfigs.dology, dologx=drawconfigs.dologx, showratio=drawconfigs.showratio, yrmax = drawconfigs.yrmax, yrmin = drawconfigs.yrmin, yrlabel = drawconfigs.yrlabel, donormalize=drawconfigs.donormalize, ratiobase=drawconfigs.ratiobase, legendPos = drawconfigs.legendPos, redrawihist = drawconfigs.redrawihist, extraText = drawconfigs.extraText, noCMS = drawconfigs.noCMS, addOverflow = drawconfigs.addOverflow, addUnderflow = drawconfigs.addUnderflow, nMaxDigits = drawconfigs.nMaxDigits, is5TeV = self.is5TeV)
+
+        print("plot making fine in sample manage")
         
 
     def launchDraw(self):
         """
         launch all the draw options in to_draw
         """
-        print "starting drawing"
-        for hname, plotinfo in self.to_draw.iteritems():
+        print("starting drawing")
+        for hname, plotinfo in self.to_draw.items():
             self._DrawPlot( plotinfo[0], plotinfo[1], plotinfo[2], hname)
         self.to_draw.clear()
-        print "finished drawing.."
+        print("finished drawing..")
 
     def dumpCounts(self):
         """
         dump the number of events in data and MC
         """
-        print "dump the counts.."
+        print("dump the counts..")
         if len(self.counts)==0:
-            print "draw at least one distribution and then count"
+            print("draw at least one distribution and then count")
             return
 
-        print(self.counts)
+        print((self.counts))
 
-        print "Data %d"%self.counts[0]
-        for imc in xrange(len(self.mcs)):
-            print "MC %s count %f"%(self.mcs[imc].name, self.counts[imc+1])
+        print("Data %d"%self.counts[0])
+        for imc in range(len(self.mcs)):
+            print("MC %s count %f"%(self.mcs[imc].name, self.counts[imc+1]))

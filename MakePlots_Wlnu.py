@@ -22,7 +22,7 @@ doWpT = False
 do5TeV = True
 
 def main():
-    print "Program start..."
+    print("Program start...")
 
     #ROOT.gROOT.ProcessLine('TFile* f_zpt = TFile::Open("results/zpt_weight.root")')
     #ROOT.gROOT.ProcessLine('TH1D* h_zpt_ratio  = (TH1D*)f_zpt->Get("h_zpt_ratio")')
@@ -139,7 +139,7 @@ def main():
         # for the signal samples
         signalSamps = [WlSamp]
         signalSampnames = [samp.name for samp in signalSamps]
-    print("signal sample names: ", signalSampnames)
+    print(("signal sample names: ", signalSampnames))
     h_sigs = OrderedDict()
 
     # define variables and weights
@@ -330,12 +330,12 @@ def main():
         h_list = h_sigs[hname]
         hadded = h_list[0].Clone(hname)
         # merge the signal MCs
-        for idx in xrange(1, len(h_list)):
+        for idx in range(1, len(h_list)):
             hadded.Add(h_list[idx].GetValue())
         return hadded
 
     h_sigsMerged = OrderedDict()
-    for hname in h_sigs.keys():
+    for hname in list(h_sigs.keys()):
         hadded = addSignals(hname)
         h_sigsMerged[hname] = hadded
 
@@ -378,7 +378,7 @@ def main():
                         hlists_central = [h_sigsMerged[hname]]
 
                     # central values for MC
-                    for ih in xrange(len(hlists_central)):
+                    for ih in range(len(hlists_central)):
                         hcen = hlists_central[ih]
                         hcen.SetDirectory(odir)
                         hcen.Write()
@@ -393,7 +393,7 @@ def main():
                             hname = "histo_wjets_{}_mT_{}_{}_{}_{}_signalMC".format(chg, str(i), wpt, lepeta, wpttruth)
                             hlists_up = [h_sigsMerged[hname]]
 
-                        for ih in xrange(len(hlists_up)):
+                        for ih in range(len(hlists_up)):
                             # loop over different simulated processes
                             hcen = hlists_central[ih]
                             hup  = hlists_up[ih]
@@ -407,7 +407,7 @@ def main():
                             hup.SetName("{}_{}Up".format(hcen.GetName(), suffix))
 
                             hdn  = hcen.Clone("{}_{}Down".format(hcen.GetName(), suffix))
-                            for ibin in xrange(1, hup.GetNbinsX()+1):
+                            for ibin in range(1, hup.GetNbinsX()+1):
                                 hdn.SetBinContent(ibin, 2*hcen.GetBinContent(ibin) - hup.GetBinContent(ibin))
 
                             hup.SetDirectory(odir)
@@ -424,7 +424,7 @@ def main():
                             # signal MC
                             hname = "histo_wjets_{}_mtcorr_weight_{}_{}_{}_{}_signalMC".format(chg, str(i), wpt, lepeta, wpttruth)
                             hlists_up = [h_sigsMerged[hname]]
-                        for ih in xrange(len(hlists_up)):
+                        for ih in range(len(hlists_up)):
                             # loop over different processes
                             hcen = hlists_central[ih]
                             hup  = hlists_up[ih]
@@ -447,7 +447,7 @@ def main():
                                 suffix = prefix + "SysWeight" + str(i) + "Down"
                                 #hdn  = hcen.Clone("{}_SysWeight{}Down".format(hcen.GetName(), str(i)))
                                 hdn  = hcen.Clone("{}_{}".format(hcen.GetName(), suffix))
-                                for ibin in xrange(1, hup.GetNbinsX()+1):
+                                for ibin in range(1, hup.GetNbinsX()+1):
                                     hdn.SetBinContent(ibin, 2*hcen.GetBinContent(ibin) - hup.GetBinContent(ibin))
                             
                             hup.SetDirectory(odir)
@@ -458,9 +458,9 @@ def main():
 
     outfile.Close()
 
-    print "Program end..."
+    print("Program end...")
 
-    raw_input()
+    input()
     
     return 
 

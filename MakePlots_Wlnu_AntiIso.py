@@ -244,7 +244,7 @@ def main():
                     strname = "weight_{}_{}_{}_{}".format(chg, iso, wpt, lepeta)
 
                     outputname = "histo_wjetsAntiIso_fullrange_mtcorr_" + strname 
-                    sampMan.cacheDraw("mtCorr", outputname, nbins,  xmin, xmax, DrawConfig(xmin=xmin, xmax=xmax, xlabel="m_{T} [GeV]", dology=True, ymax=2e6, donormalizebin=False, addOverflow=True, addUnderflow=True, showratio=False), weightname = strname)
+                    sampMan.cacheDraw("mtCorr", outputname, nbins,  xmin, xmax, DrawConfig(xmin=xmin, xmax=xmax, xlabel="m_{T} [GeV]", ylabel=f"Events / {(xmax-xmin)/nbins:.0f} GeV", dology=True, ymax=2e6, donormalizebin=False, addOverflow=False, addUnderflow=False, showratio=False), weightname = strname)
                     #outputname = "histo_wjetsAntiIso_fullrange_lepEta_" + strname
                     #sampMan.cacheDraw("Lep_eta", outputname, 24, -2.4, 2.4, DrawConfig(xmin=-2.4, xmax=2.4, xlabel="Lepton Eta", dology=True, ymax=2e6, donormalizebin=False, addOverflow=False, addUnderflow=False, showratio=True), weightname = strname)
 
@@ -262,7 +262,7 @@ def main():
                     # for mT
                     outputname = "histo_wjetsAntiIso_fullrange_mtcorr_" + strname
                     hstacked = THStack2TH1(sampMan.hsmcs[outputname])
-                    for ibin in xrange(hstacked.GetNbinsX()+1):
+                    for ibin in range(hstacked.GetNbinsX()+1):
                         # hstacked should always be above 0
                         hstacked.SetBinContent(ibin, max(hstacked.GetBinContent(ibin), 0))
                     sampMan.hdatas[outputname].Add( hstacked, -1.0 )
@@ -310,7 +310,7 @@ def main():
 
                     hup.Scale(hcenter.Integral() / (hup.Integral()+1e-6))
 
-                    for ibin in xrange(1, hcenter.GetNbinsX()+1):
+                    for ibin in range(1, hcenter.GetNbinsX()+1):
                         center = hcenter.GetBinContent(ibin)
                         up = hup.GetBinContent(ibin)
                         hdown.SetBinContent(ibin, max(2*center - up, 0))
@@ -332,7 +332,7 @@ def main():
 
     print("Program end...")
 
-    raw_input()
+    input()
     
     return 
 

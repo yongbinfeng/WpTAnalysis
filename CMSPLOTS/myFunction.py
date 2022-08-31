@@ -1,7 +1,7 @@
 import ROOT
 from ROOT import TH1F, TCanvas, TPad, Math, TF1, TLegend
-import CMS_lumi
-import tdrstyle
+from . import CMS_lumi
+from . import tdrstyle
 
 
 class bcolors:
@@ -18,16 +18,16 @@ class bcolors:
 
 def DumpHist(hist):
     # dump the number of events in histogram
-    print "histogram %s with %d bins" % (hist.GetName, hist.GetNbinsX())
-    for ibin in xrange(0, hist.GetNbinsX()+2):
-        print " %d bin with %.2f events" % (ibin, hist.GetBinContent(ibin))
+    print("histogram %s with %d bins" % (hist.GetName, hist.GetNbinsX()))
+    for ibin in range(0, hist.GetNbinsX()+2):
+        print(" %d bin with %.2f events" % (ibin, hist.GetBinContent(ibin)))
 
 
 def PrepareHisto(myfile, listhistos, printlist=True):
     if printlist:
-        print listhistos
+        print(listhistos)
     myhisto = myfile.Get("%s" % listhistos[0])
-    for idx in xrange(1, len(listhistos)):
+    for idx in range(1, len(listhistos)):
         myhisto.Add(myfile.Get("%s" % listhistos[idx]))
     return myhisto
 
@@ -51,7 +51,7 @@ def GetHisto(myfile, lhistos, *args):
         # deal with the case with numerator is 0 but denominator is not
         # temporary fix, use the upper error as the error
         # https://twiki.cern.ch/twiki/bin/viewauth/CMS/PoissonErrorBars
-        for ibin in xrange(1, htemp_rebin.GetNbinsX()+1):
+        for ibin in range(1, htemp_rebin.GetNbinsX()+1):
             if htemp_rebin.GetBinContent(ibin) == 0 and htemp_den_rebin.GetBinContent(ibin) != 0:
                 htemp_rebin.SetBinError(
                     ibin, Math.gamma_quantile_c((1 - 0.6827)/2.0, 1, 1))
@@ -87,9 +87,9 @@ def myDivide(num, den):
 def CalculateChi(hobsclone, hexp, doNewman=False, doPearson=False, ignoreHistError=False, printchi2=True):
 
     if doNewman and doPearson:
-        print bcolors.RED, "can NOT do Newman and Pearson chi2 at the same time!!! Use Pearson instead", bcolors.ENDC
+        print(bcolors.RED, "can NOT do Newman and Pearson chi2 at the same time!!! Use Pearson instead", bcolors.ENDC)
 
-    for ibin in xrange(1, hexp.GetNbinsX()+1):
+    for ibin in range(1, hexp.GetNbinsX()+1):
         num = hobsclone.GetBinContent(ibin) - hexp.GetBinContent(ibin)
         if doPearson and ignoreHistError:
             den = ROOT.TMath.Sqrt(hexp.GetBinContent(ibin))
@@ -107,9 +107,9 @@ def CalculateChi(hobsclone, hexp, doNewman=False, doPearson=False, ignoreHistErr
 
     if printchi2:
         chi2 = 0
-        for ibin in xrange(1, hobsclone.GetNbinsX()+1):
+        for ibin in range(1, hobsclone.GetNbinsX()+1):
             chi2 += ROOT.TMath.Power(hobsclone.GetBinContent(ibin), 2.0)
-        print "Chi2 for %s is %.2f" % (hobsclone.GetName(), chi2)
+        print("Chi2 for %s is %.2f" % (hobsclone.GetName(), chi2))
 
 
 '''
@@ -135,7 +135,7 @@ def myRead(inputfile):
             continue
 
         if len(tline) < 4 or len(tline) > 5:
-            print "Input Error in line\n   %s of file %s" % (line, inputfile)
+            print("Input Error in line\n   %s of file %s" % (line, inputfile))
             sys.exit(0)
 
         files.append(tline[0])
@@ -179,16 +179,16 @@ def getErrors(hprof, verbose=False):
     # to clone the binning of input hprof. If there is a better way,
     # this can be changed
     if verbose:
-        print "input histogram %s has %d bins" % (
-            hprof.GetName(), hprof.GetNbinsX())
-    for ibin in xrange(1, hprof.GetNbinsX()+1):
+        print("input histogram %s has %d bins" % (
+            hprof.GetName(), hprof.GetNbinsX()))
+    for ibin in range(1, hprof.GetNbinsX()+1):
         if verbose:
-            print "%d bin, with RMS %f" % (ibin, hprof.GetBinError(ibin))
+            print("%d bin, with RMS %f" % (ibin, hprof.GetBinError(ibin)))
         herr.SetBinContent(ibin, hprof.GetBinError(ibin))
         herr.SetBinError(ibin, 0)
-    for ibin in xrange(1, hprof.GetNbinsX()+1):
+    for ibin in range(1, hprof.GetNbinsX()+1):
         if verbose:
-            print "%d bin, with Content %f" % (ibin, herr.GetBinContent(ibin))
+            print("%d bin, with Content %f" % (ibin, herr.GetBinContent(ibin)))
     return herr
 
 
@@ -196,7 +196,7 @@ def THStack2TH1(hstack, postfix=""):
     assert isinstance(hstack, ROOT.THStack), "input must be a ROOT.THStack"
     hlist = list(hstack.GetHists())
     h1 = hlist[0].Clone("{}_histogram_{}".format(hstack.GetName(), postfix))
-    map(h1.Add, hlist[1:])
+    list(map(h1.Add, hlist[1:]))
     return h1
 
 def AddOverflowsTH1(h1, dolastbin=True):
@@ -228,14 +228,14 @@ def AddOverflows(hinput, dolastbin=True):
     if isinstance(hinput, ROOT.THStack):
         # do the AddOverflowsTH1 for all the histograms in THStack
         hlist = list(hinput.GetHists())
-        map(AddOverflowsTH1, hlist, [dolastbin]*len(hlist))
+        list(map(AddOverflowsTH1, hlist, [dolastbin]*len(hlist)))
 
 def Ratio2Diff(hratio, inpercent=True):
     '''
     convert the ratio plot to diff, by substracting 1.0,
     and may show it in percentile
     '''
-    for ibin in xrange(0,hratio.GetNbinsX()+1):
+    for ibin in range(0,hratio.GetNbinsX()+1):
         hratio.SetBinContent(ibin, hratio.GetBinContent(ibin)-1.0)
     if inpercent:
         hratio.Scale(100.0)
@@ -249,6 +249,8 @@ draw histograms with the CMS tdr style
 def DrawHistos(myhistos, mylabels, xmin, xmax, xlabel, ymin, ymax, ylabel, outputname, dology=True, showratio=False, dologx=False, lheader="", donormalize=False, binomialratio=False, yrmax=2.0, yrmin=0.0, yrlabel=None, MCOnly=False, leftlegend=False, mycolors=[], legendPos=[], legendNCols=1, linestyles=[], markerstyles=[], showpull=False, doNewman=False, doPearson=False, ignoreHistError=False, ypullmin=-2.99, ypullmax=2.99, drawashist=False, padsize=(2, 0.9, 1.1), setGridx=False, setGridy=False, drawoptions=[], legendoptions=[], ratiooptions=[], dologz=False, doth2=False, ratiobase=0, redrawihist=-1, extraText=None, noCMS=False, noLumi=False, nMaxDigits=None, addOverflow=False, addUnderflow=False, plotdiff=False, hratiopanel = None, doratios=None, hpulls=None, W_ref = 600, is5TeV = False):
     # set the tdr style
     tdrstyle.setTDRStyle()
+    # not sure why need this...
+    ROOT.gStyle.SetErrorX(0.5)
 
     # change the CMS_lumi variables (see CMS_lumi.py)
     # used with iPeriod = 0, e.g. for simulation-only plots (default is an empty string)
@@ -284,16 +286,19 @@ def DrawHistos(myhistos, mylabels, xmin, xmax, xlabel, ymin, ymax, ylabel, outpu
     elif npads == 1:
         canvas = TCanvas("c2"+outputname, "c2", 50, 50, W, 600)
         canvas.SetGrid(setGridx, setGridy)
+        canvas.SetTicks(1,1)
         padsize1 = 1.0
         if doth2:
             canvas.SetRightMargin(0.10)
         padsize2 = 0.
         padsize3 = 0.
+        canvas.cd()
     else:
         canvas = TCanvas("c2"+outputname, "c2", 50, 50, W, 800)
         padsize1 = float(padsize[0])/(padsize[0]+padsize[1]+padsize[2])
         padsize2 = float(padsize[1])/(padsize[0]+padsize[1]+padsize[2])
         padsize3 = float(padsize[2])/(padsize[0]+padsize[1]+padsize[2])
+
     if dology:
         #print "set y axis to log scale"
         canvas.SetLogy()
@@ -314,6 +319,7 @@ def DrawHistos(myhistos, mylabels, xmin, xmax, xlabel, ymin, ymax, ylabel, outpu
         pad2.SetBottomMargin(0.13/padsize2)
         pad2.SetLeftMargin(0.15 * (600.0)/W)
         pad2.SetGridy(1)
+        pad2.SetTicks(1,1)
         pad1.Draw()
         pad2.Draw()
 
@@ -328,10 +334,12 @@ def DrawHistos(myhistos, mylabels, xmin, xmax, xlabel, ymin, ymax, ylabel, outpu
         pad2.SetBottomMargin(0.02/padsize2)
         pad2.SetLeftMargin(0.15 * (600.0)/W)
         pad2.SetGridy(1)
+        pas2.SetTicks(1,1)
         pad3.SetTopMargin(0.01/padsize3)
         pad3.SetBottomMargin(0.13/padsize3)
         pad3.SetLeftMargin(0.15 * (600.0)/W)
         pad3.SetGridy(1)
+        pad3.SetTicks(1,1)
         pad1.Draw()
         pad2.Draw()
         pad3.Draw()
@@ -339,6 +347,7 @@ def DrawHistos(myhistos, mylabels, xmin, xmax, xlabel, ymin, ymax, ylabel, outpu
     if npads > 1:
         pad1.cd()
         pad1.SetGrid(setGridx, setGridy)
+        pad1.SetTicks(1,1)
         if dology:
             pad1.SetLogy()
         if dologx:
@@ -409,21 +418,21 @@ def DrawHistos(myhistos, mylabels, xmin, xmax, xlabel, ymin, ymax, ylabel, outpu
         myhistos_clone.append(ihcolone)
 
     if drawashist:
-        drawoptions = ["HIST" for i in xrange(len(myhistos_clone))]
-        legendoptions = ['L' for i in xrange(len(myhistos_clone))]
+        drawoptions = ["HIST" for i in range(len(myhistos_clone))]
+        legendoptions = ['L' for i in range(len(myhistos_clone))]
 
     if not isinstance(drawoptions, list):
         # copy the option n times
-        tmp = [drawoptions for i in xrange(len(myhistos_clone))]
+        tmp = [drawoptions for i in range(len(myhistos_clone))]
         drawoptions = tmp
     if not isinstance(legendoptions, list):
-        tmp = [legendoptions for i in xrange(len(myhistos_clone))]
+        tmp = [legendoptions for i in range(len(myhistos_clone))]
         legendoptions = tmp
 
-    print("legend options ", legendoptions)
+    #print(("legend options ", legendoptions))
 
     ileg = 0
-    for idx in xrange(0, len(myhistos_clone)):
+    for idx in range(0, len(myhistos_clone)):
         if addOverflow:
             # include overflow bin
             AddOverflows(myhistos_clone[idx])
@@ -443,7 +452,7 @@ def DrawHistos(myhistos, mylabels, xmin, xmax, xlabel, ymin, ymax, ylabel, outpu
         if donormalize:
             Normalize(myhistos_clone[idx])
         if idx >= len(drawoptions):
-            drawoptions.append("")
+            drawoptions.append("EL")
         if idx >= len(legendoptions):
             if isinstance(myhistos_clone[idx], ROOT.TH1) and myhistos_clone[idx].GetMarkerStyle() != 1:
                 legendoptions.append("LP")
@@ -452,7 +461,7 @@ def DrawHistos(myhistos, mylabels, xmin, xmax, xlabel, ymin, ymax, ylabel, outpu
         if isinstance(myhistos_clone[idx], ROOT.THStack):
             drawoptions[idx] = 'HIST'
             legendoptions[idx] = "F"
-        myhistos_clone[idx].Draw(drawoptions[idx]+"same")
+        myhistos_clone[idx].Draw(" ".join(filter(None,[drawoptions[idx], "same"])))
 
         if ileg < len(mylabels):
             # number of labels might be different from number of histograms.
@@ -468,10 +477,11 @@ def DrawHistos(myhistos, mylabels, xmin, xmax, xlabel, ymin, ymax, ylabel, outpu
                     mylabels[ileg]), legendoptions[idx])
                 ileg += 1
 
+    print("draw options ", drawoptions)
     print("legend options ", legendoptions)
 
     if redrawihist >= 0:
-        myhistos_clone[redrawihist].Draw(drawoptions[redrawihist]+"same")
+        myhistos_clone[redrawihist].Draw(" ".join(filter(None,[drawoptions[redrawihist], "same"])))
 
     iPosX = 0
     plotCMS = True
@@ -492,8 +502,8 @@ def DrawHistos(myhistos, mylabels, xmin, xmax, xlabel, ymin, ymax, ylabel, outpu
             CMS_lumi.CMS_lumi(pad1, iPeriod, iPosX, plotCMS = plotCMS)
         pad1.Update()
         pad1.RedrawAxis()
-        frame = pad1.GetFrame()
-        frame.Draw()
+        #frame = pad1.GetFrame()
+        #frame.Draw()
         if len(mylabels):
             legend.Draw()
         pad1.Update()
@@ -504,10 +514,11 @@ def DrawHistos(myhistos, mylabels, xmin, xmax, xlabel, ymin, ymax, ylabel, outpu
         canvas.cd()
         canvas.Update()
         canvas.RedrawAxis()
-        frame = canvas.GetFrame()
-        frame.Draw()
+        canvas.RedrawAxis("G")
+        #frame = canvas.GetFrame()
+        #frame.Draw()
         if len(mylabels):
-            print "draw legend", len(mylabels)
+            #print("draw legend", len(mylabels))
             legend.Draw()
         canvas.Update()
 
@@ -522,7 +533,7 @@ def DrawHistos(myhistos, mylabels, xmin, xmax, xlabel, ymin, ymax, ylabel, outpu
 
     if showratio:
         hratios = {}
-        for idx in xrange(0, len(myhistos_clone)):
+        for idx in range(0, len(myhistos_clone)):
             if doratios != None and doratios[idx]==False:
                 continue
             if idx == ratiobase:
@@ -541,7 +552,7 @@ def DrawHistos(myhistos, mylabels, xmin, xmax, xlabel, ymin, ymax, ylabel, outpu
     if showpull:
         if hpulls == None:
             hpulls = []
-            for idx in xrange(0, len(myhistos_clone)):
+            for idx in range(0, len(myhistos_clone)):
                 if idx == ratiobase:
                     continue
                 hpull = myhistos_clone[idx].Clone("hpullsnew_%s" % idx)
@@ -595,11 +606,11 @@ def DrawHistos(myhistos, mylabels, xmin, xmax, xlabel, ymin, ymax, ylabel, outpu
                 #    print("bin content ", hratiopanel.GetBinContent(ibin), " error ", hratiopanel.GetBinError(ibin))
                 h2.Draw("same")
             idx = 0
-            for hratio in hratios.values():
+            for hratio in list(hratios.values()):
                 if idx >= len(ratiooptions):
                     ratiooptions.append("")
                 hratio.SetFillColor(0)
-                hratio.Draw(ratiooptions[idx] + "same")
+                hratio.Draw(ratiooptions[idx] + " same")
                 idx += 1
         elif showpull:
             for hpull in hpulls:
@@ -638,10 +649,11 @@ def DrawHistos(myhistos, mylabels, xmin, xmax, xlabel, ymin, ymax, ylabel, outpu
 
         pad3.Update()
 
-    # canvas.Update()
-    print "save plot to plots/%s.pdf" % outputname
+    canvas.Update()
+    print("save plot to plots/%s.pdf" % outputname)
     canvas.Print("plots/%s.C"%outputname)
     canvas.Print("plots/%s.pdf" % outputname)
     #canvas.Print("plots/%s.png" % outputname)
     #canvas.Print("plots/%s.root" % outputname)
+    #print("function runs fine")
     return hratios if showratio else None

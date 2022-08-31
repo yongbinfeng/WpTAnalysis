@@ -22,7 +22,7 @@ doMuon = False
 do5TeV = False
 
 def main():
-    print "Program start..."
+    print("Program start...")
 
     if not do5TeV:
         if doMuon:
@@ -240,9 +240,9 @@ def main():
     hratiopanel = sampMan.hratios[hname][0]
     hratiopanelUp = sampMan.hratios[hnameUp][0]
     hratiopanelDown = sampMan.hratios[hnameDown][0]
-    print(hratiopanel.GetNbinsX())
-    for ibin in xrange(hratiopanel.GetNbinsX() + 1):
-        print("ibin {} bin content {} up {} down {}".format(ibin, hratiopanel.GetBinContent(ibin), hratiopanelUp.GetBinContent(ibin), hratiopanelDown.GetBinContent(ibin)))
+    print((hratiopanel.GetNbinsX()))
+    for ibin in range(hratiopanel.GetNbinsX() + 1):
+        print(("ibin {} bin content {} up {} down {}".format(ibin, hratiopanel.GetBinContent(ibin), hratiopanelUp.GetBinContent(ibin), hratiopanelDown.GetBinContent(ibin))))
         hratiopanel.SetBinContent(ibin, 1.0)
         hratiopanel.SetBinError(ibin, 0.5*abs(hratiopanelUp.GetBinContent(ibin) - hratiopanelDown.GetBinContent(ibin)))
     drawconfigs = DrawConfig(xmin=-2.5, xmax=2.5, xlabel='y_{{{leplabel}{leplabel}}}'.format(leplabel=leplabel), ymax=1e7, ylabel='Events / 1', yrmin=0.81, yrmax=1.19, outputname = hname + "_withUnc")
@@ -276,7 +276,7 @@ def main():
     hlists_central = list(hsmcs_central.GetHists())
 
     # central values for MC
-    for ih in xrange(len(hlists_central)):
+    for ih in range(len(hlists_central)):
         hcen = hlists_central[ih]
         hcen.SetDirectory(odir)
         hcen.Write()
@@ -289,7 +289,7 @@ def main():
     for i in [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]:
         hsmcs_up = sampMan.hsmcs["histo_zjets_zmass_{}_weight_{}".format(lepname, str(i))]
         hlists_up = list(hsmcs_up.GetHists())
-        for ih in xrange(len(hlists_up)):
+        for ih in range(len(hlists_up)):
             # loop over different processes
             hcen = hlists_central[ih]
             hup  = hlists_up[ih]
@@ -323,7 +323,7 @@ def main():
             if i<6:
                 suffix = prefix + "SysWeight{}Down".format(str(i))
                 hdn  = hcen.Clone("{}_{}".format(hcen.GetName(), suffix))
-                for ibin in xrange(1, hup.GetNbinsX()+1):
+                for ibin in range(1, hup.GetNbinsX()+1):
                     hdn.SetBinContent(ibin, 2*hcen.GetBinContent(ibin) - hup.GetBinContent(ibin))
 
             hup.SetDirectory(odir)
@@ -333,9 +333,9 @@ def main():
                 hdn.Write()
 
     outfile.Close()
-    print "Program end..."
+    print("Program end...")
 
-    raw_input()
+    input()
     
     return 
 
