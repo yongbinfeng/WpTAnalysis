@@ -1,2 +1,8 @@
 *.pyc
 *.pdf
+plots/*
+root/*
+*_cc.d
+*_cc.so
+*.pcm
+inputs*

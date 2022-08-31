@@ -14,9 +14,8 @@ ROOT.gROOT.SetBatch(True)
 ROOT.ROOT.EnableImplicitMT(10)
 
 dotest = 0
-VetoB = False
 
-doMuon = True
+doMuon = False
 
 # analyze the 5TeV data
 # if set to false will analyze the 13TeV data
@@ -220,7 +219,10 @@ def main():
     sampMan.cacheDraw("met_phi_corr", "histo_zjets_pfmet_phi_corr_" + lepname, 30, phimin, phimax, DrawConfig(xmin=phimin, xmax=phimax, xlabel='Corrected PF MET #phi'))
 
     sampMan.cacheDraw("u1_corr", "histo_zjets_pfmet_u1_corr_" + lepname, u1_bins, DrawConfig(xmin=-20.0, xmax=50.0, xlabel='Corrected u_{#parallel} [GeV]'))
-    sampMan.cacheDraw("u2_corr", "histo_zjets_pfmet_u2_corr_" + lepname, u2_bins, DrawConfig(xmin=-40.0, xmax=40.0, xlabel='Corrected u_{ #perp} [GeV]'))
+    sampMan.cacheDraw("u2_corr", "histo_zjets_pfmet_u2_corr_" + lepname, u2_bins, DrawConfig(xmin=-40.0, xmax=40.0, xlabel='Corrected u_{#perp } [GeV]'))
+
+    sampMan.cacheDraw("u1", "histo_zjets_pfmet_u1_" + lepname, u1_bins, DrawConfig(xmin=-20.0, xmax=50.0, xlabel='u_{#parallel} [GeV]'))
+    sampMan.cacheDraw("u2", "histo_zjets_pfmet_u2_" + lepname, u2_bins, DrawConfig(xmin=-40.0, xmax=40.0, xlabel='u_{#perp } [GeV]'))
 
     #sampMan.cacheDraw("ucor1", "histo_zjets_mumu_pfmet_ucor1_pt", u1_bins, DrawConfig(xmin=-20.0, xmax=100.0, xlabel="u_{#parallel} [GeV]", extraText='#mu#mu channel'))
     #sampMan.cacheDraw("ucor2", "histo_zjets_mumu_pfmet_ucor2_pt", u2_bins, DrawConfig(xmin=-30.0, xmax=30.0, xlabel= "u_{#perp  } [GeV]", extraText='#mu#mu channel'))

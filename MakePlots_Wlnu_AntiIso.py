@@ -5,8 +5,7 @@ import ROOT
 import numpy as np
 from collections import OrderedDict
 import sys
-sys.path.append("/afs/cern.ch/work/y/yofeng/public/CMSPLOTS")
-from myFunction import THStack2TH1
+from CMSPLOTS.myFunction import THStack2TH1
 
 from SampleManager import DrawConfig, Sample, SampleManager
 
@@ -15,17 +14,17 @@ ROOT.ROOT.EnableImplicitMT(15)
 
 # boolean flag to set either muon or electron channel
 # doMuon = False means the electron channel
-doMuon = False
+doMuon = True
 
 # boolean flag to bin in different W pt bins
 doWpT = False
 
 # boolean flag. if set to true, scale the MC cross section by 30%
-applyScaling = True
+applyScaling = False
 
 # analyze the 5TeV data
 # if set to false will analyze the 13TeV data
-do5TeV = True
+do5TeV = False
 
 def main():
     print "Program start..."
@@ -227,7 +226,7 @@ def main():
                     strname = "weight_{}_{}_{}_{}".format(chg, iso, wpt, lepeta)
 
                     outputname = "histo_wjetsAntiIso_fullrange_mtcorr_" + strname 
-                    sampMan.cacheDraw("mtCorr", outputname, nbins,  xmin, xmax, DrawConfig(xmin=xmin, xmax=xmax, xlabel="m_{T} [GeV]", dology=True, ymax=2e4, donormalizebin=False, addOverflow=False, addUnderflow=False, showratio=True), weightname = strname)
+                    sampMan.cacheDraw("mtCorr", outputname, nbins,  xmin, xmax, DrawConfig(xmin=xmin, xmax=xmax, xlabel="m_{T} [GeV]", dology=True, ymax=2e6, donormalizebin=False, addOverflow=True, addUnderflow=True, showratio=False), weightname = strname)
                     #outputname = "histo_wjetsAntiIso_fullrange_lepEta_" + strname
                     #sampMan.cacheDraw("Lep_eta", outputname, 24, -2.4, 2.4, DrawConfig(xmin=-2.4, xmax=2.4, xlabel="Lepton Eta", dology=True, ymax=2e6, donormalizebin=False, addOverflow=False, addUnderflow=False, showratio=True), weightname = strname)
 

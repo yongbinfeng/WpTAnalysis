@@ -203,13 +203,20 @@ def AddOverflowsTH1(h1, dolastbin=True):
     assert isinstance(h1, ROOT.TH1), "input must be a ROOT.TH1"
     nbins = h1.GetNbinsX()
     if dolastbin:
+        # merge overflow bin to the last bin
         h1.SetBinContent(nbins, h1.GetBinContent(nbins)+h1.GetBinContent(nbins+1))
+        # treat the uncertainties as uncorrelated
+        h1.SetBinError(nbins, ROOT.TMath.Sqrt((h1.GetBinError(nbins))**2 + (h1.GetBinError(nbins+1))**2))
         # clean the old bins
-        h1.SetBinContent(nbins+1, 0)
+        h1.SetBinContent(nbins + 1, 0)
+        h1.SetBinError(nbins + 1, 0)
     else:
         h1.SetBinContent(1, h1.GetBinContent(0)+h1.GetBinContent(1))
+        # treat the uncertainties as uncorrelated
+        h1.SetBinError(1, ROOT.TMath.Sqrt((h1.GetBinError(1))**2 + (h1.GetBinError(0))**2))
         # clean the old bins
-        h1.SetBinContent(0,0)
+        h1.SetBinContent(0, 0)
+        h1.SetBinError(0, 0)
 
 def AddOverflows(hinput, dolastbin=True):
     '''
