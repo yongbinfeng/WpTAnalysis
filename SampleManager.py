@@ -55,6 +55,7 @@ class DrawConfig(object):
 
         self.legends = kwargs.get('legends', [])
         self.legendPos = kwargs.get('legendPos', [0.92, 0.88, 0.70, 0.62])
+        self.lheader = kwargs.get('lheader', None)
         self.colors = kwargs.get('colors', [])
 
         self.redrawihist = kwargs.get('redrawihist', 0)
@@ -450,13 +451,11 @@ class SampleManager(object):
 
         if drawconfigs.donormalizebin:
             h_data.Scale(1.0, "width")
-        
+
         self.hdatas[ drawconfigs.outputname] = h_data
         self.hsmcs[  drawconfigs.outputname] = hs_gmc
-        self.hratios[drawconfigs.outputname] = DrawHistos( [h_data, hs_gmc], drawconfigs.legends, drawconfigs.xmin, drawconfigs.xmax, drawconfigs.xlabel, drawconfigs.ymin, drawconfigs.ymax, drawconfigs.ylabel, drawconfigs.outputname, dology=drawconfigs.dology, dologx=drawconfigs.dologx, showratio=drawconfigs.showratio, yrmax = drawconfigs.yrmax, yrmin = drawconfigs.yrmin, yrlabel = drawconfigs.yrlabel, donormalize=drawconfigs.donormalize, ratiobase=drawconfigs.ratiobase, legendPos = drawconfigs.legendPos, redrawihist = drawconfigs.redrawihist, extraText = drawconfigs.extraText, noCMS = drawconfigs.noCMS, addOverflow = drawconfigs.addOverflow, addUnderflow = drawconfigs.addUnderflow, nMaxDigits = drawconfigs.nMaxDigits, is5TeV = self.is5TeV)
+        self.hratios[drawconfigs.outputname] = DrawHistos( [h_data, hs_gmc], drawconfigs.legends, drawconfigs.xmin, drawconfigs.xmax, drawconfigs.xlabel, drawconfigs.ymin, drawconfigs.ymax, drawconfigs.ylabel, drawconfigs.outputname, dology=drawconfigs.dology, dologx=drawconfigs.dologx, showratio=drawconfigs.showratio, yrmax = drawconfigs.yrmax, yrmin = drawconfigs.yrmin, yrlabel = drawconfigs.yrlabel, donormalize=drawconfigs.donormalize, ratiobase=drawconfigs.ratiobase, legendPos = drawconfigs.legendPos, redrawihist = drawconfigs.redrawihist, extraText = drawconfigs.extraText, noCMS = drawconfigs.noCMS, addOverflow = drawconfigs.addOverflow, addUnderflow = drawconfigs.addUnderflow, nMaxDigits = drawconfigs.nMaxDigits, is5TeV = self.is5TeV, lheader = drawconfigs.lheader)
 
-        print("plot making fine in sample manage")
-        
 
     def launchDraw(self):
         """

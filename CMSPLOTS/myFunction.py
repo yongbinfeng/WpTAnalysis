@@ -246,7 +246,7 @@ draw histograms with the CMS tdr style
 '''
 
 
-def DrawHistos(myhistos, mylabels, xmin, xmax, xlabel, ymin, ymax, ylabel, outputname, dology=True, showratio=False, dologx=False, lheader="", donormalize=False, binomialratio=False, yrmax=2.0, yrmin=0.0, yrlabel=None, MCOnly=False, leftlegend=False, mycolors=[], legendPos=[], legendNCols=1, linestyles=[], markerstyles=[], showpull=False, doNewman=False, doPearson=False, ignoreHistError=False, ypullmin=-2.99, ypullmax=2.99, drawashist=False, padsize=(2, 0.9, 1.1), setGridx=False, setGridy=False, drawoptions=[], legendoptions=[], ratiooptions=[], dologz=False, doth2=False, ratiobase=0, redrawihist=-1, extraText=None, noCMS=False, noLumi=False, nMaxDigits=None, addOverflow=False, addUnderflow=False, plotdiff=False, hratiopanel = None, doratios=None, hpulls=None, W_ref = 600, is5TeV = False):
+def DrawHistos(myhistos, mylabels, xmin, xmax, xlabel, ymin, ymax, ylabel, outputname, dology=True, showratio=False, dologx=False, lheader=None, donormalize=False, binomialratio=False, yrmax=2.0, yrmin=0.0, yrlabel=None, MCOnly=False, leftlegend=False, mycolors=[], legendPos=[], legendNCols=1, linestyles=[], markerstyles=[], showpull=False, doNewman=False, doPearson=False, ignoreHistError=False, ypullmin=-2.99, ypullmax=2.99, drawashist=False, padsize=(2, 0.9, 1.1), setGridx=False, setGridy=False, drawoptions=[], legendoptions=[], ratiooptions=[], dologz=False, doth2=False, ratiobase=0, redrawihist=-1, extraText=None, noCMS=False, noLumi=False, nMaxDigits=None, addOverflow=False, addUnderflow=False, plotdiff=False, hratiopanel = None, doratios=None, hpulls=None, W_ref = 600, is5TeV = False):
     # set the tdr style
     tdrstyle.setTDRStyle()
     # not sure why need this...
@@ -401,7 +401,7 @@ def DrawHistos(myhistos, mylabels, xmin, xmax, xlabel, ymin, ymax, ylabel, outpu
         legend = TLegend(x0_l, y0_l, x1_l, y1_l)
     else:
         legend = TLegend(x0_l-0.40, y0_l, x1_l-0.40, y1_l)
-    if lheader != "":
+    if lheader and lheader != "":
         legend.SetHeader(lheader)
     legend.SetNColumns(legendNCols)
     legend.SetBorderSize(0)
@@ -477,8 +477,8 @@ def DrawHistos(myhistos, mylabels, xmin, xmax, xlabel, ymin, ymax, ylabel, outpu
                     mylabels[ileg]), legendoptions[idx])
                 ileg += 1
 
-    print("draw options ", drawoptions)
-    print("legend options ", legendoptions)
+    #print("draw options ", drawoptions)
+    #print("legend options ", legendoptions)
 
     if redrawihist >= 0:
         myhistos_clone[redrawihist].Draw(" ".join(filter(None,[drawoptions[redrawihist], "same"])))
