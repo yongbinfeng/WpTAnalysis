@@ -10,23 +10,23 @@ from CMSPLOTS.myFunction import THStack2TH1
 from SampleManager import DrawConfig, Sample, SampleManager
 
 ROOT.gROOT.SetBatch(True)
-ROOT.ROOT.EnableImplicitMT(15)
+ROOT.ROOT.EnableImplicitMT(10)
 
-doTest = True
+doTest = False
 
 # boolean flag to set either muon or electron channel
 # doMuon = False means the electron channel
-doMuon = True
+doMuon = False
 
 # boolean flag to bin in different W pt bins
 doWpT = False
 
 # boolean flag. if set to true, scale the MC cross section by 30%
-applyScaling = False
+applyScaling = True
 
 # analyze the 5TeV data
 # if set to false will analyze the 13TeV data
-do5TeV = False
+do5TeV = True
 
 def main():
     print("Program start...")
@@ -86,16 +86,18 @@ def main():
             input_antiiso_ttbar   = "inputs_5TeV/awmunu/input_ttbar.txt"
             input_antiiso_ww      = "inputs_5TeV/awmunu/input_ww.txt"
             input_antiiso_wz      = "inputs_5TeV/awmunu/input_wz.txt"
-            input_antiiso_zz      = "inputs_5TeV/awmunu/input_zz.txt"
+            input_antiiso_zz2l    = "inputs_5TeV/awmunu/input_zz2l.txt"
+            input_antiiso_zz4l    = "inputs_5TeV/awmunu/input_zz4l.txt"
             input_antiiso_zxx     = "inputs_5TeV/awmunu/input_zxx.txt"
             input_antiiso_wx      = "inputs_5TeV/awmunu/input_wx.txt"
         else:   
-            input_antiiso_data    = "inputs_5TeV/awmunu/input_data.txt"
+            input_antiiso_data    = "inputs_5TeV/awenu/input_data.txt"
             input_antiiso_wl      = "inputs_5TeV/awenu/input_we.txt"
             input_antiiso_ttbar   = "inputs_5TeV/awenu/input_ttbar.txt"
             input_antiiso_ww      = "inputs_5TeV/awenu/input_ww.txt"
             input_antiiso_wz      = "inputs_5TeV/awenu/input_wz.txt"
-            input_antiiso_zz      = "inputs_5TeV/awenu/input_zz.txt"
+            input_antiiso_zz2l    = "inputs_5TeV/awenu/input_zz2l.txt"
+            input_antiiso_zz4l    = "inputs_5TeV/awenu/input_zz4l.txt"
             input_antiiso_zxx     = "inputs_5TeV/awenu/input_zxx.txt"
             input_antiiso_wx      = "inputs_5TeV/awenu/input_wx.txt"
 
@@ -142,14 +144,20 @@ def main():
         ## dibosons
         WWAisoSamp = Sample(input_antiiso_ww, isMC=True, name = "WW_aiso", isWSR=True, additionalnorm= qcdnorm * mcscale, is5TeV = True)
         WZAisoSamp = Sample(input_antiiso_wz, isMC=True, name = "WZ_aiso", isWSR=True, additionalnorm= qcdnorm * mcscale, is5TeV = True)
-        ZZAisoSamp = Sample(input_antiiso_zz, isMC=True, name = "ZZ_aiso", isWSR=True, additionalnorm= qcdnorm * mcscale, is5TeV = True)
+        ZZ2LAisoSamp = Sample(input_antiiso_zz2l, isMC=True, name = "ZZ2L_aiso", isWSR=True, additionalnorm= qcdnorm * mcscale, is5TeV = True)
+        ZZ4LAisoSamp = Sample(input_antiiso_zz4l, isMC=True, name = "ZZ4L_aiso", isWSR=True, additionalnorm= qcdnorm * mcscale, is5TeV = True)
         # tau
         ZXXAisoSamp = Sample(input_antiiso_zxx, isMC=True, name = "ZXX_aiso", isWSR=True, additionalnorm= qcdnorm * mcscale, is5TeV = True)
         WxAisoSamp  = Sample(input_antiiso_wx,  isMC=True, name = "wx_aiso",  isWSR=True, additionalnorm= qcdnorm * mcscale, is5TeV = True)
 
-        sampMan = SampleManager(DataAisoSamp, [WlAisoSamp, TTbarAisoSamp, WWAisoSamp, WZAisoSamp, ZZAisoSamp, ZXXAisoSamp, WxAisoSamp], is5TeV = True)
+        sampMan = SampleManager(DataAisoSamp, [WlAisoSamp, TTbarAisoSamp, WWAisoSamp, WZAisoSamp, ZZ2LAisoSamp, ZZ4LAisoSamp, ZXXAisoSamp, WxAisoSamp], is5TeV = True)
 
-        sampMan.groupMCs(["WW_aiso", "WZ_aiso", "ZZ_aiso", "ZXX_aiso", "wx_aiso", ], "EWK", 216, "EWK")
+        sampMan.groupMCs(["WW_aiso", "WZ_aiso", "ZZ2L_aiso", "ZZ4L_aiso", "ZXX_aiso", "wx_aiso", ], "EWK", 216, "EWK")
+
+    # customize legends
+    label_plus = "W^{+}#rightarrow#mu^{+}#nu" if doMuon else "W^{+}#rightarrow e^{+}#nu"
+    label_minus = "W^{-}#rightarrow#mu^{-}#bar{#nu}" if doMuon else "W^{-}#rightarrow e^{-}#bar{#nu}"
+    legends = ["Data", label_plus, "t#bar{t}", "EWK"]
 
     sampMan.DefineAll("Lep_pt", "lep.Pt()")
     sampMan.ApplyCutAll("Lep_pt > 25.0")
@@ -158,31 +166,22 @@ def main():
     # muon and electron isolation distributions are different
     # more coarse binning for electrons to make sure enough statistics
     if doMuon:
-        sampMan.DefineAll("w_iso5", "(relIso > 0.20 && relIso < 0.25)")
-        sampMan.DefineAll("w_iso6", "(relIso > 0.25 && relIso < 0.30)")
-        sampMan.DefineAll("w_iso7", "(relIso > 0.30 && relIso < 0.35)")
-        sampMan.DefineAll("w_iso8", "(relIso > 0.35 && relIso < 0.40)")
-        sampMan.DefineAll("w_iso9", "(relIso > 0.40 && relIso < 0.45)")
-        sampMan.DefineAll("w_iso10", "(relIso > 0.45 && relIso < 0.50)")
-        sampMan.DefineAll("w_iso11", "(relIso > 0.50 && relIso < 0.55)")
-        sampMan.DefineAll("w_iso12", "(relIso > 0.55 && relIso < 0.60)")
-        sampMan.DefineAll("w_iso13", "(relIso > 0.60 && relIso < 0.65)")
-        isobins = ["iso5", "iso6", "iso7", "iso8", "iso9", "iso10", "iso11", "iso12", "iso13"]
+        isoCuts = [0.15, 0.20, 0.25, 0.30, 0.35, 0.40, 0.45, 0.50, 0.55, 0.60, 0.65, 0.70, 0.75, 0.80, 0.85, 0.90, 0.95]
+        isobins = []
+        sampMan.DefineAll("RelIso", "relIso")
+        for isobin in range(4, 20):
+            sampMan.DefineAll(f"w_iso{isobin}", f"(relIso > {isoCuts[isobin-4]} && relIso < {isoCuts[isobin-3]})")
+            isobins.append(f"iso{isobin}")
+
     else:
-        # separate the EB and EE and correct the electron isolation
-        # based on the EB and EE (because of a bug in the code)
+        isoCuts = [0.10, 0.15, 0.20, 0.25, 0.30, 0.35, 0.40, 0.50, 0.65, 0.90]
+        isobins = []
         sampMan.DefineAll("isEB",   "fabs(Lep_eta) <= 1.4442")
         #sampMan.DefineAll("RelIso", "isEB ? (relIso + 0.0287 - 0.0478) : (relIso + 0.0445 - 0.0658)")
-        sampMan.DefineAll("RelIso", "(pfCombIso/lep.Pt() + 0.05)")
-        sampMan.DefineAll("w_iso4", "(RelIso > 0.15 && RelIso < 0.20)")
-        sampMan.DefineAll("w_iso5", "(RelIso > 0.20 && RelIso < 0.25)")
-        sampMan.DefineAll("w_iso6", "(RelIso > 0.25 && RelIso < 0.30)")
-        sampMan.DefineAll("w_iso7", "(RelIso > 0.30 && RelIso < 0.35)")
-        sampMan.DefineAll("w_iso8", "(RelIso > 0.35 && RelIso < 0.40)")
-        sampMan.DefineAll("w_iso9", "(RelIso > 0.40 && RelIso < 0.45)")
-        sampMan.DefineAll("w_iso10", "(RelIso > 0.45 && RelIso < 0.55)")
-        sampMan.DefineAll("w_iso11", "(RelIso > 0.55 && RelIso < 0.70)")
-        isobins = ["iso4", "iso5", "iso6", "iso7", "iso8", "iso9", "iso10", "iso11"]
+        sampMan.DefineAll("RelIso", "(pfCombIso/lep.Pt())")
+        for isobin in range(4, 13):
+            sampMan.DefineAll(f"w_iso{isobin}", f"(RelIso > {isoCuts[isobin-4]} && RelIso < {isoCuts[isobin-3]})")
+            isobins.append(f"iso{isobin}")
 
     sampMan.DefineMC("met_pt", "metVars[1]", excludes=['Data_aiso'])
     sampMan.DefineMC("met_phi", "TVector2::Phi_mpi_pi(metVarsPhi[1])", excludes=['Data_aiso'])
@@ -226,32 +225,46 @@ def main():
     else:
         etabins = ["lepEta_bin0", "lepEta_bin1", "lepEta_bin2"]
 
-    for iso in isobins:
-        for wpt in wptbins:
-            for lepeta in etabins:
-                for chg in chgbins:
-                    sampMan.DefineAll("weight_{}_{}_{}_{}".format(chg, iso,  wpt, lepeta), "w_{} * weight_WoVpt * {} * {} * {}".format(iso, wpt, lepeta, chg))
-                    #sampMan.DefineAll("weight_{}_{}_{}_{}".format(chg, iso, wpt, lepeta), "w_{} * weight_{} * {} * {}".format(iso, chg, wpt, lepeta))
+    # draw the lepton isolation distribution
+    nbins = 50
+    xmin = 0.
+    xmax = 0.75
+    ymax = 5e7 if doMuon else 1e6
+    for wpt in wptbins:
+        for lepeta in etabins:
+            strname = f"weight_{wpt}_{lepeta}"
+            sampMan.DefineAll(strname, f"weight_WoVpt * {wpt} * {lepeta}")
+            sampMan.cacheDraw("RelIso", f"histo_wjets_{lepname}_RelIso_{lepeta}_{wpt}", 100, 0, 0.72, DrawConfig(xmin=xmin, xmax=xmax, xlabel="Relative Isolation", ylabel=f"Events / {(xmax-xmin)/nbins:.2f}", dology=True, ymax=ymax, donormalizebin=False, addOverflow=True, addUnderflow=True, showratio=False, legendPos=[0.94, 0.88, 0.70, 0.68]), weightname = strname)
+
 
     nbins = 12
     xmin = 0
     xmax = 120
-
+    idx = 0
     for iso in isobins:
         for wpt in wptbins:
             for lepeta in etabins:
                 for chg in chgbins:
                     strname = "weight_{}_{}_{}_{}".format(chg, iso, wpt, lepeta)
 
-                    outputname = "histo_wjetsAntiIso_fullrange_mtcorr_" + strname 
-                    sampMan.cacheDraw("mtCorr", outputname, nbins,  xmin, xmax, DrawConfig(xmin=xmin, xmax=xmax, xlabel="m_{T} [GeV]", ylabel=f"Events / {(xmax-xmin)/nbins:.0f} GeV", dology=True, ymax=2e6, donormalizebin=False, addOverflow=False, addUnderflow=False, showratio=False), weightname = strname)
-                    #outputname = "histo_wjetsAntiIso_fullrange_lepEta_" + strname
+                    sampMan.DefineAll(strname, "w_{} * weight_WoVpt * {} * {} * {}".format(iso, wpt, lepeta, chg))
+                    legends[1] = label_plus if "plus" in chg else label_minus
+
+                    outputname = "histo_wjetsAntiIso_mtcorr_" + strname 
+                    sampMan.cacheDraw("mtCorr", outputname, nbins,  xmin, xmax, DrawConfig(xmin=xmin, xmax=xmax, xlabel="m_{T} [GeV]", ylabel=f"Events / {(xmax-xmin)/nbins:.0f} GeV", dology=True, ymax=6e5, donormalizebin=False, addOverflow=True, addUnderflow=True, showratio=False, lheader = f"{isoCuts[idx]} < I < {isoCuts[idx + 1]}", legendPos=[0.94, 0.88, 0.70, 0.68], legends = legends.copy()), weightname = strname)
+                    #outputname = "histo_wjetsAntiIso_lepEta_" + strname
                     #sampMan.cacheDraw("Lep_eta", outputname, 24, -2.4, 2.4, DrawConfig(xmin=-2.4, xmax=2.4, xlabel="Lepton Eta", dology=True, ymax=2e6, donormalizebin=False, addOverflow=False, addUnderflow=False, showratio=True), weightname = strname)
+
+                    # draw the isolation in different bins, in order to calculate the mean in each bin
+                    sampMan.cacheDraw("RelIso", f"histo_wjetsAntiIso_RelIso_{strname}", 100, isoCuts[idx], isoCuts[idx + 1], DrawConfig(xmin=xmin, xmax=xmax, xlabel="Relative Isolation", ylabel=f"Events / {(xmax-xmin)/nbins:.2f}", dology=True, ymax=ymax, donormalizebin=False, addOverflow=True, addUnderflow=True, showratio=False, legendPos=[0.94, 0.88, 0.70, 0.68]), weightname = strname)
+        idx += 1
 
     sampMan.launchDraw()
 
 
     hmts_comp = OrderedDict()
+    hIsos = OrderedDict()
+
     #hetas_mtCut_comp = OrderedDict()
     for iso in isobins:
         for wpt in wptbins:
@@ -260,7 +273,7 @@ def main():
                     strname = "weight_{}_{}_{}_{}".format(chg, iso, wpt, lepeta)
                     
                     # for mT
-                    outputname = "histo_wjetsAntiIso_fullrange_mtcorr_" + strname
+                    outputname = "histo_wjetsAntiIso_mtcorr_" + strname
                     hstacked = THStack2TH1(sampMan.hsmcs[outputname])
                     for ibin in range(hstacked.GetNbinsX()+1):
                         # hstacked should always be above 0
@@ -271,7 +284,7 @@ def main():
 
                     ## for lepton eta with mT cuts
                     #strname += "_mtCut"
-                    #outputname = "histo_wjetsAntiIso_fullrange_lepEta_" + strname
+                    #outputname = "histo_wjetsAntiIso_lepEta_" + strname
                     #hstacked = THStack2TH1(sampMan.hsmcs[outputname])
                     #for ibin in xrange(hstacked.GetNbinsX()+1):
                     #    # hstacked should always be above 0
@@ -280,27 +293,42 @@ def main():
                     #hetas_mtCut_comp[strname] = sampMan.hdatas[outputname]
                     #hetas_mtCut_comp[strname].SetName(outputname)
 
+                    # for isolation
+                    outputname = f"histo_wjetsAntiIso_RelIso_{strname}"
+                    hstacked = THStack2TH1(sampMan.hsmcs[outputname])
+                    for ibin in range(hstacked.GetNbinsX()+1):
+                        # hstacked should always be above 0
+                        hstacked.SetBinContent(ibin, max(hstacked.GetBinContent(ibin), 0))
+                    sampMan.hdatas[outputname].Add( hstacked, -1.0 )
+                    hIsos[strname] = sampMan.hdatas[outputname]
+                    hIsos[strname].SetName(outputname)
+
     postfix = lepname + "nu"
     if applyScaling:
         postfix += "_applyScaling"
     if do5TeV:
         postfix += "_5TeV"
     postfix += ".root"
-    outfile = ROOT.TFile.Open("root/output_qcdshape_fullrange_"+postfix, "recreate")
+    outfile = ROOT.TFile.Open("root/output_qcdshape_"+postfix, "recreate")
 
     for wpt in wptbins:
         odir = outfile.mkdir(wpt)
         outfile.cd(wpt)
-        for iso in isobins[:-1]:
+        for iso in isobins:
             # skip the last iso bin as it is used for the uncertaintiy of the previous iso bin
             for lepeta in etabins:
                 for chg in chgbins:
                     i = int(iso[3:])
-                    iso_next = "iso" + str(i+1)
+                    if iso == isobins[-1]:
+                        # a bit cheating, 
+                        # for the last bin, use the previous bin shape as the shape variation
+                        iso_next = "iso" + str(i-1)
+                    else:
+                        iso_next = "iso" + str(i+1)
                     strname = "weight_{}_{}_{}_{}".format(chg, iso, wpt, lepeta)
                     strname_next = "weight_{}_{}_{}_{}".format(chg, iso_next, wpt, lepeta)
 
-                    outputname = "histo_wjetsAntiIso_fullrange_mtcorr_" + strname
+                    outputname = "histo_wjetsAntiIso_mtcorr_" + strname
 
                     hcenter = hmts_comp[strname]
                     # shape uncertaintis are using the shape difference from the neighboring bins
@@ -329,6 +357,13 @@ def main():
 
 
     sampMan.dumpCounts()
+
+    outfile = ROOT.TFile.Open("root/output_qcdIso_"+postfix, "recreate")
+    for isobin, h in hIsos.items():
+        print(f"{isobin} mean: {h.GetMean():.3f}")
+        h.SetDirectory(outfile)
+        h.Write()
+    outfile.Close()
 
     print("Program end...")
 

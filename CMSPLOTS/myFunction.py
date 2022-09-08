@@ -608,7 +608,10 @@ def DrawHistos(myhistos, mylabels, xmin, xmax, xlabel, ymin, ymax, ylabel, outpu
             idx = 0
             for hratio in list(hratios.values()):
                 if idx >= len(ratiooptions):
-                    ratiooptions.append("")
+                    if drawashist:
+                        ratiooptions.append("HIST")
+                    else:
+                        ratiooptions.append("")
                 hratio.SetFillColor(0)
                 hratio.Draw(ratiooptions[idx] + " same")
                 idx += 1
