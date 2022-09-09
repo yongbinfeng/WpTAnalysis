@@ -16,7 +16,7 @@ doTest = False
 
 # boolean flag to set either muon or electron channel
 # doMuon = False means the electron channel
-doMuon = False
+doMuon = True
 
 # boolean flag to bin in different W pt bins
 doWpT = False
@@ -26,7 +26,7 @@ applyScaling = True
 
 # analyze the 5TeV data
 # if set to false will analyze the 13TeV data
-do5TeV = True
+do5TeV = False
 
 def main():
     print("Program start...")
@@ -236,7 +236,7 @@ def main():
             sampMan.DefineAll(strname, f"weight_WoVpt * {wpt} * {lepeta}")
             sampMan.cacheDraw("RelIso", f"histo_wjets_{lepname}_RelIso_{lepeta}_{wpt}", 100, 0, 0.72, DrawConfig(xmin=xmin, xmax=xmax, xlabel="Relative Isolation", ylabel=f"Events / {(xmax-xmin)/nbins:.2f}", dology=True, ymax=ymax, donormalizebin=False, addOverflow=True, addUnderflow=True, showratio=False, legendPos=[0.94, 0.88, 0.70, 0.68]), weightname = strname)
 
-
+    mass_bins = np.array([0, 20.0, 30.0, 40.0, 50.0, 60.0, 70.0, 80.0, 90.0, 120.0])
     nbins = 12
     xmin = 0
     xmax = 120
@@ -251,7 +251,7 @@ def main():
                     legends[1] = label_plus if "plus" in chg else label_minus
 
                     outputname = "histo_wjetsAntiIso_mtcorr_" + strname 
-                    sampMan.cacheDraw("mtCorr", outputname, nbins,  xmin, xmax, DrawConfig(xmin=xmin, xmax=xmax, xlabel="m_{T} [GeV]", ylabel=f"Events / {(xmax-xmin)/nbins:.0f} GeV", dology=True, ymax=6e5, donormalizebin=False, addOverflow=True, addUnderflow=True, showratio=False, lheader = f"{isoCuts[idx]} < I < {isoCuts[idx + 1]}", legendPos=[0.94, 0.88, 0.70, 0.68], legends = legends.copy()), weightname = strname)
+                    sampMan.cacheDraw("mtCorr", outputname, mass_bins, DrawConfig(xmin=xmin, xmax=xmax, xlabel="m_{T} [GeV]", ylabel=f"Events / {(xmax-xmin)/nbins:.0f} GeV", dology=True, ymax=6e5, donormalizebin=False, addOverflow=True, addUnderflow=True, showratio=False, lheader = f"{isoCuts[idx]} < I < {isoCuts[idx + 1]}", legendPos=[0.94, 0.88, 0.70, 0.68], legends = legends.copy()), weightname = strname)
                     #outputname = "histo_wjetsAntiIso_lepEta_" + strname
                     #sampMan.cacheDraw("Lep_eta", outputname, 24, -2.4, 2.4, DrawConfig(xmin=-2.4, xmax=2.4, xlabel="Lepton Eta", dology=True, ymax=2e6, donormalizebin=False, addOverflow=False, addUnderflow=False, showratio=True), weightname = strname)
 
