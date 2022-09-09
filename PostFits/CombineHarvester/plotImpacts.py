@@ -6,8 +6,8 @@ import ROOT
 import math
 import json
 import argparse
-import plotting as plot
-import rounding as rounding
+from . import plotting as plot
+from . import rounding as rounding
 
 perPage = 30
 maxPages = None
@@ -80,23 +80,23 @@ def plotImpacts(ifilename, ofilename, blind=True):
     
     seen_types = set()
     
-    for name, col in colors.iteritems():
+    for name, col in colors.items():
         color_hists[name] = ROOT.TH1F()
         plot.Set(color_hists[name], FillColor=col, Title=name)
     
     if colorGroups is not None:
-        for name, col in colorGroups.iteritems():
+        for name, col in colorGroups.items():
             color_group_hists[name] = ROOT.TH1F()
             plot.Set(color_group_hists[name], FillColor=col, Title=name)
     
-    for page in xrange(n):
+    for page in range(n):
         canv = ROOT.TCanvas("plots/"+ofilename, "plots/"+ofilename)
         n_params = len(data['params'][show * page:show * (page + 1)])
         pdata = data['params'][show * page:show * (page + 1)]
-        print '>> Doing page %i, have %i parameters' % (page, n_params)
+        print('>> Doing page %i, have %i parameters' % (page, n_params))
     
         boxes = []
-        for i in xrange(n_params):
+        for i in range(n_params):
             y1 = ROOT.gStyle.GetPadBottomMargin()
             y2 = 1. - ROOT.gStyle.GetPadTopMargin()
             h = (y2 - y1) / float(n_params)
@@ -132,7 +132,7 @@ def plotImpacts(ifilename, ofilename, blind=True):
     
         text_entries = []
         redo_boxes = []
-        for p in xrange(n_params):
+        for p in range(n_params):
             i = n_params - (p + 1)
             pre = pdata[p]['prefit']
             fit = pdata[p]['fit']
@@ -274,13 +274,13 @@ def plotImpacts(ifilename, ofilename, blind=True):
         if colorGroups is not None:
             legend2 = ROOT.TLegend(0.01, 0.94, leg_width, 0.99, '', 'NBNDC')
             legend2.SetNColumns(2)
-            for name, h in color_group_hists.iteritems():
+            for name, h in color_group_hists.items():
                 legend2.AddEntry(h, name, 'F')
             legend2.Draw()
         elif len(seen_types) > 1:
             legend2 = ROOT.TLegend(0.01, 0.94, leg_width, 0.99, '', 'NBNDC')
             legend2.SetNColumns(2)
-            for name, h in color_hists.iteritems():
+            for name, h in color_hists.items():
                 if name == 'Unrecognised': continue
                 legend2.AddEntry(h, name, 'F')
             legend2.Draw()

@@ -5,7 +5,7 @@ from collections import OrderedDict
 import os
 
 doMuon = True
-doElectron = True
+doElectron = False
 doWpT = False
 doQCDSys = True
 
@@ -95,8 +95,8 @@ def MakeCards(fname_mc, fname_qcd, channel, wptbin, etabin):
                 )
     # Z bkg
     zxx = Process(name = "zxx", fname = fname_mc,
-                  hname = "MCTemplates/histo_wjets_{}_mT_1_{}_{}_grouped_ZXX9".format(channel, wptbin, etabin),
-                  hsys = "MCTemplates/histo_wjets_{}_mT_1_{}_{}_grouped_ZXX9_".format(channel, wptbin, etabin),
+                  hname = "MCTemplates/histo_wjets_{}_mT_1_{}_{}_grouped_zxx9".format(channel, wptbin, etabin),
+                  hsys = "MCTemplates/histo_wjets_{}_mT_1_{}_{}_grouped_zxx9_".format(channel, wptbin, etabin),
                   isSignal = False,
                   isMC = True,
                   isV = True,
@@ -126,7 +126,8 @@ def MakeCards(fname_mc, fname_qcd, channel, wptbin, etabin):
     # QCD bkg
     qcd = Process(name = "QCD_"+channel+"_"+etabin+"_"+wptbin, fname = fname_qcd,
                   hname = "h_QCD_Extrapolated_{}_{}_{}".format(channel, etabin, wptbin),
-                  hsys = "h_QCD_Extrapolated_{}_lepEta_".format(channel),
+                  #hsys = "h_QCD_Extrapolated_{}_lepEta_".format(channel),
+                  hsys = "h_QCD_Extrapolated_",
                   isSignal = False,
                   isMC = False,
                   isV = False,
@@ -134,13 +135,15 @@ def MakeCards(fname_mc, fname_qcd, channel, wptbin, etabin):
                 )
 
     processes = sigs + [ttbar, zxx, wtau, vv, qcd]
+    
+    lepname = "mu" if "mu" in channel else "e"
 
     # correction systematics
     # in Aram's ntuples, defined here: https://github.com/MiT-HEP/MitEwk13TeV/blob/CMSSW_94X/NtupleMod/eleNtupleMod.C#L71
     # and here: https://github.com/MiT-HEP/MitEwk13TeV/blob/CMSSW_94X/NtupleMod/muonNtupleMod.C#L81
     # 1 is MC, 2 is FSR, 3 is Bkg, 4 is tagpt, 
     # 6 is prefire
-    sfsys = ["SysWeight1", "SysWeight2", "SysWeight3", "SysWeight4", "SysWeight6"]
+    sfsys = ["SysWeight1", lepname+"_SysWeight2", lepname+"_SysWeight3", lepname+"_SysWeight4", "SysWeight8", "SysWeight10"]
 
     # recoil correction systematics
     # in Aram's ntuples, defined here: https://github.com/MiT-HEP/MitEwk13TeV/blob/CMSSW_94X/NtupleMod/eleNtupleMod.C#L65
@@ -151,11 +154,12 @@ def MakeCards(fname_mc, fname_qcd, channel, wptbin, etabin):
 
     # qcd stat
     # this is hard coded for now. Will be improved later
-    prefix = etabin.split("_")[1]+"_"+wptbin
+    #prefix = etabin.split("_")[1]+"_"+wptbin
+    prefix = channel + "_" + etabin + "_" + wptbin
     nbins = 12
-    qcdstats = [prefix+"_bin"+str(i)+"shape" for i in xrange(1, nbins+1)]
+    qcdstats = [prefix+"_bin"+str(i)+"shape" for i in range(1, nbins+1)]
     if doQCDSys:
-        qcdstats += [prefix+"_Pol2shape"]
+        #qcdstats += [prefix+"_Pol2shape"]
         qcdstats += [prefix+"_ScaledMCshape"]
 
 
@@ -164,7 +168,7 @@ def MakeCards(fname_mc, fname_qcd, channel, wptbin, etabin):
     #
     if not os.path.exists("cards"):
         os.makedirs("cards")
-    ofile = open("cards/datacard_{}_{}_{}.txt".format(channel, etabin, wptbin), "wb")
+    ofile = open("cards/datacard_{}_{}_{}.txt".format(channel, etabin, wptbin), "w")
     ofile.write("imax 1 number of channels\n")
 
     ofile.write("jmax {} number of processes -1\n".format(len(processes)-1))
@@ -248,7 +252,7 @@ def MakeCards(fname_mc, fname_qcd, channel, wptbin, etabin):
         recoilgroup += " " + sys
 
     # write these systematic lines
-    for line in lines.values():
+    for line in list(lines.values()):
         ofile.write(line+"\n")
     ofile.write(qcdgroup+"\n")
     ofile.write(recoilgroup+"\n")
@@ -265,7 +269,7 @@ def combineCards(labels, cards, oname):
     for label, card in zip(labels, cards):
         cmd += " {}={}".format(label, card)
     cmd += " > {}; cd ../".format(oname)
-    print("combine cards with {}".format(cmd))
+    print(("combine cards with {}".format(cmd)))
     os.system(cmd)
     
     
@@ -281,25 +285,26 @@ if __name__ == "__main__":
 
     fqcds = {
         "muplus": "QCD/qcdshape_extrapolated_mu",
-        "muplus": "QCD/qcdshape_extrapolated_mu",
+        "muminus": "QCD/qcdshape_extrapolated_mu",
         "eplus":  "QCD/qcdshape_extrapolated_e",
         "eplus":  "QCD/qcdshape_extrapolated_e",
     }
 
     pwd = os.getcwd()
     if doMuon:
-        channel = "muplus"
-        etabin = "lepEta_bin0"
-        pwd = os.getcwd()
-        cards = []
-        for wptbin in wptbins:
-            postfix = "" if not doWpT else "_WpT"
-            card = MakeCards(pwd+"/root/"+fnames[channel]+postfix+".root", pwd+"/root/"+fqcds[channel]+"_"+wptbin+".root", channel, wptbin, etabin)
-            cards.append(card)
+        channels = ["muplus", "muminus"]
+        for channel in channels:
+            etabin = "lepEta_bin0"
+            pwd = os.getcwd()
+            cards = []
+            for wptbin in wptbins:
+                postfix = "" if not doWpT else "_WpT"
+                card = MakeCards(pwd+"/root/"+fnames[channel]+postfix+".root", pwd+"/root/"+fqcds[channel]+"_"+wptbin+".root", channel, wptbin, etabin)
+                cards.append(card)
 
-        if doWpT:
-            # combine the cards in different w pt bins
-            combineCards(wptbins, cards, pwd+"/cards/datacard_{}_{}_WpT.txt".format(channel, etabin))
+            if doWpT:
+                # combine the cards in different w pt bins
+                combineCards(wptbins, cards, pwd+"/cards/datacard_{}_{}_WpT.txt".format(channel, etabin))
     if doElectron:
         # do electron
         channel = "eplus"

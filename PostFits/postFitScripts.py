@@ -6,6 +6,7 @@ import os,sys,math
 from collections import OrderedDict
 import json
 import re
+import numpy as np
 
 from CMSPLOTS.myFunction import DrawHistos
 from SampleManager import DrawConfig
@@ -25,12 +26,14 @@ def MakePostPlot(ifilename, channel, postfix, showpull=False):
     hnames_sig = []
     hnames_qcd = []
     for hkey in hkeys:
-        if bool(re.match(r"expproc_w_"+channel+"_\w*sig_postfit", hkey.GetName())):
+        if bool(re.match(r"expproc_w_"+channel+"_\w*sig_postfit$", hkey.GetName())):
             hnames_sig.append( hkey.GetName() )
-        elif bool(re.match(r"expproc_QCD_"+channel+"_\w*postfit", hkey.GetName())):
+        elif bool(re.match(r"expproc_QCD_"+channel+"_\w*postfit$", hkey.GetName())):
             hnames_qcd.append( hkey.GetName() )
     assert len(hnames_sig)>=1, "There should be at least one sig histogram in file: {}".format(ifilename)
     assert len(hnames_qcd)>=1, "There should be at least one QCD histogram in file: {}".format(ifilename)
+
+    print(hnames_sig)
     
     ## read the postfit plots from input file
     hexpsig = ifile.Get(hnames_sig[0])
@@ -56,8 +59,10 @@ def MakePostPlot(ifilename, channel, postfix, showpull=False):
     # hard coded the binning for now, assuming 10GeV fixed bin width
     nbins = horgdata.GetNbinsX()
     xmin = 0.
-    xmax = 10 * nbins
-    binnings = (nbins, xmin, xmax)
+    xmax = 120.
+    #binnings = (nbins, xmin, xmax)
+    binnings = (nbins, np.array([0, 10, 20., 30., 40., 50., 60., 70., 80., 90., 120.]))
+    
     #binnings = (newbins.shape[0]-1, newbins)
     hdata   = ROOT.TH1D("hdata_{}_{}".format( channel, postfix),  "hdata_{}_{}".format( channel, postfix),  *binnings)
     hsig    = ROOT.TH1D("hsig_{}_{}".format(  channel, postfix),  "hsig_{}_{}".format(  channel, postfix),  *binnings)
@@ -66,7 +71,7 @@ def MakePostPlot(ifilename, channel, postfix, showpull=False):
     hqcd    = ROOT.TH1D("hqcd_{}_{}".format(  channel, postfix),  "hqcd_{}_{}".format(  channel, postfix),  *binnings)
     hratio  = ROOT.TH1D("hrato_{}_{}".format( channel, postfix),  "hratio_{}_{}".format(channel, postfix),  *binnings)
     hpull   = ROOT.TH1D("hpull_{}_{}".format( channel, postfix),  "hpull_{}_{}".format( channel, postfix),  *binnings)
-    for ibin in xrange(1, nbins+1):
+    for ibin in range(1, nbins+1):
         hdata.SetBinContent(ibin,   horgdata.GetBinContent(ibin))
         hdata.SetBinError(ibin,     horgdata.GetBinError(ibin))
         hsig.SetBinContent(ibin,    hexpsig.GetBinContent(ibin))
@@ -85,7 +90,7 @@ def MakePostPlot(ifilename, channel, postfix, showpull=False):
         hpull.SetBinContent(ibin, diff/(sig+1e-6))
 
     # deal with the uncertainty bar
-    for ibin in xrange(1, hratio.GetNbinsX()+1):
+    for ibin in range(1, hratio.GetNbinsX()+1):
         val = hratio.GetBinContent(ibin)
         err = hratio.GetBinError(ibin)
         hratio.SetBinContent(ibin, 1.0)
@@ -129,9 +134,9 @@ def MakePostPlot(ifilename, channel, postfix, showpull=False):
     hs_gmc.Add(hewk)
     hs_gmc.Add(hsig)
 
-    ymaxs = {"muplus": 3e4, "muminus": 2e4, "eplus": 1.5e4, "eminus": 1.0e4}
+    ymaxs = {"muplus": 3e4, "muminus": 2.5e4, "eplus": 1.5e4, "eminus": 1.0e4}
     drawconfigs = DrawConfig(xmin = xmin, xmax = xmax, xlabel = "Unrolled m_{T} [GeV]", ymin = 0, ymax = ymaxs[channel] / (int(nbins/36)+1), ylabel = "Events / GeV", outputname = "histo_wjets_{}_mT_PostFit_{}".format(channel, postfix), dology=False, addOverflow=False, addUnderflow=False, yrmin=0.95, yrmax=1.05)
-    DrawHistos( [hdata, hs_gmc], ["Data", "Signal", "EWK", "ttbar", "QCD"], drawconfigs.xmin, drawconfigs.xmax, drawconfigs.xlabel, drawconfigs.ymin, drawconfigs.ymax, drawconfigs.ylabel, drawconfigs.outputname, dology=drawconfigs.dology, dologx=drawconfigs.dologx, showratio=drawconfigs.showratio, yrmax = drawconfigs.yrmax, yrmin = drawconfigs.yrmin, yrlabel = drawconfigs.yrlabel, donormalize=drawconfigs.donormalize, ratiobase=drawconfigs.ratiobase, legendPos = drawconfigs.legendPos, redrawihist = drawconfigs.redrawihist, extraText = drawconfigs.extraText, noCMS = drawconfigs.noCMS, addOverflow = drawconfigs.addOverflow, addUnderflow = drawconfigs.addUnderflow, nMaxDigits = drawconfigs.nMaxDigits, hratiopannel=hratio, drawoptions=['PE', 'HIST same'], showpull=showpull, hpulls=[hpull], W_ref = 600 * int(nbins/36+1))
+    DrawHistos( [hdata, hs_gmc], ["Data", "Signal", "EWK", "ttbar", "QCD"], drawconfigs.xmin, drawconfigs.xmax, drawconfigs.xlabel, drawconfigs.ymin, drawconfigs.ymax, drawconfigs.ylabel, drawconfigs.outputname, dology=drawconfigs.dology, dologx=drawconfigs.dologx, showratio=drawconfigs.showratio, yrmax = drawconfigs.yrmax, yrmin = drawconfigs.yrmin, yrlabel = drawconfigs.yrlabel, donormalize=drawconfigs.donormalize, ratiobase=drawconfigs.ratiobase, legendPos = drawconfigs.legendPos, redrawihist = drawconfigs.redrawihist, extraText = drawconfigs.extraText, noCMS = drawconfigs.noCMS, addOverflow = drawconfigs.addOverflow, addUnderflow = drawconfigs.addUnderflow, nMaxDigits = drawconfigs.nMaxDigits, hratiopanel=hratio, drawoptions=['PE', 'HIST same'], showpull=showpull, hpulls=[hpull], W_ref = 600 * int(nbins/36+1))
 
     return nevts
 
@@ -162,7 +167,7 @@ def result2json(ifilename, poiname, ofilename):
     }
 
     def getNuisName(nuis):
-        if nuis in nameMap.keys():
+        if nuis in list(nameMap.keys()):
             return nameMap[nuis]
         elif bool(re.match(r"\w*bin\d+shape", nuis)):
             return "QCD_" + nuis
@@ -204,18 +209,18 @@ def result2json(ifilename, poiname, ofilename):
 
     # add the grouped QCD and Recoil systematic
     groupnames = []
-    for ibinY in range(1, himpact_grouped.GetNbinsY()+1):
-        tmpY = himpact_grouped.GetYaxis().GetBinLabel(ibinY)
-        if tmpY == 'stat':
-            continue
-        impacts[tmpY] = himpact_grouped.GetBinContent(ibinX, ibinY)
-        groupnames.append(tmpY)
+    #for ibinY in range(1, himpact_grouped.GetNbinsY()+1):
+    #    tmpY = himpact_grouped.GetYaxis().GetBinLabel(ibinY)
+    #    if tmpY == 'stat':
+    #        continue
+    #    impacts[tmpY] = himpact_grouped.GetBinContent(ibinX, ibinY)
+    #    groupnames.append(tmpY)
 
     # sort impacts, descending
-    impacts = OrderedDict(sorted(impacts.items(), key=lambda x: abs(x[1]), reverse=True))
+    impacts = OrderedDict(sorted(list(impacts.items()), key=lambda x: abs(x[1]), reverse=True))
 
     pulls = OrderedDict()
-    for nuis in impacts.keys():
+    for nuis in list(impacts.keys()):
         if nuis not in groupnames:
             val = getattr(tree, nuis)
             err = getattr(tree, nuis+"_err")
@@ -228,7 +233,7 @@ def result2json(ifilename, poiname, ofilename):
         pulls[nuis] = [val - err, val, val + err]
 
     # save to results
-    for nuis in impacts.keys():
+    for nuis in list(impacts.keys()):
         systematic = OrderedDict()
         systematic['fit'] = pulls[nuis]
         systematic['groups'] = []
@@ -237,7 +242,7 @@ def result2json(ifilename, poiname, ofilename):
         systematic['prefit'] = [-1.0, 0., 1.0]
         systematic[poiname] = [poi['fit'][1] - impacts[nuis], poi['fit'][1], poi['fit'][1] + impacts[nuis]]
         systematic['type'] = "Gaussian"
-        print(getNuisName(nuis), pulls[nuis][1], pulls[nuis][1]-pulls[nuis][0], impacts[nuis])
+        print((getNuisName(nuis), pulls[nuis][1], pulls[nuis][1]-pulls[nuis][0], impacts[nuis]))
 
         results['params'].append(systematic)
 
@@ -281,11 +286,11 @@ def MakeWpTPostFitPlots(jsonNames, postfix=""):
                 diff = systematic["impact_"+poiname]
                 himpacts[systematic["name"]].SetBinContent(ibin, abs(diff))
 
-    for key, val in himpacts.iteritems():
+    for key, val in himpacts.items():
         val.SetLineColor(colors[key])
 
     hmu.SetLineColor(1)
     DrawHistos([hmu], ['W^{+}#rightarrow#mu^{+}#nu'], 0, 120, "W p_{T} [GeV]", 0.5, 1.5, "#sigma_{Obs}/#sigma_{MC}", "hsignal_strength_"+postfix, dology=False, legendPos=[0.92, 0.88, 0.70, 0.80])
 
-    DrawHistos(himpacts.values(), himpacts.keys(), 0, 120, "W p_{T} [GeV]", 0, 0.20, "Uncertainty", "himpacts_wpt_"+postfix, dology=False, legendPos=[0.92, 0.88, 0.70, 0.40], drawashist=True)
+    DrawHistos(list(himpacts.values()), list(himpacts.keys()), 0, 120, "W p_{T} [GeV]", 0, 0.20, "Uncertainty", "himpacts_wpt_"+postfix, dology=False, legendPos=[0.92, 0.88, 0.70, 0.40], drawashist=True)
 

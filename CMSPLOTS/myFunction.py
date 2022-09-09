@@ -334,7 +334,7 @@ def DrawHistos(myhistos, mylabels, xmin, xmax, xlabel, ymin, ymax, ylabel, outpu
         pad2.SetBottomMargin(0.02/padsize2)
         pad2.SetLeftMargin(0.15 * (600.0)/W)
         pad2.SetGridy(1)
-        pas2.SetTicks(1,1)
+        pad2.SetTicks(1,1)
         pad3.SetTopMargin(0.01/padsize3)
         pad3.SetBottomMargin(0.13/padsize3)
         pad3.SetLeftMargin(0.15 * (600.0)/W)
