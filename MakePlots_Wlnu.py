@@ -8,7 +8,7 @@ ROOT.ROOT.EnableImplicitMT(10)
 
 # boolean flag to set either muon or electron channel
 # doMuon = False means the electron channel
-doMuon = False
+doMuon = True
 
 # boolean flag to run on a subset of samples for
 # debugging
@@ -19,7 +19,7 @@ doWpT = False
 
 # analyze the 5TeV data
 # if set to false will analyze the 13TeV data
-do5TeV = True
+do5TeV = False
 
 def main():
     print("Program start...")
@@ -106,6 +106,7 @@ def main():
             sampMan = SampleManager(DataSamp, [Wl1Samp, Wl2Samp])
         sampMan.groupMCs(["wx0", "wx1", "wx2"], 'wx', 216, 'wx')
         sampMan.groupMCs(["WW", "WZ", "ZZ"], 'vv', 216, 'vv')
+        sampMan.groupMCs(['ZXX'], 'zxx', 216, 'zxx')
         sampMan.groupMCs(["ttbar_dilepton", "ttbar_1lepton", "ttbar_0lepton"], "ttbar", 96, "t#bar{t}")
         label = "W#rightarrow#mu#nu" if doMuon else "W#rightarrow e#nu"
         sampMan.groupMCs(['wl0', 'wl1', 'wl2'], "wlnu", 92,"W#rightarrow#mu#nu")
@@ -133,7 +134,8 @@ def main():
         WxSamp = Sample(input_wx, isMC=True, name = "wx", color = 216, legend = "wx", isWSR=True, is5TeV = True)
 
         sampMan = SampleManager(DataSamp, [WlSamp, TTbarSamp, WWSamp, WZSamp, ZZSamp, ZXXSamp, WxSamp], is5TeV = True)
-        sampMan.groupMCs(["WW", "WZ", "ZZ"], 'vv', 216, 'vv')
+        sampMan.groupMCs(["WW", "WZ", "ZZ"], 'vv', 75, 'vv')
+        sampMan.groupMCs(['ZXX'], 'zxx', 84, 'zxx')
         label = "W#rightarrow#mu#nu" if doMuon else "W#rightarrow e#nu"
 
         # for the signal samples
@@ -249,7 +251,8 @@ def main():
 
     eta_bins = np.concatenate((np.linspace(-2.4, -2.0, 3),np.linspace(-1.8,1.8,37), np.linspace(2.0, 2.4, 3)))
     pt_bins = np.concatenate((np.linspace(25, 35, 6),np.linspace(36,55,20), np.linspace(57, 63, 4), np.linspace(66,70,2)))
-    mass_bins = np.concatenate((np.linspace(70, 76, 3),np.linspace(78,86,5), np.linspace(87, 96, 10), np.linspace(98,104,5), np.linspace(106, 110, 2)))
+    #mass_bins = np.concatenate((np.linspace(70, 76, 3),np.linspace(78,86,5), np.linspace(87, 96, 10), np.linspace(98,104,5), np.linspace(106, 110, 2)))
+    mass_bins = np.array([0, 20.0, 30.0, 40.0, 50.0, 60.0, 70.0, 80.0, 90.0, 120.0])
 
     # nPV
     sampMan.cacheDraw("npv", "histo_nPV_"+lepname, 10, 0, 10, DrawConfig(xmin=0, xmax=10, xlabel='# PV', ylabel='Events / 1', dology=False, ymax = 9e5), weightname = "weight_0_WpT_bin0_lepEta_bin0")
@@ -290,14 +293,14 @@ def main():
         for i in [1, 2, 3, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16]:
             for wpt in wptbins:
                 for lepeta in etabins:
-                    sampMan.cacheDraw("mT_{}".format(str(i)), "histo_wjets_{}_mT_{}_{}_{}".format(chg, str(i), wpt, lepeta),  nbins, xmin, xmax, DrawConfig(xmin=xmin, xmax=xmax, xlabel="m_{T} [GeV]", dology=False, ymax=ymaxs[chg], donormalizebin=False, addOverflow=False, addUnderflow=False), weightname = "weight_{}_0_{}_{}".format(chg, wpt, lepeta))
+                    sampMan.cacheDraw("mT_{}".format(str(i)), "histo_wjets_{}_mT_{}_{}_{}".format(chg, str(i), wpt, lepeta),  mass_bins, DrawConfig(xmin=xmin, xmax=xmax, xlabel="m_{T} [GeV]", dology=False, ymax=ymaxs[chg], donormalizebin=False, addOverflow=False, addUnderflow=False), weightname = "weight_{}_0_{}_{}".format(chg, wpt, lepeta))
 
                     # for signal MC, draw the histogram in different truth WpT bins
                     for wpttruth in wpttruthbins:
                         h_list = []
                         hname = "histo_wjets_{}_mT_{}_{}_{}_{}_signalMC".format(chg, str(i), wpt, lepeta, wpttruth)
                         for isamp, samp in enumerate(signalSamps):    
-                            h_list.append( samp.rdf.Histo1D((hname+str(isamp), hname, nbins, xmin, xmax), "mT_{}".format(str(i)), "weight_{}_0_{}_{}_{}".format(chg, wpt, lepeta, wpttruth)) )
+                            h_list.append( samp.rdf.Histo1D((hname+str(isamp), hname, mass_bins), "mT_{}".format(str(i)), "weight_{}_0_{}_{}_{}".format(chg, wpt, lepeta, wpttruth)) )
                         h_sigs[hname] = h_list
                             
 
@@ -305,14 +308,14 @@ def main():
         for i in [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]:
             for wpt in wptbins:
                 for lepeta in etabins:
-                    sampMan.cacheDraw("mT_1", "histo_wjets_{}_mtcorr_weight_{}_{}_{}".format(chg, str(i), wpt, lepeta),  nbins, xmin, xmax, DrawConfig(xmin=xmin, xmax=xmax, xlabel="m_{T} [GeV]", dology=False, ymax=ymaxs[chg], donormalizebin=False, addOverflow=False, addUnderflow=False), weightname = "weight_{}_{}_{}_{}".format(chg, str(i), wpt, lepeta))
+                    sampMan.cacheDraw("mT_1", "histo_wjets_{}_mtcorr_weight_{}_{}_{}".format(chg, str(i), wpt, lepeta),  mass_bins, DrawConfig(xmin=xmin, xmax=xmax, xlabel="m_{T} [GeV]", dology=False, ymax=ymaxs[chg], donormalizebin=False, addOverflow=False, addUnderflow=False), weightname = "weight_{}_{}_{}_{}".format(chg, str(i), wpt, lepeta))
 
                     # for signal MC, draw the histogram in different truth WpT bins
                     for wpttruth in wpttruthbins:
                         h_list = []
                         hname = "histo_wjets_{}_mtcorr_weight_{}_{}_{}_{}_signalMC".format(chg, str(i), wpt, lepeta, wpttruth)
                         for isamp, samp in enumerate(signalSamps):
-                            h_list.append( samp.rdf.Histo1D((hname+str(isamp), hname, nbins, xmin, xmax), "mT_1", "weight_{}_{}_{}_{}_{}".format(chg, str(i), wpt, lepeta, wpttruth)))
+                            h_list.append( samp.rdf.Histo1D((hname+str(isamp), hname, mass_bins), "mT_1", "weight_{}_{}_{}_{}_{}".format(chg, str(i), wpt, lepeta, wpttruth)))
                         h_sigs[hname] = h_list
 
 
@@ -338,7 +341,6 @@ def main():
     for hname in list(h_sigs.keys()):
         hadded = addSignals(hname)
         h_sigsMerged[hname] = hadded
-
 
     #
     # write out mT histograms for combine
