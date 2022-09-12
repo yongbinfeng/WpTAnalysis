@@ -22,7 +22,7 @@ doMuon = True
 doWpT = False
 
 # boolean flag. if set to true, scale the MC cross section by 30%
-applyScaling = True
+applyScaling = False
 
 # analyze the 5TeV data
 # if set to false will analyze the 13TeV data
@@ -312,8 +312,8 @@ def main():
     outfile = ROOT.TFile.Open("root/output_qcdshape_"+postfix, "recreate")
 
     for wpt in wptbins:
-        odir = outfile.mkdir(wpt)
-        outfile.cd(wpt)
+        #odir = outfile.mkdir(wpt)
+        #outfile.cd(wpt)
         for iso in isobins:
             # skip the last iso bin as it is used for the uncertaintiy of the previous iso bin
             for lepeta in etabins:
@@ -346,11 +346,14 @@ def main():
                         hcenter.SetBinContent(ibin, max(center, 0))
                         hup.SetBinContent(ibin, max(up, 0))
 
-                    hcenter.SetDirectory(odir)
+                    #hcenter.SetDirectory(odir)
+                    hcenter.SetDirectory(outfile)
                     hcenter.Write()
-                    hup.SetDirectory(odir)
+                    #hup.SetDirectory(odir)
+                    hup.SetDirectory(outfile)
                     hup.Write()
-                    hdown.SetDirectory(odir)
+                    #hdown.SetDirectory(odir)
+                    hdown.SetDirectory(outfile)
                     hdown.Write()
 
     outfile.Close()
