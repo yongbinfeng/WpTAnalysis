@@ -40,8 +40,9 @@ def MakePostPlot(ifilename, channel, postfix, showpull=False):
     for hname_sig in hnames_sig[1:]:
         hexpsig.Add( ifile.Get(hname_sig) )
     # ewk bkg includes W->tau+nu, z->ll, and diboson process
-    hexpewk = ifile.Get("expproc_taunu_postfit")
-    hexpewk.Add( ifile.Get("expproc_zxx_postfit"))
+    #hexpewk = ifile.Get("expproc_taunu_postfit")
+    #hexpewk.Add( ifile.Get("expproc_zxx_postfit"))
+    hexpewk = ifile.Get("expproc_zxx_postfit")
     hexpewk.Add( ifile.Get("expproc_VV_postfit"))
     hexpttbar = ifile.Get("expproc_tt_postfit")
 

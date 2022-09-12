@@ -55,15 +55,15 @@ class Process(object):
 def MakeCards(fname_mc, fname_qcd, channel, wptbin, etabin):
     # data
     data = Process(name = "data_obs", fname = fname_mc,
-                   hname = "Data/histo_wjets_{}_mT_1_{}_{}_data".format(channel, wptbin, etabin),
+                   hname = "histo_wjets_{}_mT_1_{}_{}_data".format(channel, wptbin, etabin),
                    isObs = True,
                    )
     # sig processes
     sigs = []
     if not doWpT:
         sig = Process(name = "w_"+channel+"_sig", fname = fname_mc, 
-                     hname = "MCTemplates/histo_wjets_{}_mT_1_{}_{}_grouped_wlnu0".format( channel, wptbin, etabin),
-                     hsys  = "MCTemplates/histo_wjets_{}_mT_1_{}_{}_grouped_wlnu0_".format(channel, wptbin, etabin),
+                     hname = "histo_wjets_{}_mT_1_{}_{}_grouped_wsig".format( channel, wptbin, etabin),
+                     hsys  = "histo_wjets_{}_mT_1_{}_{}_grouped_wsig_".format(channel, wptbin, etabin),
                      isSignal = True,
                      isMC = True,
                      isV = True,
@@ -85,8 +85,8 @@ def MakeCards(fname_mc, fname_qcd, channel, wptbin, etabin):
 
     # ttbar bkg
     ttbar = Process(name = "tt", fname = fname_mc,
-                    hname = "MCTemplates/histo_wjets_{}_mT_1_{}_{}_grouped_ttbar3".format(channel, wptbin, etabin),
-                    hsys = "MCTemplates/histo_wjets_{}_mT_1_{}_{}_grouped_ttbar3_".format(channel, wptbin, etabin),
+                    hname = "histo_wjets_{}_mT_1_{}_{}_grouped_ttbar3".format(channel, wptbin, etabin),
+                    hsys  = "histo_wjets_{}_mT_1_{}_{}_grouped_ttbar3_".format(channel, wptbin, etabin),
                     isSignal = False,
                     isMC = True,
                     isV = False,
@@ -95,8 +95,8 @@ def MakeCards(fname_mc, fname_qcd, channel, wptbin, etabin):
                 )
     # Z bkg
     zxx = Process(name = "zxx", fname = fname_mc,
-                  hname = "MCTemplates/histo_wjets_{}_mT_1_{}_{}_grouped_zxx9".format(channel, wptbin, etabin),
-                  hsys = "MCTemplates/histo_wjets_{}_mT_1_{}_{}_grouped_zxx9_".format(channel, wptbin, etabin),
+                  hname = "histo_wjets_{}_mT_1_{}_{}_grouped_zxx9".format(channel, wptbin, etabin),
+                  hsys  = "histo_wjets_{}_mT_1_{}_{}_grouped_zxx9_".format(channel, wptbin, etabin),
                   isSignal = False,
                   isMC = True,
                   isV = True,
@@ -105,8 +105,8 @@ def MakeCards(fname_mc, fname_qcd, channel, wptbin, etabin):
                   )
     # W->tau + nu bkg
     wtau = Process(name = "taunu", fname = fname_mc,
-                   hname = "MCTemplates/histo_wjets_{}_mT_1_{}_{}_grouped_wx10".format(channel, wptbin, etabin),
-                   hsys = "MCTemplates/histo_wjets_{}_mT_1_{}_{}_grouped_wx10_".format(channel, wptbin, etabin),
+                   hname = "histo_wjets_{}_mT_1_{}_{}_grouped_wx10".format(channel, wptbin, etabin),
+                   hsys  = "histo_wjets_{}_mT_1_{}_{}_grouped_wx10_".format(channel, wptbin, etabin),
                    isSignal = False,
                    isMC = True,
                    isV = True,
@@ -115,8 +115,8 @@ def MakeCards(fname_mc, fname_qcd, channel, wptbin, etabin):
                 )
     # VV bkg
     vv = Process(name = "VV", fname = fname_mc,
-                 hname = "MCTemplates/histo_wjets_{}_mT_1_{}_{}_grouped_vv6".format(channel, wptbin, etabin),
-                 hsys = "MCTemplates/histo_wjets_{}_mT_1_{}_{}_grouped_vv6_".format(channel, wptbin, etabin),
+                 hname = "histo_wjets_{}_mT_1_{}_{}_grouped_vv6".format(channel, wptbin, etabin),
+                 hsys  = "histo_wjets_{}_mT_1_{}_{}_grouped_vv6_".format(channel, wptbin, etabin),
                  isSignal = False,
                  isMC = True,
                  isV = False,
@@ -134,7 +134,8 @@ def MakeCards(fname_mc, fname_qcd, channel, wptbin, etabin):
                   isQCD = True,
                 )
 
-    processes = sigs + [ttbar, zxx, wtau, vv, qcd]
+    #processes = sigs + [ttbar, zxx, wtau, vv, qcd]
+    processes = sigs + [ttbar, zxx, vv, qcd]
     
     lepname = "mu" if "mu" in channel else "e"
 
@@ -156,7 +157,7 @@ def MakeCards(fname_mc, fname_qcd, channel, wptbin, etabin):
     # this is hard coded for now. Will be improved later
     #prefix = etabin.split("_")[1]+"_"+wptbin
     prefix = channel + "_" + etabin + "_" + wptbin
-    nbins = 12
+    nbins = 9
     qcdstats = [prefix+"_bin"+str(i)+"shape" for i in range(1, nbins+1)]
     if doQCDSys:
         #qcdstats += [prefix+"_Pol2shape"]
@@ -277,8 +278,8 @@ if __name__ == "__main__":
     channel = "muplus"
     etabin = "lepEta_bin0"
     fnames = {
-        "muplus" : "output_shapes_mu",
-        "muminus": "output_shapes_mu",
+        "muplus" : "output_shapes_mu_mergeTau",
+        "muminus": "output_shapes_mu_mergeTau",
         "eplus" :  "output_shapes_e",
         "eminus":  "output_shapes_e",
     }
