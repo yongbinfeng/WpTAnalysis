@@ -352,21 +352,22 @@ def main():
     outfile = ROOT.TFile.Open("root/output_shapes_"+postfix, "recreate")
 
     # Data
-    odir = outfile.mkdir("Data")
-    outfile.cd("Data")
+    #odir = outfile.mkdir("Data")
+    #outfile.cd("Data")
     for chg in chgbins:
         for wpt in wptbins:
             for lepeta in etabins:
                 hdata = sampMan.hdatas["histo_wjets_{}_mT_1_{}_{}".format(chg, wpt, lepeta)]
-                hdata.SetDirectory(odir)
+                #hdata.SetDirectory(odir)
+                hdata.SetDirectory(outfile)
                 hdata.Write()
 
     # MC
     for wpttruth in ["MCTemplates"] + wpttruthbins:
         # the 1st wpttruth bin is 'fake', for all MC templates
         # the other wpttruth bins are for signal MC only
-        odir = outfile.mkdir(wpttruth)
-        outfile.cd(wpttruth)
+        #odir = outfile.mkdir(wpttruth)
+        #outfile.cd(wpttruth)
         for chg in chgbins:
             for wpt in wptbins:
                 for lepeta in etabins:
@@ -382,7 +383,8 @@ def main():
                     # central values for MC
                     for ih in range(len(hlists_central)):
                         hcen = hlists_central[ih]
-                        hcen.SetDirectory(odir)
+                        #hcen.SetDirectory(odir)
+                        hcen.SetDirectory(outfile)
                         hcen.Write()
 
                     # recoil systematics
@@ -412,9 +414,11 @@ def main():
                             for ibin in range(1, hup.GetNbinsX()+1):
                                 hdn.SetBinContent(ibin, 2*hcen.GetBinContent(ibin) - hup.GetBinContent(ibin))
 
-                            hup.SetDirectory(odir)
+                            #hup.SetDirectory(odir)
+                            hup.SetDirectory(outfile)
                             hup.Write()
-                            hdn.SetDirectory(odir)
+                            #hdn.SetDirectory(odir)
+                            hdn.SetDirectory(outfile)
                             hdn.Write()
 
                     # weights/corrections
@@ -452,10 +456,12 @@ def main():
                                 for ibin in range(1, hup.GetNbinsX()+1):
                                     hdn.SetBinContent(ibin, 2*hcen.GetBinContent(ibin) - hup.GetBinContent(ibin))
                             
-                            hup.SetDirectory(odir)
+                            #hup.SetDirectory(odir)
+                            hup.SetDirectory(outfile)
                             hup.Write()
                             if i<6 or i==12 or i==13:
-                                hdn.SetDirectory(odir)
+                                #hdn.SetDirectory(odir)
+                                hdn.SetDirectory(outfile)
                                 hdn.Write()
 
     outfile.Close()
