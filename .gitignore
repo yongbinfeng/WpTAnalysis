@@ -6,3 +6,5 @@ root/*
 *_cc.so
 *.pcm
 inputs*
+*.bak
+backup/*
