@@ -6,7 +6,7 @@ from CMSPLOTS.myFunction import DrawHistos
 doMuon = True
 doElectron = True
 doWpT = False
-do5TeV = True
+do5TeV = False
 
 ROOT.gROOT.SetBatch(True)
 
@@ -327,9 +327,9 @@ def ExtrapolateQCD(fname, oname, channels, wptbin, etabins, fname_scaled=None):
             #
             hnew.SetDirectory(ofile)
             hnew.Write()
-            for h in h_todraws + [h_pol1_par0]:
-                h.SetDirectory(ofile)
-                h.Write()
+            #for h in h_todraws + [h_pol1_par0]:
+            #    h.SetDirectory(ofile)
+            #    h.Write()
             for hnew_up in hnew_ups:
                 hnew_up.SetDirectory(ofile)
                 hnew_up.Write()
