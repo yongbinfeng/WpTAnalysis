@@ -5,6 +5,7 @@ import ROOT
 import numpy as np
 from collections import OrderedDict
 import sys
+import argparse
 from CMSPLOTS.myFunction import THStack2TH1
 
 from SampleManager import DrawConfig, Sample, SampleManager
@@ -12,24 +13,28 @@ from SampleManager import DrawConfig, Sample, SampleManager
 ROOT.gROOT.SetBatch(True)
 ROOT.ROOT.EnableImplicitMT(10)
 
-doTest = False
-
-# boolean flag to set either muon or electron channel
-# doMuon = False means the electron channel
-doMuon = True
-
-# boolean flag to bin in different W pt bins
-doWpT = False
-
-# boolean flag. if set to true, scale the MC cross section by 30%
-applyScaling = True
-
-# analyze the 5TeV data
-# if set to false will analyze the 13TeV data
-do5TeV = False
-
 def main():
     print("Program start...")
+
+    parser = argparse.ArgumentParser(description="Make plots for Wlnu analysis in the lepton anti-isolated region")
+    parser.add_argument("--doTest", action="store_true", dest="doTest", help="Run on a subset of samples for debugging; false runs on all dataset.")
+    parser.add_argument("--doWpT", action="store_true", dest="doWpT", help="Bin in different W pt bins; false runs inclusively")
+    parser.add_argument("--do5TeV", action="store_true", dest="do5TeV", help="Analyze the 5TeV data; false runs on 13TeV data")
+    parser.add_argument("--doElectron", action="store_true", dest="doElectron", help="Analyze the electron channel; false runs the muon channel")
+    parser.add_argument("--applyScaling", action="store_true", dest="applyScaling", help="Scale the MC cross section by 30 percents and subtract")
+    args = parser.parse_args()
+
+    doMuon = not args.doElectron
+    applyScaling = args.applyScaling
+    doTest = args.doTest
+    doWpT  = args.doWpT
+    do5TeV = args.do5TeV
+
+    print("doMuon: ", doMuon)
+    print("applyScaling: ", applyScaling)
+    print("doTest:", doTest)
+    print("doWpT:", doWpT)
+    print("do5TeV:", do5TeV)
 
     if not do5TeV:
         if doTest:

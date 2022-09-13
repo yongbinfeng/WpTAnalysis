@@ -1,28 +1,32 @@
+from ast import parse
 import ROOT
 import numpy as np
 from collections import OrderedDict
 from SampleManager import DrawConfig, Sample, SampleManager
+import argparse
 
 ROOT.gROOT.SetBatch(True)
 ROOT.ROOT.EnableImplicitMT(10)
 
-# boolean flag to set either muon or electron channel
-# doMuon = False means the electron channel
-doMuon = True
-
-# boolean flag to run on a subset of samples for
-# debugging
-doTest = False
-
-# boolean flag to bin in different W pt bins
-doWpT = False
-
-# analyze the 5TeV data
-# if set to false will analyze the 13TeV data
-do5TeV = False
-
 def main():
     print("Program start...")
+
+    parser = argparse.ArgumentParser(description="Make plots for Wlnu analysis")
+    parser.add_argument("--doTest", action="store_true", dest="doTest", help="Run on a subset of samples for debugging; false runs on all dataset.")
+    parser.add_argument("--doWpT", action="store_true", dest="doWpT", help="Bin in different W pt bins; false runs inclusively")
+    parser.add_argument("--do5TeV", action="store_true", dest="do5TeV", help="Analyze the 5TeV data; false runs on 13TeV data")
+    parser.add_argument("--doElectron", action="store_true", dest="doElectron", help="Analyze the electron channel; false runs the muon channel")
+    args = parser.parse_args()
+
+    doMuon = not args.doElectron
+    doTest = args.doTest
+    doWpT  = args.doWpT
+    do5TeV = args.do5TeV
+
+    print("doMuon: ", doMuon)
+    print("doTest:", doTest)
+    print("doWpT:", doWpT)
+    print("do5TeV:", do5TeV)
 
     #ROOT.gROOT.ProcessLine('TFile* f_zpt = TFile::Open("results/zpt_weight.root")')
     #ROOT.gROOT.ProcessLine('TH1D* h_zpt_ratio  = (TH1D*)f_zpt->Get("h_zpt_ratio")')
@@ -60,23 +64,25 @@ def main():
             input_wx2     = "inputs/wenu/input_wx2.txt"
     else:
         if doMuon:
-            input_data    =    "inputs_5TeV/wmunu/input_data.txt"
-            input_wl      =    "inputs_5TeV/wmunu/input_wm.txt"
-            input_ttbar   =    "inputs_5TeV/wmunu/input_ttbar.txt"
-            input_ww      =    "inputs_5TeV/wmunu/input_ww.txt"
-            input_wz      =    "inputs_5TeV/wmunu/input_wz.txt"
-            input_zz      =    "inputs_5TeV/wmunu/input_zz.txt"
-            input_zxx     =    "inputs_5TeV/wmunu/input_zxx.txt"
-            input_wx      =    "inputs_5TeV/wmunu/input_wx.txt"
+            input_data  = "inputs_5TeV/wmunu/input_data.txt"
+            input_wl    = "inputs_5TeV/wmunu/input_wm.txt"
+            input_ttbar = "inputs_5TeV/wmunu/input_ttbar.txt"
+            input_ww    = "inputs_5TeV/wmunu/input_ww.txt"
+            input_wz    = "inputs_5TeV/wmunu/input_wz.txt"
+            input_zz2l  = "inputs_5TeV/wmunu/input_zz2l.txt"
+            input_zz4l  = "inputs_5TeV/wmunu/input_zz4l.txt" 
+            input_zxx   = "inputs_5TeV/wmunu/input_zxx.txt"
+            input_wx    = "inputs_5TeV/wmunu/input_wx.txt"
         else:
-            input_data    = "inputs_5TeV/wenu/input_data.txt"
-            input_wl      = "inputs_5TeV/wenu/input_we.txt"
-            input_ttbar   = "inputs_5TeV/wenu/input_ttbar.txt"
-            input_ww      = "inputs_5TeV/wenu/input_ww.txt"
-            input_wz      = "inputs_5TeV/wenu/input_wz.txt"
-            input_zz      = "inputs_5TeV/wenu/input_zz.txt"
-            input_zxx     = "inputs_5TeV/wenu/input_zxx.txt"
-            input_wx      = "inputs_5TeV/wenu/input_wx.txt"
+            input_data  = "inputs_5TeV/wenu/input_data.txt"
+            input_wl    = "inputs_5TeV/wenu/input_we.txt"
+            input_ttbar = "inputs_5TeV/wenu/input_ttbar.txt"
+            input_ww    = "inputs_5TeV/wenu/input_ww.txt"
+            input_wz    = "inputs_5TeV/wenu/input_wz.txt"
+            input_zz2l  = "inputs_5TeV/wenu/input_zz2l.txt"
+            input_zz4l  = "inputs_5TeV/wenu/input_zz4l.txt"
+            input_zxx   = "inputs_5TeV/wenu/input_zxx.txt"
+            input_wx    = "inputs_5TeV/wenu/input_wx.txt"
 
     DataSamp  = Sample(input_data, isMC=False, legend="Data", name="Data", isWSR=True)
     if not do5TeV:
@@ -128,13 +134,14 @@ def main():
         ## dibosons
         WWSamp = Sample(input_ww, isMC=True, name = "WW", isWSR=True, is5TeV = True)
         WZSamp = Sample(input_wz, isMC=True, name = "WZ", isWSR=True, is5TeV = True)
-        ZZSamp = Sample(input_zz, isMC=True, name = "ZZ", isWSR=True, is5TeV = True)
+        ZZ2LSamp = Sample(input_zz2l, isMC=True, name = "ZZ2L", isWSR=True, is5TeV = True)
+        ZZ4LSamp = Sample(input_zz4l, isMC=True, name = "ZZ4L", isWSR=True, is5TeV = True)
         # tau
         ZXXSamp = Sample(input_zxx, isMC=True, name = "ZXX", isWSR=True, is5TeV = True)
         WxSamp = Sample(input_wx, isMC=True, name = "wx", color = 216, legend = "wx", isWSR=True, is5TeV = True)
 
-        sampMan = SampleManager(DataSamp, [WlSamp, TTbarSamp, WWSamp, WZSamp, ZZSamp, ZXXSamp, WxSamp], is5TeV = True)
-        sampMan.groupMCs(["WW", "WZ", "ZZ"], 'vv', 75, 'vv')
+        sampMan = SampleManager(DataSamp, [WlSamp, TTbarSamp, WWSamp, WZSamp, ZZ2LSamp, ZZ4LSamp, ZXXSamp, WxSamp], is5TeV = True)
+        sampMan.groupMCs(["WW", "WZ", "ZZ2L", "ZZ4L"], 'vv', 75, 'vv')
         sampMan.groupMCs(['ZXX'], 'zxx', 84, 'zxx')
         label = "W#rightarrow#mu#nu" if doMuon else "W#rightarrow e#nu"
 
