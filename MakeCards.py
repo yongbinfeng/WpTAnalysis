@@ -4,17 +4,6 @@ script to generate the W(lnv) cards for tfCombine
 from collections import OrderedDict
 import os
 
-doMuon = True
-doElectron = False
-doWpT = False
-doQCDSys = True
-
-if doWpT:
-    wptbins = ["WpT_bin1", "WpT_bin2", "WpT_bin3", "WpT_bin4", "WpT_bin5", "WpT_bin6", "WpT_bin7", "WpT_bin8", "WpT_bin9"]
-else:
-    wptbins = ["WpT_bin0"]
-
-
 class Process(object):
     """
     define one process and related information for the cards
@@ -52,18 +41,21 @@ class Process(object):
             self.xsecUnc = "-1.0"
 
 
-def MakeCards(fname_mc, fname_qcd, channel, wptbin, etabin):
+def MakeCards(fname_mc, fname_qcd, channel, wptbin, etabin, doWpT = False, rebinned = False):
+    prefix = ""
+    if rebinned:
+        prefix = "Rebinned_"
     # data
     data = Process(name = "data_obs", fname = fname_mc,
-                   hname = "histo_wjets_{}_mT_1_{}_{}_data".format(channel, wptbin, etabin),
+                   hname = prefix + "histo_wjets_{}_mT_1_{}_{}_data".format(channel, wptbin, etabin),
                    isObs = True,
                    )
     # sig processes
     sigs = []
     if not doWpT:
         sig = Process(name = "w_"+channel+"_sig", fname = fname_mc, 
-                     hname = "histo_wjets_{}_mT_1_{}_{}_grouped_wsig".format( channel, wptbin, etabin),
-                     hsys  = "histo_wjets_{}_mT_1_{}_{}_grouped_wsig_".format(channel, wptbin, etabin),
+                     hname = prefix + "histo_wjets_{}_mT_1_{}_{}_grouped_wsig".format( channel, wptbin, etabin),
+                     hsys  = prefix + "histo_wjets_{}_mT_1_{}_{}_grouped_wsig_".format(channel, wptbin, etabin),
                      isSignal = True,
                      isMC = True,
                      isV = True,
@@ -74,8 +66,8 @@ def MakeCards(fname_mc, fname_qcd, channel, wptbin, etabin):
         wpttruthbins  = ["WpT_truth_bin1", "WpT_truth_bin2", "WpT_truth_bin3", "WpT_truth_bin4", "WpT_truth_bin5", "WpT_truth_bin6", "WpT_truth_bin7", "WpT_truth_bin8", "WpT_truth_bin9"]
         for wpttruthbin in wpttruthbins:
             sig = Process(name = "w_"+channel+"_"+wpttruthbin+"_sig", fname = fname_mc,
-                     hname = "{}/histo_wjets_{}_mT_1_{}_{}_{}_signalMC".format( wpttruthbin, channel, wptbin, etabin, wpttruthbin),
-                     hsys  = "{}/histo_wjets_{}_mT_1_{}_{}_{}_signalMC_".format(wpttruthbin, channel, wptbin, etabin, wpttruthbin),
+                     hname = prefix + "histo_wjets_{}_mT_1_{}_{}_{}_signalMC".format( wpttruthbin, channel, wptbin, etabin, wpttruthbin),
+                     hsys  = prefix + "histo_wjets_{}_mT_1_{}_{}_{}_signalMC_".format(wpttruthbin, channel, wptbin, etabin, wpttruthbin),
                      isSignal = True,
                      isMC = True,
                      isV = True,
@@ -85,8 +77,8 @@ def MakeCards(fname_mc, fname_qcd, channel, wptbin, etabin):
 
     # ttbar bkg
     ttbar = Process(name = "tt", fname = fname_mc,
-                    hname = "histo_wjets_{}_mT_1_{}_{}_grouped_ttbar3".format(channel, wptbin, etabin),
-                    hsys  = "histo_wjets_{}_mT_1_{}_{}_grouped_ttbar3_".format(channel, wptbin, etabin),
+                    hname = prefix + "histo_wjets_{}_mT_1_{}_{}_grouped_ttbar3".format(channel, wptbin, etabin),
+                    hsys  = prefix + "histo_wjets_{}_mT_1_{}_{}_grouped_ttbar3_".format(channel, wptbin, etabin),
                     isSignal = False,
                     isMC = True,
                     isV = False,
@@ -95,8 +87,8 @@ def MakeCards(fname_mc, fname_qcd, channel, wptbin, etabin):
                 )
     # Z bkg
     zxx = Process(name = "zxx", fname = fname_mc,
-                  hname = "histo_wjets_{}_mT_1_{}_{}_grouped_zxx9".format(channel, wptbin, etabin),
-                  hsys  = "histo_wjets_{}_mT_1_{}_{}_grouped_zxx9_".format(channel, wptbin, etabin),
+                  hname = prefix + "histo_wjets_{}_mT_1_{}_{}_grouped_zxx9".format(channel, wptbin, etabin),
+                  hsys  = prefix + "histo_wjets_{}_mT_1_{}_{}_grouped_zxx9_".format(channel, wptbin, etabin),
                   isSignal = False,
                   isMC = True,
                   isV = True,
@@ -105,8 +97,8 @@ def MakeCards(fname_mc, fname_qcd, channel, wptbin, etabin):
                   )
     # W->tau + nu bkg
     wtau = Process(name = "taunu", fname = fname_mc,
-                   hname = "histo_wjets_{}_mT_1_{}_{}_grouped_wx10".format(channel, wptbin, etabin),
-                   hsys  = "histo_wjets_{}_mT_1_{}_{}_grouped_wx10_".format(channel, wptbin, etabin),
+                   hname = prefix + "histo_wjets_{}_mT_1_{}_{}_grouped_wx10".format(channel, wptbin, etabin),
+                   hsys  = prefix + "histo_wjets_{}_mT_1_{}_{}_grouped_wx10_".format(channel, wptbin, etabin),
                    isSignal = False,
                    isMC = True,
                    isV = True,
@@ -115,8 +107,8 @@ def MakeCards(fname_mc, fname_qcd, channel, wptbin, etabin):
                 )
     # VV bkg
     vv = Process(name = "VV", fname = fname_mc,
-                 hname = "histo_wjets_{}_mT_1_{}_{}_grouped_vv6".format(channel, wptbin, etabin),
-                 hsys  = "histo_wjets_{}_mT_1_{}_{}_grouped_vv6_".format(channel, wptbin, etabin),
+                 hname = prefix + "histo_wjets_{}_mT_1_{}_{}_grouped_vv6".format(channel, wptbin, etabin),
+                 hsys  = prefix + "histo_wjets_{}_mT_1_{}_{}_grouped_vv6_".format(channel, wptbin, etabin),
                  isSignal = False,
                  isMC = True,
                  isV = False,
@@ -143,7 +135,8 @@ def MakeCards(fname_mc, fname_qcd, channel, wptbin, etabin):
     # in Aram's ntuples, defined here: https://github.com/MiT-HEP/MitEwk13TeV/blob/CMSSW_94X/NtupleMod/eleNtupleMod.C#L71
     # and here: https://github.com/MiT-HEP/MitEwk13TeV/blob/CMSSW_94X/NtupleMod/muonNtupleMod.C#L81
     # 1 is MC, 2 is FSR, 3 is Bkg, 4 is tagpt, 
-    # 6 is prefire
+    # 8 is ecal prefire
+    # 10 is muon prefire
     sfsys = ["SysWeight1", lepname+"_SysWeight2", lepname+"_SysWeight3", lepname+"_SysWeight4", "SysWeight8", "SysWeight10"]
 
     # recoil correction systematics
@@ -159,10 +152,11 @@ def MakeCards(fname_mc, fname_qcd, channel, wptbin, etabin):
     prefix = channel + "_" + etabin + "_" + wptbin
     nbins = 9
     qcdstats = [prefix+"_bin"+str(i)+"shape" for i in range(1, nbins+1)]
-    if doQCDSys:
+    if True:
         #qcdstats += [prefix+"_Pol2shape"]
         qcdstats += [prefix+"_ScaledMCshape"]
 
+    othersys = ['SysTauFrac']
 
     #
     # writing datacards
@@ -204,6 +198,9 @@ def MakeCards(fname_mc, fname_qcd, channel, wptbin, etabin):
     for sys in qcdstats:
         lines[sys] = "{:<30} {:<10}".format(sys, "shape")
 
+    for sys in othersys:
+        lines[sys] = "{:<30} {:<10}".format(sys, "shape")
+
     # fill in the per-process information
     isig = 0
     ibkg = 1
@@ -242,6 +239,10 @@ def MakeCards(fname_mc, fname_qcd, channel, wptbin, etabin):
             temp = "1.0" if proc.isQCD else "-"
             lines[sys] += " {:<10}".format(temp)
 
+        for sys in othersys:
+            temp = "1.0" if proc.isSignal else "-"
+            lines[sys] += " {:<10}".format(temp)
+
     # add the QCD group 
     qcdgroup = "QCD group ="
     for sys in qcdstats:
@@ -275,6 +276,16 @@ def combineCards(labels, cards, oname):
     
     
 if __name__ == "__main__":
+    doMuon = True
+    doElectron = False
+    doWpT = False
+
+    if doWpT:
+        wptbins = ["WpT_bin1", "WpT_bin2", "WpT_bin3", "WpT_bin4", "WpT_bin5", "WpT_bin6", "WpT_bin7", "WpT_bin8", "WpT_bin9"]
+    else:
+        wptbins = ["WpT_bin0"]
+    
+
     channel = "muplus"
     etabin = "lepEta_bin0"
     fnames = {
@@ -300,7 +311,7 @@ if __name__ == "__main__":
             cards = []
             for wptbin in wptbins:
                 postfix = "" if not doWpT else "_WpT"
-                card = MakeCards(pwd+"/root/"+fnames[channel]+postfix+".root", pwd+"/root/"+fqcds[channel]+"_"+wptbin+".root", channel, wptbin, etabin)
+                card = MakeCards(pwd+"/root/"+fnames[channel]+postfix+".root", pwd+"/root/"+fqcds[channel]+"_"+wptbin+".root", channel, wptbin, etabin, doWpT=doWpT)
                 cards.append(card)
 
             if doWpT:

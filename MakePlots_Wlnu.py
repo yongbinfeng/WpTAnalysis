@@ -252,7 +252,7 @@ def main():
     eta_bins = np.concatenate((np.linspace(-2.4, -2.0, 3),np.linspace(-1.8,1.8,37), np.linspace(2.0, 2.4, 3)))
     pt_bins = np.concatenate((np.linspace(25, 35, 6),np.linspace(36,55,20), np.linspace(57, 63, 4), np.linspace(66,70,2)))
     #mass_bins = np.concatenate((np.linspace(70, 76, 3),np.linspace(78,86,5), np.linspace(87, 96, 10), np.linspace(98,104,5), np.linspace(106, 110, 2)))
-    mass_bins = np.array([0, 20.0, 30.0, 40.0, 50.0, 60.0, 70.0, 80.0, 90.0, 120.0])
+    mass_bins = np.array([0, 10.0, 20.0, 30.0, 40.0, 50.0, 60.0, 70.0, 80.0, 90.0, 100.0, 110.0, 120.0, 130.0, 140,])
 
     # nPV
     sampMan.cacheDraw("npv", "histo_nPV_"+lepname, 10, 0, 10, DrawConfig(xmin=0, xmax=10, xlabel='# PV', ylabel='Events / 1', dology=False, ymax = 9e5), weightname = "weight_0_WpT_bin0_lepEta_bin0")
@@ -345,7 +345,9 @@ def main():
     #
     # write out mT histograms for combine
     #
-    postfix = lepname + "_WpT" if doWpT else lepname
+    postfix = lepname + "nu"
+    if doWpT:
+        postfix += "_WpT"
     if do5TeV:
         postfix += "_5TeV"
     postfix += ".root"

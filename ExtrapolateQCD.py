@@ -3,32 +3,9 @@ import os,sys
 import numpy as np
 from CMSPLOTS.myFunction import DrawHistos
 
-doMuon = True
-doElectron = True
-doWpT = False
-do5TeV = False
-
 ROOT.gROOT.SetBatch(True)
 
-etaLabels = {
-    "lepEta_bin0": "Full Eta", 
-    "lepEta_bin1": "Barrel", 
-    "lepEta_bin2": "Endcap"
-}
-channelLabels = {
-    "muplus":  "W^{+}#rightarrow #mu^{+}#nu",
-    "muminus": "W^{-}#rightarrow #mu^{-}#bar{#nu}",
-    "eplus":   "W^{+}#rightarrow e^{+}#nu",
-    "eminus":  "W^{-}#rightarrow e^{-}#bar{#nu}",
-}
-
-if doWpT:
-    wptbins = ["WpT_bin1", "WpT_bin2", "WpT_bin3", "WpT_bin4", "WpT_bin5", "WpT_bin6", "WpT_bin7", "WpT_bin8", "WpT_bin9"]
-else:
-    wptbins = ["WpT_bin0"]
-
-
-def ExpltOneBin(isocenters, bincontents, binerrors, isoSR, mTmin, mTmax, suffix="", extraText="", bincontents_scaled = None, binerrors_scaled = None, showScaled = True, isMuon = True):
+def ExpltOneBin(isocenters, bincontents, binerrors, isoSR, mTmin, mTmax, suffix="", extraText="", bincontents_scaled = None, binerrors_scaled = None, showScaled = True, isMuon = True, is5TeV = False):
     """
     extrapolate the QCD shape from a set of control regions (isocenters) to the signal region (isoSR),
     using linear extrapolation and the 2nd order polynomial function
@@ -110,26 +87,36 @@ def ExpltOneBin(isocenters, bincontents, binerrors, isoSR, mTmin, mTmax, suffix=
             drawoptions.extend(["P same", "L", "P same"])
             legendoptions.extend(["PE", "L", "PE"])
 
-    DrawHistos( h_todraws, labels, 0, fitmax, "Lepton Relative Isolation", 0.4*min(bincontents), 1.25*max(bincontents), "Bin Content", "QCDBinContentNorm_"+suffix, dology=False, drawoptions=drawoptions, legendoptions=legendoptions, nMaxDigits=3, legendPos=[0.55, 0.18, 0.88, 0.50], lheader=extraText, is5TeV = do5TeV, noCMS = True)
+    DrawHistos( h_todraws, labels, 0, fitmax, "Lepton Relative Isolation", 0.4*min(bincontents), 1.25*max(bincontents), "Bin Content", "QCDBinContentNorm_"+suffix, dology=False, drawoptions=drawoptions, legendoptions=legendoptions, nMaxDigits=3, legendPos=[0.55, 0.18, 0.88, 0.50], lheader=extraText, is5TeV = is5TeV, noCMS = True)
 
     #return (val_pol1_par1, err_pol1_par1), (val_pol1_par0, err_pol1_par0), (val_pol2_par2, err_pol2_par2), (val_scaled_pol1_par1, err_scaled_pol1_par1)
     return (val_pol1_par1, err_pol1_par1), (val_pol1_par0, err_pol1_par0), (val_scaled_pol1_par1, err_scaled_pol1_par1)
 
 
-def ExtrapolateQCD(fname, oname, channels, wptbin, etabins, fname_scaled=None):
+def ExtrapolateQCD(fname, oname, channels, wptbin, etabins, fname_scaled=None, is5TeV=False, rebinned = False):
     """
     run the QCd extrapolation in all mT bins,
     save the statistical and systematic variations for HComb, and
     make some shape comparison plots
     """
+    etaLabels = {
+        "lepEta_bin0": "Full Eta", 
+        "lepEta_bin1": "Barrel", 
+        "lepEta_bin2": "Endcap"
+    }
+    channelLabels = {
+        "muplus":  "W^{+}#rightarrow #mu^{+}#nu",
+        "muminus": "W^{-}#rightarrow #mu^{-}#bar{#nu}",
+        "eplus":   "W^{+}#rightarrow e^{+}#nu",
+        "eminus":  "W^{-}#rightarrow e^{-}#bar{#nu}",
+    }
+
     fqcd = ROOT.TFile.Open(fname)
     if fname_scaled:
         # qcd templates with scaled MC subtraction
         fqcd_scaled = ROOT.TFile.Open(fname_scaled)
 
-    if not os.path.exists("root/QCD"):
-        os.makedirs("root/QCD")
-    ofile = ROOT.TFile.Open("root/QCD/"+oname, "recreate")
+    ofile = ROOT.TFile.Open(oname, "recreate")
   
     if isinstance(channels, str):
         channels = [channels]
@@ -165,7 +152,11 @@ def ExtrapolateQCD(fname, oname, channels, wptbin, etabins, fname_scaled=None):
             histos_norm = {}
             histos_scaled_norm = {}
             for iso in range(isomin, isomax):
-                hname = wptbin + "/histo_wjetsAntiIso_mtcorr_weight_" + channel + "_iso" + str(iso) + "_" + wptbin + "_" + etabin
+                prefix = "histo_wjetsAntiIso_mtcorr_weight_"
+                if rebinned:
+                    prefix = "Rebinned_" + prefix
+                hname = prefix + channel + "_iso" + str(iso) + "_" + wptbin + "_" + etabin
+                print("hname: ", hname)
                 h = fqcd.Get(hname)
                 # set the overflow and underflow to zero
                 h.SetBinContent(0, 0)
@@ -225,7 +216,7 @@ def ExtrapolateQCD(fname, oname, channels, wptbin, etabins, fname_scaled=None):
                 #extraText = channelLabels[channel] +" "+ etaLabels[etabin]
                 extraText = channelLabels[channel]
                 #results_pol1_par1, results_pol1_par0, results_pol2_par2, results_scaled_pol1_par1 = ExpltOneBin(isocenters, bincontents, binerrors, isoSR, mTmin, mTmax, suffix=suffix, extraText=extraText, bincontents_scaled = bincontents_scaled, binerrors_scaled = binerrors_scaled)
-                results_pol1_par1, results_pol1_par0, results_scaled_pol1_par1 = ExpltOneBin(isocenters, bincontents, binerrors, isoSR, mTmin, mTmax, suffix=suffix, extraText=extraText, bincontents_scaled = bincontents_scaled, binerrors_scaled = binerrors_scaled, showScaled=False, isMuon = isMuon)
+                results_pol1_par1, results_pol1_par0, results_scaled_pol1_par1 = ExpltOneBin(isocenters, bincontents, binerrors, isoSR, mTmin, mTmax, suffix=suffix, extraText=extraText, bincontents_scaled = bincontents_scaled, binerrors_scaled = binerrors_scaled, showScaled=False, isMuon = isMuon, is5TeV=is5TeV)
 
                 hnew.SetBinContent(ibin, max(results_pol1_par1[0], 0))
                 hnew.SetBinError(ibin, 0.)
@@ -297,7 +288,7 @@ def ExtrapolateQCD(fname, oname, channels, wptbin, etabins, fname_scaled=None):
                 h_scaled_pol1_par1.SetMarkerColor(30)
                 h_todraws.append(h_scaled_pol1_par1)
                 labels.append("With Scaled MC")
-            DrawHistos( h_todraws, labels, 0, 120, "m_{T} [GeV]", 0., 0.3, "A.U.", "QCDShapeCompare_"+channel+"_"+etabin+"_"+wptbin, dology=False, nMaxDigits=3, legendPos=[0.60, 0.65, 0.88, 0.83], lheader=extraText, is5TeV = do5TeV, noCMS = True, donormalize = True, addOverflow = True, showratio = True, yrmin = 0.81, yrmax = 1.19)
+            DrawHistos( h_todraws, labels, 0, 120, "m_{T} [GeV]", 0., 0.3, "A.U.", "QCDShapeCompare_"+channel+"_"+etabin+"_"+wptbin, dology=False, nMaxDigits=3, legendPos=[0.60, 0.65, 0.88, 0.83], lheader=extraText, is5TeV = is5TeV, noCMS = True, donormalize = True, addOverflow = True, showratio = True, yrmin = 0.81, yrmax = 1.19)
 
             # 
             # draw the original (normalized) mT distribution in different anti-isolated regions
@@ -319,7 +310,7 @@ def ExtrapolateQCD(fname, oname, channels, wptbin, etabins, fname_scaled=None):
                 h_todraws.append(hmt)
 
                 labels.append(f"{isocuts[idx]} < I < {isocuts[idx+1]}")
-            DrawHistos( h_todraws, labels, 0, 120, "m_{T} [GeV]", 0., 0.3, "A.U.", "mTShape_QCD_"+suffix, dology=False, nMaxDigits=3, legendPos=[0.65, 0.50, 0.88, 0.85], lheader=extraText, noCMS = True, donormalize=True, drawashist=True, showratio=True, yrmin=0.81, addOverflow = True, yrmax=1.39, is5TeV = do5TeV)
+            DrawHistos( h_todraws, labels, 0, 120, "m_{T} [GeV]", 0., 0.3, "A.U.", "mTShape_QCD_"+suffix, dology=False, nMaxDigits=3, legendPos=[0.65, 0.50, 0.88, 0.85], lheader=extraText, noCMS = True, donormalize=True, drawashist=True, showratio=True, yrmin=0.81, addOverflow = True, yrmax=1.39, is5TeV = is5TeV)
                
 
             #
@@ -341,12 +332,22 @@ def ExtrapolateQCD(fname, oname, channels, wptbin, etabins, fname_scaled=None):
 
 
 if __name__ == "__main__":
+    doMuon = True
+    doElectron = False
+    doWpT = False
+    do5TeV = False
+
+    if doWpT:
+        wptbins = ["WpT_bin1", "WpT_bin2", "WpT_bin3", "WpT_bin4", "WpT_bin5", "WpT_bin6", "WpT_bin7", "WpT_bin8", "WpT_bin9"]
+    else:
+        wptbins = ["WpT_bin0"]
+
     if doMuon:
         fname = "root/output_qcdshape_munu"
-        oname = "qcdshape_extrapolated_mu"
+        oname = "root/qcdshape_extrapolated_mu"
         for wptbin in wptbins:
             if do5TeV:
-                ExtrapolateQCD(fname+"_5TeV.root", oname+"_"+wptbin+"_5TeV.root", ["muplus", "muminus"], wptbin, ["lepEta_bin0"], fname_scaled = fname+"_applyScaling_5TeV.root")
+                ExtrapolateQCD(fname+"_5TeV.root", oname+"_"+wptbin+"_5TeV.root", ["muplus", "muminus"], wptbin, ["lepEta_bin0"], fname_scaled = fname+"_applyScaling_5TeV.root", is5TeV=True)
             else:
                 ExtrapolateQCD(fname+".root", oname+"_"+wptbin+".root", ["muplus", "muminus"], wptbin, ["lepEta_bin0"], fname_scaled = fname+"_applyScaling.root")
 
@@ -354,11 +355,11 @@ if __name__ == "__main__":
         # on electron channel
         # currently separate barrel and endcap for electrons
         fname = "root/output_qcdshape_enu"
-        oname = "qcdshape_extrapolated_e"
+        oname = "root/qcdshape_extrapolated_e"
         for wptbin in ["WpT_bin0"]:
             # for electrons, only implement the inclusive version for now
             if do5TeV:
-                ExtrapolateQCD(fname+"_5TeV.root", oname+"_"+wptbin+"_5TeV.root", ["eplus", "eminus"], wptbin, ["lepEta_bin0"], fname_scaled = fname+"_applyScaling_5TeV.root")
+                ExtrapolateQCD(fname+"_5TeV.root", oname+"_"+wptbin+"_5TeV.root", ["eplus", "eminus"], wptbin, ["lepEta_bin0"], fname_scaled = fname+"_applyScaling_5TeV.root", is5TeV = True)
             else:
                 ExtrapolateQCD(fname+".root", oname+"_"+wptbin+".root", ["eplus", "eminus"], wptbin, ["lepEta_bin0"], fname_scaled = fname+"_applyScaling.root")
 

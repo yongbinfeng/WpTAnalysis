@@ -38,7 +38,7 @@ def RebinHisto(histo, *args):
     elif len(args) == 1:
         return histo.Rebin(int(args[0]))
     else:
-        return histo.Rebin(len(args[0])-1, "rebinned_%s" % args[1], args[0])
+        return histo.Rebin(len(args[0])-1, "Rebinned_%s" % args[1], args[0])
 
 
 def GetHisto(myfile, lhistos, *args):
