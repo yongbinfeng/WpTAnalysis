@@ -9,7 +9,7 @@ import re
 import numpy as np
 
 from CMSPLOTS.myFunction import DrawHistos
-from SampleManager import DrawConfig
+from modules.SampleManager import DrawConfig
 
 ROOT.gROOT.SetBatch(True)
 
