@@ -2,127 +2,96 @@ import ROOT
 import re
 import numpy as np
 from CMSPLOTS.myFunction import AddOverflowsTH1, RebinHisto
-from ExtrapolateQCD import ExtrapolateQCD
-from MakeCards import MakeCards
+from modules.qcdExtrapolater import ExtrapolateQCD
+from modules.cardMaker import MakeCards
+from modules.histProcessor import ProcessHists, CopyandMergeTau
 
 ROOT.gROOT.SetBatch(True)
 
-includeUnderflow = False
-includeOverflow = True
 
-def DoRebin(hist):
+def RunPreparations(fsig_input, fsig_rebin, fsig_mergeTau, fqcd_input, fqcd_rebin, fqcd_input_scaled, fqcd_rebin_scaled, fqcd_output, lepname = "mu", is5TeV = False):
     """
-    rebin the histogram to be used for the mass fit
+    rebin the mT hists for sig and qcd bkg,
+    merge tau (wx) process to sig (wlnu),
+    exptrapolate the qcd shape from anti-isolated to isolated
+    genereate datacard
     """
-    mass_bins = np.array([0., 20.0, 40.0, 50.0, 60.0, 70.0, 80.0, 90.0, 120.0])
-    hist = RebinHisto(hist, mass_bins, hist.GetName())
+    mass_bins = np.array([20.0, 30.0, 40.0, 50.0, 60.0, 70.0, 80.0, 90.0, 100.0, 120.0])
+    includeUnderflow = False
+    includeOverflow = True
 
-    return hist
-
-def SaveHistToFile(hist, ofile):
-    """
-    post processing for histograms
-    """
-    hist.SetDirectory(ofile)
-    hist.Write()
-
-
-def ProcessHists(ifile ,ofile):
-    """
-    process all the hists in ifile (rebinning, include over/underflow, etc),
-    and save them into ofile
-    """
-    finput = ROOT.TFile.Open(ifile)
-    hnames = finput.GetListOfKeys()
-    hnames = [hname.GetName() for hname in hnames]
-
-    foutput = ROOT.TFile(ofile, "RECREATE")
-
-    for hname in hnames:
-        h = finput.Get(hname)
-        if includeOverflow:
-            AddOverflowsTH1(h)
-        if includeUnderflow:
-            AddOverflowsTH1(h, False)
-        h = DoRebin(h)
-        SaveHistToFile(h, foutput)
-
-    foutput.Close()
-
-
-def CopyandMergeTau(iname, oname):
-    """
-    copy all the histograms from iname;
-    merge the tau processes into the signal process,
-    and assign relative systematics; 
-    save into new file
-    """
-    finput = ROOT.TFile(iname)
-    hnames = finput.GetListOfKeys()
-    hnames = [hname.GetName() for hname in hnames]
-
-    # get the substring for wx (tau) and wlnu
-    wxstr = None
-    wlnustr = None
-    for hname in hnames:
-        if wxstr is None:
-            searched = re.search('wx\d*', hname)
-            if searched:
-                wxstr = searched.group(0)
-        if wlnustr is None:
-            searched = re.search('wlnu\d*', hname)
-            if searched:
-                wlnustr = searched.group(0)
-    print("wx string is ", wxstr)
-    print("wlnu string is ", wlnustr)
-
-    foutput = ROOT.TFile(oname, "RECREATE")
-    for hname in hnames:
-        h = finput.Get(hname)
-
-        if wlnustr not in hname and wxstr not in hname:
-            SaveHistToFile(h, foutput)
-
-        elif wlnustr in hname:
-            print(hname)
-            # sig represents both wlnu and wx
-            hsig = h.Clone(hname.replace(wlnustr, "wsig"))
-            htau = finput.Get(hname.replace(wlnustr, wxstr))
-            hsig.Add(htau)
-            SaveHistToFile(hsig, foutput)
-
-            if re.search("wlnu\d*$", hname):
-                # central histograms
-                # assign tau fraction systematic variations on it
-                # and save to output
-                hsig_up = h.Clone(hsig.GetName() + "_SysTauFracUp")
-                hsig_dn = h.Clone(hsig.GetName() + "_SysTauFracDown")
-
-                htau_up = htau.Clone(htau.GetName() + "_SysTauFracUp")
-                htau_dn = htau.Clone(htau.GetName() + "_SysTauFracDown")
-                varfraction = 0.2
-                htau_up.Scale(1.0 + varfraction)
-                htau_dn.Scale(1.0 - varfraction)
-                
-                hsig_up.Add(htau_up)
-                hsig_dn.Add(htau_dn)
-                SaveHistToFile(hsig_up, foutput)
-                SaveHistToFile(hsig_dn, foutput)
-
-    foutput.Close()
-
-if "__main__" == __name__:
-    # do the rebin and include overflow
-    ProcessHists("root/output_shapes_munu.root", "root/output_shapes_munu_Rebin.root")
-    ProcessHists("root/output_qcdshape_munu.root", "root/output_qcdshape_munu_Rebin.root")
-    ProcessHists("root/output_qcdshape_munu_applyScaling.root", "root/output_qcdshape_munu_Rebin_applyScaling.root")
-
+    ProcessHists(fsig_input, fsig_rebin, mass_bins, includeUnderflow, includeOverflow)
     # merge the tau processes into the signal process
-    CopyandMergeTau("root/output_shapes_munu_Rebin.root", "root/output_shapes_munu_mergeTau.root")
+    CopyandMergeTau(fsig_rebin, fsig_mergeTau)
+
+    # for QCD
+    ProcessHists(fqcd_input, fqcd_rebin, mass_bins, includeUnderflow, includeOverflow)
+    ProcessHists(fqcd_input_scaled, fqcd_rebin_scaled, mass_bins, includeUnderflow, includeOverflow)
 
     # extrapolate the QCD template from anti-isolated region to isolated region
-    ExtrapolateQCD("root/output_qcdshape_munu_Rebin.root", "root/qcdshape_extrapolated_mu.root", ["muplus", "muminus"], "WpT_bin0", ["lepEta_bin0"], fname_scaled="root/output_qcdshape_munu_Rebin_applyScaling.root", rebinned = True)
+    ExtrapolateQCD(fqcd_rebin, fqcd_output, [lepname+"plus", lepname+"minus"], "WpT_bin0", ["lepEta_bin0"], fname_scaled=fqcd_rebin_scaled, rebinned = True, is5TeV = is5TeV)
 
     # generate card based on the signal and qcd templates
-    MakeCards("root/output_shapes_munu_mergeTau.root", "root/qcdshape_extrapolated_mu.root", "muplus", "WpT_bin0", "lepEta_bin0", rebinned = True)
-    MakeCards("root/output_shapes_munu_mergeTau.root", "root/qcdshape_extrapolated_mu.root", "muminus", "WpT_bin0", "lepEta_bin0", rebinned = True)
+    MakeCards(fsig_mergeTau, fqcd_output, lepname+"plus", "WpT_bin0", "lepEta_bin0", rebinned = True, nMTBins = len(mass_bins)-1, is5TeV = is5TeV)
+    MakeCards(fsig_mergeTau, fqcd_output, lepname+"minus", "WpT_bin0", "lepEta_bin0", rebinned = True, nMTBins = len(mass_bins)-1, is5TeV = is5TeV)
+
+
+if "__main__" == __name__:
+    do13TeV = False
+    do5TeV = True
+
+    if do13TeV:
+        # 13TeV muon
+        fsig_input = "root/output_shapes_munu.root"
+        fsig_rebin = "root/output_shapes_munu_Rebin.root"
+        fsig_mergeTau = "root/output_shapes_munu_mergeTau.root"
+
+        fqcd_input = "root/output_qcdshape_munu.root"
+        fqcd_rebin = "root/output_qcdshape_munu_Rebin.root"
+        fqcd_input_scaled = "root/output_qcdshape_munu_applyScaling.root"
+        fqcd_rebin_scaled = "root/output_qcdshape_munu_Rebin_applyScaling.root"
+        fqcd_output = "root/qcdshape_extrapolated_munu.root"
+
+        RunPreparations(fsig_input, fsig_rebin, fsig_mergeTau, fqcd_input, fqcd_rebin, fqcd_input_scaled, fqcd_rebin_scaled, fqcd_output, "mu")
+
+        # 13TeV electron
+        fsig_input = "root/output_shapes_enu.root"
+        fsig_rebin = "root/output_shapes_enu_Rebin.root"
+        fsig_mergeTau = "root/output_shapes_enu_mergeTau.root"
+
+        fqcd_input = "root/output_qcdshape_enu.root"
+        fqcd_rebin = "root/output_qcdshape_enu_Rebin.root"
+        fqcd_input_scaled = "root/output_qcdshape_enu_applyScaling.root"
+        fqcd_rebin_scaled = "root/output_qcdshape_enu_Rebin_applyScaling.root"
+        fqcd_output = "root/qcdshape_extrapolated_enu.root"
+
+        RunPreparations(fsig_input, fsig_rebin, fsig_mergeTau, fqcd_input, fqcd_rebin, fqcd_input_scaled, fqcd_rebin_scaled, fqcd_output, "e")
+
+    if do5TeV:
+        # 5TeV muon channel
+        fsig_input = "root/output_shapes_munu_5TeV.root"
+        fsig_rebin = "root/output_shapes_munu_Rebin_5TeV.root"
+        fsig_mergeTau = "root/output_shapes_munu_mergeTau_5TeV.root"
+
+        fqcd_input = "root/output_qcdshape_munu_5TeV.root"
+        fqcd_rebin = "root/output_qcdshape_munu_Rebin_5TeV.root"
+        fqcd_input_scaled = "root/output_qcdshape_munu_applyScaling_5TeV.root"
+        fqcd_rebin_scaled = "root/output_qcdshape_munu_Rebin_applyScaling_5TeV.root"
+        fqcd_output = "root/qcdshape_extrapolated_munu_5TeV.root"
+
+        RunPreparations(fsig_input, fsig_rebin, fsig_mergeTau, fqcd_input, fqcd_rebin, fqcd_input_scaled, fqcd_rebin_scaled, fqcd_output, "mu", is5TeV = True)
+
+
+        # 5TeV electron channel
+        fsig_input = "root/output_shapes_enu_5TeV.root"
+        fsig_rebin = "root/output_shapes_enu_Rebin_5TeV.root"
+        fsig_mergeTau = "root/output_shapes_enu_mergeTau_5TeV.root"
+
+        fqcd_input = "root/output_qcdshape_enu_5TeV.root"
+        fqcd_rebin = "root/output_qcdshape_enu_Rebin_5TeV.root"
+        fqcd_input_scaled = "root/output_qcdshape_enu_applyScaling_5TeV.root"
+        fqcd_rebin_scaled = "root/output_qcdshape_enu_Rebin_applyScaling_5TeV.root"
+        fqcd_output = "root/qcdshape_extrapolated_enu_5TeV.root"
+
+        RunPreparations(fsig_input, fsig_rebin, fsig_mergeTau, fqcd_input, fqcd_rebin, fqcd_input_scaled, fqcd_rebin_scaled, fqcd_output, "e", is5TeV = True)
+

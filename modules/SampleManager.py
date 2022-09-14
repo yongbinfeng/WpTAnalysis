@@ -20,7 +20,7 @@ LUMI = 200.87
 LUMI_5TeV = 298.0
 
 ROOT.ROOT.EnableImplicitMT()
-ROOT.gSystem.Load("Functions_cc.so")
+ROOT.gSystem.Load("./modules/Functions_cc.so")
 
 
 class DrawConfig(object):

@@ -8,7 +8,7 @@ import sys
 import argparse
 from CMSPLOTS.myFunction import THStack2TH1
 
-from SampleManager import DrawConfig, Sample, SampleManager
+from modules.SampleManager import DrawConfig, Sample, SampleManager
 
 ROOT.gROOT.SetBatch(True)
 ROOT.ROOT.EnableImplicitMT(10)

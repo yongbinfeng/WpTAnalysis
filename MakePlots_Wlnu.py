@@ -2,7 +2,7 @@ from ast import parse
 import ROOT
 import numpy as np
 from collections import OrderedDict
-from SampleManager import DrawConfig, Sample, SampleManager
+from modules.SampleManager import DrawConfig, Sample, SampleManager
 import argparse
 
 ROOT.gROOT.SetBatch(True)
