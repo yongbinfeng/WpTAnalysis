@@ -10,7 +10,6 @@ class Process(object):
     """
     def __init__(self,**kwargs):
         self.name = kwargs.get('name', 'sig')
-        self.fname = kwargs.get('fname', 'test.root')
         self.hname = kwargs.get('hname', 'htest')
         self.hsys  = kwargs.get('hsys', 'htest_sys')
         self.isObs = kwargs.get('isObs', False) # if it is the observation
@@ -20,6 +19,10 @@ class Process(object):
         self.isV = kwargs.get('isV', False) # recoil sys if true
         self.isQCD = kwargs.get('isQCD', False) # fake QCD
         self.xsecUnc = kwargs.get('xsecUnc', "0.10") # uncertainty on the cross section
+
+        # a bit hacky - by default the fits run on lpc
+        prefix_LPC = "/uscms/home/yfeng/nobackup/WpT/Cards/TestCode/WpTAnalysis/"
+        self.fname = prefix_LPC + kwargs.get('fname', 'test.root')
 
         #  regulation
         if self.isObs:
@@ -41,7 +44,7 @@ class Process(object):
             self.xsecUnc = "-1.0"
 
 
-def MakeCards(fname_mc, fname_qcd, channel, wptbin, etabin, doWpT = False, rebinned = False):
+def MakeCards(fname_mc, fname_qcd, channel, wptbin, etabin, doWpT = False, rebinned = False, is5TeV = False, nMTBins = 9):
     prefix = ""
     if rebinned:
         prefix = "Rebinned_"
@@ -76,9 +79,10 @@ def MakeCards(fname_mc, fname_qcd, channel, wptbin, etabin, doWpT = False, rebin
             sigs.append(sig)
 
     # ttbar bkg
+    sname = "ttbar3" if not is5TeV else "ttbar1"
     ttbar = Process(name = "tt", fname = fname_mc,
-                    hname = prefix + "histo_wjets_{}_mT_1_{}_{}_grouped_ttbar3".format(channel, wptbin, etabin),
-                    hsys  = prefix + "histo_wjets_{}_mT_1_{}_{}_grouped_ttbar3_".format(channel, wptbin, etabin),
+                    hname = prefix + "histo_wjets_{}_mT_1_{}_{}_grouped_{}".format(channel, wptbin, etabin, sname),
+                    hsys  = prefix + "histo_wjets_{}_mT_1_{}_{}_grouped_{}_".format(channel, wptbin, etabin, sname),
                     isSignal = False,
                     isMC = True,
                     isV = False,
@@ -86,9 +90,10 @@ def MakeCards(fname_mc, fname_qcd, channel, wptbin, etabin, doWpT = False, rebin
                     xsecUnc = "1.10"
                 )
     # Z bkg
+    sname = "zxx9" if not is5TeV else "zxx6"
     zxx = Process(name = "zxx", fname = fname_mc,
-                  hname = prefix + "histo_wjets_{}_mT_1_{}_{}_grouped_zxx9".format(channel, wptbin, etabin),
-                  hsys  = prefix + "histo_wjets_{}_mT_1_{}_{}_grouped_zxx9_".format(channel, wptbin, etabin),
+                  hname = prefix + "histo_wjets_{}_mT_1_{}_{}_grouped_{}".format(channel, wptbin, etabin, sname),
+                  hsys  = prefix + "histo_wjets_{}_mT_1_{}_{}_grouped_{}_".format(channel, wptbin, etabin, sname),
                   isSignal = False,
                   isMC = True,
                   isV = True,
@@ -96,9 +101,10 @@ def MakeCards(fname_mc, fname_qcd, channel, wptbin, etabin, doWpT = False, rebin
                   xsecUnc = "1.03"
                   )
     # W->tau + nu bkg
+    sname = "wx10" if not is5TeV else "wx7"
     wtau = Process(name = "taunu", fname = fname_mc,
-                   hname = prefix + "histo_wjets_{}_mT_1_{}_{}_grouped_wx10".format(channel, wptbin, etabin),
-                   hsys  = prefix + "histo_wjets_{}_mT_1_{}_{}_grouped_wx10_".format(channel, wptbin, etabin),
+                   hname = prefix + "histo_wjets_{}_mT_1_{}_{}_grouped_{}".format(channel, wptbin, etabin, sname),
+                   hsys  = prefix + "histo_wjets_{}_mT_1_{}_{}_grouped_{}_".format(channel, wptbin, etabin, sname),
                    isSignal = False,
                    isMC = True,
                    isV = True,
@@ -106,9 +112,10 @@ def MakeCards(fname_mc, fname_qcd, channel, wptbin, etabin, doWpT = False, rebin
                    xsecUnc = "1.10"
                 )
     # VV bkg
+    sname = "vv6" if not is5TeV else "vv2"
     vv = Process(name = "VV", fname = fname_mc,
-                 hname = prefix + "histo_wjets_{}_mT_1_{}_{}_grouped_vv6".format(channel, wptbin, etabin),
-                 hsys  = prefix + "histo_wjets_{}_mT_1_{}_{}_grouped_vv6_".format(channel, wptbin, etabin),
+                 hname = prefix + "histo_wjets_{}_mT_1_{}_{}_grouped_{}".format(channel, wptbin, etabin, sname),
+                 hsys  = prefix + "histo_wjets_{}_mT_1_{}_{}_grouped_{}_".format(channel, wptbin, etabin, sname),
                  isSignal = False,
                  isMC = True,
                  isV = False,
@@ -150,7 +157,7 @@ def MakeCards(fname_mc, fname_qcd, channel, wptbin, etabin, doWpT = False, rebin
     # this is hard coded for now. Will be improved later
     #prefix = etabin.split("_")[1]+"_"+wptbin
     prefix = channel + "_" + etabin + "_" + wptbin
-    nbins = 9
+    nbins = nMTBins
     qcdstats = [prefix+"_bin"+str(i)+"shape" for i in range(1, nbins+1)]
     if True:
         #qcdstats += [prefix+"_Pol2shape"]
@@ -163,17 +170,20 @@ def MakeCards(fname_mc, fname_qcd, channel, wptbin, etabin, doWpT = False, rebin
     #
     if not os.path.exists("cards"):
         os.makedirs("cards")
-    ofile = open("cards/datacard_{}_{}_{}.txt".format(channel, etabin, wptbin), "w")
+    cardname = f"cards/datacard_{channel}_{etabin}_{wptbin}.txt"
+    if is5TeV:
+        cardname = f"cards/datacard_{channel}_{etabin}_{wptbin}_5TeV.txt"
+    ofile = open(cardname, "w")
     ofile.write("imax 1 number of channels\n")
 
     ofile.write("jmax {} number of processes -1\n".format(len(processes)-1))
     ofile.write("kmax * number of nuisance parameters\n\n")
     # observation
     ofile.write("Observation -1\n\n")
-    ofile.write("shapes {pname:<30} * {fname:<30} {hname:<50}\n".format(pname = "data_obs", fname = data.fname, hname = data.hname))
+    ofile.write("shapes {pname:<30} * {fname:<40} {hname:<50}\n".format(pname = "data_obs", fname = data.fname, hname = data.hname))
 
     for proc in processes:
-        ofile.write("shapes {pname:<30} * {fname:<30} {hname:<50} {hsys}$SYSTEMATIC\n".format(pname = proc.name, fname = proc.fname, hname = proc.hname, hsys = proc.hsys))
+        ofile.write("shapes {pname:<30} * {fname:<40} {hname:<50} {hsys}$SYSTEMATIC\n".format(pname = proc.name, fname = proc.fname, hname = proc.hname, hsys = proc.hsys))
     ofile.write("\n")
 
     # systematic uncertainties
