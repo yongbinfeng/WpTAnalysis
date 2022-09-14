@@ -1,4 +1,5 @@
-from moduels.cardMaker import MakeCards    
+from modules.cardMaker import MakeCards, combineCards
+import os
     
 doMuon = True
 doElectron = False
