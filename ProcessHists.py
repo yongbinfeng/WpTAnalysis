@@ -5,6 +5,7 @@ from CMSPLOTS.myFunction import AddOverflowsTH1, RebinHisto
 from modules.qcdExtrapolater import ExtrapolateQCD
 from modules.cardMaker import MakeCards
 from modules.histProcessor import ProcessHists, CopyandMergeTau
+from modules.mass_bins import mass_bins
 
 ROOT.gROOT.SetBatch(True)
 
@@ -16,7 +17,6 @@ def RunPreparations(fsig_input, fsig_rebin, fsig_mergeTau, fqcd_input, fqcd_rebi
     exptrapolate the qcd shape from anti-isolated to isolated
     genereate datacard
     """
-    mass_bins = np.array([20.0, 30.0, 40.0, 50.0, 60.0, 70.0, 80.0, 90.0, 100.0, 120.0])
     includeUnderflow = False
     includeOverflow = True
 

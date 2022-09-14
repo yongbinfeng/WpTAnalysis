@@ -13,7 +13,7 @@ from modules.SampleManager import DrawConfig
 
 ROOT.gROOT.SetBatch(True)
 
-def MakePostPlot(ifilename, channel, postfix, showpull=False):
+def MakePostPlot(ifilename: str, channel: str, bins: np.array, suffix: str, showpull: bool = False, is5TeV: bool = False, startbin: int = 0):
     """
     compare the unrolled postfit of data and templates
     """
@@ -57,37 +57,33 @@ def MakePostPlot(ifilename, channel, postfix, showpull=False):
 
     # the histograms saved in the root file does not follow the original bining
     # recover the original binning
-    # hard coded the binning for now, assuming 10GeV fixed bin width
-    nbins = horgdata.GetNbinsX()
-    xmin = 0.
-    xmax = 120.
-    #binnings = (nbins, xmin, xmax)
-    binnings = (nbins, np.array([0, 10, 20., 30., 40., 50., 60., 70., 80., 90., 120.]))
+    nbins = len(bins) - 1
+    binnings = (nbins, bins)
     
     #binnings = (newbins.shape[0]-1, newbins)
-    hdata   = ROOT.TH1D("hdata_{}_{}".format( channel, postfix),  "hdata_{}_{}".format( channel, postfix),  *binnings)
-    hsig    = ROOT.TH1D("hsig_{}_{}".format(  channel, postfix),  "hsig_{}_{}".format(  channel, postfix),  *binnings)
-    hewk    = ROOT.TH1D("hewk_{}_{}".format(  channel, postfix),  "hewk_{}_{}".format(  channel, postfix),  *binnings)
-    httbar  = ROOT.TH1D("httbar_{}_{}".format(channel, postfix),  "httbar_{}_{}".format(channel, postfix),  *binnings)
-    hqcd    = ROOT.TH1D("hqcd_{}_{}".format(  channel, postfix),  "hqcd_{}_{}".format(  channel, postfix),  *binnings)
-    hratio  = ROOT.TH1D("hrato_{}_{}".format( channel, postfix),  "hratio_{}_{}".format(channel, postfix),  *binnings)
-    hpull   = ROOT.TH1D("hpull_{}_{}".format( channel, postfix),  "hpull_{}_{}".format( channel, postfix),  *binnings)
+    hdata   = ROOT.TH1D("hdata_{}_{}".format( channel, suffix),  "hdata_{}_{}".format( channel, suffix),  *binnings)
+    hsig    = ROOT.TH1D("hsig_{}_{}".format(  channel, suffix),  "hsig_{}_{}".format(  channel, suffix),  *binnings)
+    hewk    = ROOT.TH1D("hewk_{}_{}".format(  channel, suffix),  "hewk_{}_{}".format(  channel, suffix),  *binnings)
+    httbar  = ROOT.TH1D("httbar_{}_{}".format(channel, suffix),  "httbar_{}_{}".format(channel, suffix),  *binnings)
+    hqcd    = ROOT.TH1D("hqcd_{}_{}".format(  channel, suffix),  "hqcd_{}_{}".format(  channel, suffix),  *binnings)
+    hratio  = ROOT.TH1D("hrato_{}_{}".format( channel, suffix),  "hratio_{}_{}".format(channel, suffix),  *binnings)
+    hpull   = ROOT.TH1D("hpull_{}_{}".format( channel, suffix),  "hpull_{}_{}".format( channel, suffix),  *binnings)
     for ibin in range(1, nbins+1):
-        hdata.SetBinContent(ibin,   horgdata.GetBinContent(ibin))
-        hdata.SetBinError(ibin,     horgdata.GetBinError(ibin))
-        hsig.SetBinContent(ibin,    hexpsig.GetBinContent(ibin))
-        hewk.SetBinContent(ibin,    hexpewk.GetBinContent(ibin))
-        httbar.SetBinContent(ibin,  hexpttbar.GetBinContent(ibin))
-        hqcd.SetBinContent(ibin,    hexpqcd.GetBinContent(ibin))
-        hqcd.SetBinError(ibin, hexpqcd.GetBinError(ibin))
+        hdata.SetBinContent(ibin,   horgdata.GetBinContent(ibin + startbin))
+        hdata.SetBinError(ibin,     horgdata.GetBinError(ibin + startbin))
+        hsig.SetBinContent(ibin,    hexpsig.GetBinContent(ibin + startbin))
+        hewk.SetBinContent(ibin,    hexpewk.GetBinContent(ibin + startbin))
+        httbar.SetBinContent(ibin,  hexpttbar.GetBinContent(ibin + startbin))
+        hqcd.SetBinContent(ibin,    hexpqcd.GetBinContent(ibin + startbin))
+        hqcd.SetBinError(ibin, hexpqcd.GetBinError(ibin + startbin))
 
-        hratio.SetBinContent(ibin, hexpfull.GetBinContent(ibin))
-        hratio.SetBinError(ibin,   hexpfull.GetBinError(ibin))
+        hratio.SetBinContent(ibin, hexpfull.GetBinContent(ibin + startbin))
+        hratio.SetBinError(ibin,   hexpfull.GetBinError(ibin + startbin))
 
-        diff = horgdata.GetBinContent(ibin) - hexpfull.GetBinContent(ibin)
+        diff = horgdata.GetBinContent(ibin + startbin) - hexpfull.GetBinContent(ibin + startbin)
         # take the sigma as sqrt(data**2 + templates**2)
         # not 100% sure if this is the correct way to calculate pull
-        sig = math.sqrt(horgdata.GetBinError(ibin)**2 + hexpfull.GetBinError(ibin)**2)
+        sig = math.sqrt(horgdata.GetBinError(ibin + startbin)**2 + hexpfull.GetBinError(ibin + startbin)**2)
         hpull.SetBinContent(ibin, diff/(sig+1e-6))
 
     # deal with the uncertainty bar
@@ -129,15 +125,23 @@ def MakePostPlot(ifilename, channel, postfix, showpull=False):
     hewk.Scale(1.0, "width")
     hsig.Scale(1.0, "width")
 
-    hs_gmc = ROOT.THStack("hs_stack_{}_{}".format(channel, postfix), "hs_stack")
+    hs_gmc = ROOT.THStack("hs_stack_{}_{}".format(channel, suffix), "hs_stack")
     hs_gmc.Add(hqcd)
     hs_gmc.Add(httbar)
     hs_gmc.Add(hewk)
     hs_gmc.Add(hsig)
 
-    ymaxs = {"muplus": 3e4, "muminus": 2.5e4, "eplus": 1.5e4, "eminus": 1.0e4}
-    drawconfigs = DrawConfig(xmin = xmin, xmax = xmax, xlabel = "Unrolled m_{T} [GeV]", ymin = 0, ymax = ymaxs[channel] / (int(nbins/36)+1), ylabel = "Events / GeV", outputname = "histo_wjets_{}_mT_PostFit_{}".format(channel, postfix), dology=False, addOverflow=False, addUnderflow=False, yrmin=0.95, yrmax=1.05)
-    DrawHistos( [hdata, hs_gmc], ["Data", "Signal", "EWK", "ttbar", "QCD"], drawconfigs.xmin, drawconfigs.xmax, drawconfigs.xlabel, drawconfigs.ymin, drawconfigs.ymax, drawconfigs.ylabel, drawconfigs.outputname, dology=drawconfigs.dology, dologx=drawconfigs.dologx, showratio=drawconfigs.showratio, yrmax = drawconfigs.yrmax, yrmin = drawconfigs.yrmin, yrlabel = drawconfigs.yrlabel, donormalize=drawconfigs.donormalize, ratiobase=drawconfigs.ratiobase, legendPos = drawconfigs.legendPos, redrawihist = drawconfigs.redrawihist, extraText = drawconfigs.extraText, noCMS = drawconfigs.noCMS, addOverflow = drawconfigs.addOverflow, addUnderflow = drawconfigs.addUnderflow, nMaxDigits = drawconfigs.nMaxDigits, hratiopanel=hratio, drawoptions=['PE', 'HIST same'], showpull=showpull, hpulls=[hpull], W_ref = 600 * int(nbins/36+1))
+    ymaxs = {"muplus": 3.5e4, "muminus": 2.5e4, "eplus": 2.5e4, "eminus": 1.8e4}
+    if is5TeV:
+        for key, val in ymaxs.items():
+            ymaxs[key] = val*0.7
+
+    siglabels = {"muplus":  "W^{+}#rightarrow#mu^{+}#nu", 
+                 "muminus": "W^{-}#rightarrow#mu^{-}#bar{#nu}", 
+                 "eplus":   "W^{+}#rightarrow e^{+}#nu", 
+                 "eminus":  "W^{-}#rightarrow e^{-}#bar{#nu}"}
+    drawconfigs = DrawConfig(xmin = bins.min(), xmax = bins.max(), xlabel = "m_{T} [GeV]", ymin = 0, ymax = ymaxs[channel] / (int(nbins/36)+1), ylabel = "Events / GeV", outputname = "histo_wjets_{}_mT_PostFit{}".format(channel, suffix), dology=False, addOverflow=False, addUnderflow=False, yrmin=0.95, yrmax=1.05, yrlabel = "Data / Pred")
+    DrawHistos( [hdata, hs_gmc], ["Data", siglabels[channel], "EWK", "t#bar{t}", "QCD"], drawconfigs.xmin, drawconfigs.xmax, drawconfigs.xlabel, drawconfigs.ymin, drawconfigs.ymax, drawconfigs.ylabel, drawconfigs.outputname, dology=drawconfigs.dology, dologx=drawconfigs.dologx, showratio=drawconfigs.showratio, yrmax = drawconfigs.yrmax, yrmin = drawconfigs.yrmin, yrlabel = drawconfigs.yrlabel, donormalize=drawconfigs.donormalize, ratiobase=drawconfigs.ratiobase, legendPos = drawconfigs.legendPos, redrawihist = drawconfigs.redrawihist, extraText = drawconfigs.extraText, noCMS = drawconfigs.noCMS, addOverflow = drawconfigs.addOverflow, addUnderflow = drawconfigs.addUnderflow, nMaxDigits = drawconfigs.nMaxDigits, hratiopanel=hratio, drawoptions=['PE', 'HIST same'], showpull=showpull, hpulls=[hpull], W_ref = 600 * int(nbins/36+1), is5TeV = is5TeV) 
 
     return nevts
 
@@ -251,7 +255,7 @@ def result2json(ifilename, poiname, ofilename):
         json.dump(results, fp, indent=2)
 
 
-def MakeWpTPostFitPlots(jsonNames, postfix=""):
+def MakeWpTPostFitPlots(jsonNames, suffix=""):
     """
     plot the signal strength and systematic unc impacts as a function of wpt
     """
@@ -260,15 +264,15 @@ def MakeWpTPostFitPlots(jsonNames, postfix=""):
     wptbins = np.array([0., 8.0, 16.0, 24.0, 32.0, 40.0, 50.0, 70.0, 100.0, 120.0])
     nbins = wptbins.shape[0] - 1
 
-    hmu = ROOT.TH1F("hmu_wpt_{}".format(postfix), "hmu_wpt_{}".format(postfix), nbins, wptbins)
+    hmu = ROOT.TH1F("hmu_wpt_{}".format(suffix), "hmu_wpt_{}".format(suffix), nbins, wptbins)
 
     sysUncs = ['lumi_13TeV', 'Recoil', 'QCD', 'Prefire', 'norm_tt', 'effstat', 'norm_taunu', 'FSR', 'tagpt', 'norm_z']
     colors = {"total": 1, 'lumi_13TeV': 14, "Recoil": 2, "QCD": 3, "Prefire": 4, "effstat":6, "norm_taunu": 7, "tagpt": 8, "norm_z": 9, "norm_tt": 28, "FSR": 38}
 
     himpacts = OrderedDict()
-    himpacts['total'] = ROOT.TH1F("htotal_wpt_{}".format(postfix), "htotal_wpt_{}".format(postfix), nbins, wptbins)
+    himpacts['total'] = ROOT.TH1F("htotal_wpt_{}".format(suffix), "htotal_wpt_{}".format(suffix), nbins, wptbins)
     for unc in sysUncs: 
-        himpacts[unc] = ROOT.TH1F("h{}_wpt_{}".format(unc, postfix), "h{}_wpt_{}".format(unc, postfix), nbins, wptbins)
+        himpacts[unc] = ROOT.TH1F("h{}_wpt_{}".format(unc, suffix), "h{}_wpt_{}".format(unc, suffix), nbins, wptbins)
 
     for ibin, jname in enumerate(jsonNames, start=1):
         with open(jname) as f:
@@ -291,7 +295,7 @@ def MakeWpTPostFitPlots(jsonNames, postfix=""):
         val.SetLineColor(colors[key])
 
     hmu.SetLineColor(1)
-    DrawHistos([hmu], ['W^{+}#rightarrow#mu^{+}#nu'], 0, 120, "W p_{T} [GeV]", 0.5, 1.5, "#sigma_{Obs}/#sigma_{MC}", "hsignal_strength_"+postfix, dology=False, legendPos=[0.92, 0.88, 0.70, 0.80])
+    DrawHistos([hmu], ['W^{+}#rightarrow#mu^{+}#nu'], 0, 120, "W p_{T} [GeV]", 0.5, 1.5, "#sigma_{Obs}/#sigma_{MC}", "hsignal_strength_"+suffix, dology=False, legendPos=[0.92, 0.88, 0.70, 0.80])
 
-    DrawHistos(list(himpacts.values()), list(himpacts.keys()), 0, 120, "W p_{T} [GeV]", 0, 0.20, "Uncertainty", "himpacts_wpt_"+postfix, dology=False, legendPos=[0.92, 0.88, 0.70, 0.40], drawashist=True)
+    DrawHistos(list(himpacts.values()), list(himpacts.keys()), 0, 120, "W p_{T} [GeV]", 0, 0.20, "Uncertainty", "himpacts_wpt_"+suffix, dology=False, legendPos=[0.92, 0.88, 0.70, 0.40], drawashist=True)
 

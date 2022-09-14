@@ -48,6 +48,25 @@ def MakeCards(fname_mc, fname_qcd, channel, wptbin, etabin, doWpT = False, rebin
     prefix = ""
     if rebinned:
         prefix = "Rebinned_"
+
+    # from lumi    
+    unc_lumi = {}
+    unc_lumi['13TeV'] = 1.017
+    unc_lumi['5TeV'] = 1.019
+
+    # from eff calculations
+    unc_effstat = {}
+    unc_effstat['13TeV'] = {}
+    unc_effstat['13TeV']['muplus'] = 1.0022
+    unc_effstat['13TeV']['muminus'] = 1.0021
+    unc_effstat['13TeV']['eplus'] = 1.0059
+    unc_effstat['13TeV']['eminus'] = 1.0053
+    unc_effstat['5TeV'] = {}
+    unc_effstat['5TeV']['muplus'] = 1.0023
+    unc_effstat['5TeV']['muminus'] = 1.0021
+    unc_effstat['5TeV']['eplus'] = 1.0080
+    unc_effstat['5TeV']['eminus'] = 1.0077
+
     # data
     data = Process(name = "data_obs", fname = fname_mc,
                    hname = prefix + "histo_wjets_{}_mT_1_{}_{}_data".format(channel, wptbin, etabin),
@@ -193,14 +212,14 @@ def MakeCards(fname_mc, fname_qcd, channel, wptbin, etabin, doWpT = False, rebin
     lines["proc_index"] = "{:<40}".format("process")
     lines["rate"]       = "{:<40}".format("rate")
 
-    lines['lumi'] = "{:<30} {:<10}".format("lumi_13TeV", "lnN")
+    lines['lumi'] = "{:<30} {:<10}".format("lumi_13TeV" if not is5TeV else "lumi_5TeV", "lnN")
     for proc in processes:
         if not proc.isSignal and proc.isMC:
             lines["norm_"+proc.name] = "{:<30} {:<10}".format("norm_"+proc.name, "lnN")
     
     for sys in sfsys:
         lines[sys] = "{:<30} {:<10}".format(sys, "shape")
-    lines["effstat"] = "{:<30} {:<10}".format("effstat", "lnN")
+    lines["effstat"] = "{:<30} {:<10}".format("effstat_" + channel, "lnN")
 
     for sys in recoilsys:
         lines[sys] = "{:<30} {:<10}".format(sys, "shape")
@@ -225,7 +244,11 @@ def MakeCards(fname_mc, fname_qcd, channel, wptbin, etabin, doWpT = False, rebin
             ibkg += 1
         lines["rate"] += " {:<10}".format("-1.0")
 
-        temp = "1.017 "if proc.isMC else "-"
+        temp = "-"
+        if proc.isMC and not is5TeV:
+            temp = unc_lumi['13TeV']
+        if proc.isMC and is5TeV:
+            temp = unc_lumi['5TeV']
         lines['lumi'] += " {:<10}".format(temp)
         for proc2 in processes:
             if not proc2.isSignal and proc2.isMC:
@@ -237,8 +260,10 @@ def MakeCards(fname_mc, fname_qcd, channel, wptbin, etabin, doWpT = False, rebin
             lines[sys] += " {:<10}".format(temp)
 
         temp = "-"
-        if proc.isSignal:
-            temp = "1.0049" if channel.startswith("e") else "1.0029" 
+        if proc.isSignal and not is5TeV:
+            temp = unc_effstat['13TeV'][channel]
+        elif proc.isSignal and is5TeV:
+            temp = unc_effstat['5TeV'][channel]
         lines['effstat'] += " {:<10}".format(temp)
 
         for sys in recoilsys:
