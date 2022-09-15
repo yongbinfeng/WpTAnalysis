@@ -15,35 +15,34 @@ doRebin = False
 # distribution should be included in the plots
 showPULL = True
 if doInclusive:
-    MakePostPlot("cards/datacard_muminus_lepEta_bin0_WpT_bin0.root", "muminus", mass_bins, "", showPULL)
-    MakePostPlot("cards/datacard_muplus_lepEta_bin0_WpT_bin0.root", "muplus", mass_bins, "", showPULL)
+    MakePostPlot("cards/test_mu.root", "muplus", mass_bins, "", showPULL)
+    MakePostPlot("cards/test_mu.root", "muminus", mass_bins, "", showPULL, startbin = len(mass_bins)-1)
     MakePostPlot("cards/test_e.root",  "eplus", mass_bins, "", showPULL)
+    MakePostPlot("cards/test_e.root",  "eminus", mass_bins, "", showPULL, startbin = len(mass_bins)-1)
     MakePostPlot("cards/test_5TeV.root", "muplus", mass_bins, "_5TeV", showPULL, is5TeV=True)
     MakePostPlot("cards/test_5TeV.root", "muminus", mass_bins, "_5TeV", showPULL, is5TeV=True, startbin = len(mass_bins)-1)
     MakePostPlot("cards/test_e_5TeV.root", "eplus", mass_bins, "_5TeV", showPULL, is5TeV=True)
     MakePostPlot("cards/test_e_5TeV.root", "eminus", mass_bins, "_5TeV", showPULL, is5TeV=True, startbin = len(mass_bins)-1)
     #
-    #result2json("cards/datacard_mu_lepEta_bin0_WpT_bin0.root", "w_muminus_sig_mu", "cards/impacts_muminus_lepEta_bin0_WpT_bin0.json")
-    #result2json("cards/datacard_mu_lepEta_bin0_WpT_bin0.root", "w_muplus_sig_mu", "cards/impacts_muplus_lepEta_bin0_WpT_bin0.json")
-    #result2json("cards/test_e.root",       "w_eplus_sig_mu",  "cards/impacts_eplus.json")
-    #result2json("cards/test_e.root",       "w_eminus_sig_mu",  "cards/impacts_eminus.json")
+    result2json("cards/test_mu.root", "w_muminus_sig_mu", "cards/impacts_muminus_lepEta_bin0_WpT_bin0.json")
+    result2json("cards/test_mu.root", "w_muplus_sig_mu", "cards/impacts_muplus_lepEta_bin0_WpT_bin0.json")
+    result2json("cards/test_e.root",  "w_eplus_sig_mu",  "cards/impacts_eplus_lepEta_bin0_WpT_bin0.json")
+    result2json("cards/test_e.root",  "w_eminus_sig_mu",  "cards/impacts_eminus_lepEta_bin0_WpT_bin0.json")
 
-    #result2json("cards/test_5TeV.root", "w_muminus_sig_mu", "cards/impacts_muminus_lepEta_bin0_WpT_bin0_5TeV.json")
-    #result2json("cards/test_5TeV.root", "w_muplus_sig_mu", "cards/impacts_muplus_lepEta_bin0_WpT_bin0_5TeV.json")
+    result2json("cards/test_5TeV.root", "w_muminus_sig_mu", "cards/impacts_muminus_lepEta_bin0_WpT_bin0_5TeV.json")
+    result2json("cards/test_5TeV.root", "w_muplus_sig_mu", "cards/impacts_muplus_lepEta_bin0_WpT_bin0_5TeV.json")
+    result2json("cards/test_e_5TeV.root", "w_eminus_sig_mu", "cards/impacts_eminus_lepEta_bin0_WpT_bin0_5TeV.json")
+    result2json("cards/test_e_5TeV.root", "w_eplus_sig_mu",  "cards/impacts_eplus_lepEta_bin0_WpT_bin0_5TeV.json")
 
-    #result2json("cards/test_e_5TeV.root", "w_eminus_sig_mu", "cards/impacts_eminus_lepEta_bin0_WpT_bin0_5TeV.json")
-    #result2json("cards/test_e_5TeV.root", "w_eplus_sig_mu",  "cards/impacts_eplus_lepEta_bin0_WpT_bin0_5TeV.json")
+    plotImpacts("cards/impacts_muplus_lepEta_bin0_WpT_bin0.json", "impacts_muplus_lepEta_bin0")
+    plotImpacts("cards/impacts_muminus_lepEta_bin0_WpT_bin0.json", "impacts_muminus_lepEta_bin0")
+    plotImpacts("cards/impacts_eplus_lepEta_bin0_WpT_bin0.json",       "impacts_eplus_lepEta_bin0")
+    plotImpacts("cards/impacts_eminus_lepEta_bin0_WpT_bin0.json",       "impacts_eminus_lepEta_bin0")
 
-    #plotImpacts("cards/impacts_muminus_lepEta_bin0_WpT_bin0.json", "impacts_muminus_lepEta_bin0")
-    #plotImpacts("cards/impacts_muplus_lepEta_bin0_WpT_bin0.json", "impacts_muplus_lepEta_bin0")
-    #plotImpacts("cards/impacts_eplus.json",       "impacts_eplus_lepEta")
-    #plotImpacts("cards/impacts_eminus.json",       "impacts_eminus_lepEta")
-
-    #plotImpacts("cards/impacts_muminus_lepEta_bin0_WpT_bin0_5TeV.json", "impacts_muminus_lepEta_bin0_5TeV")
-    #plotImpacts("cards/impacts_muplus_lepEta_bin0_WpT_bin0_5TeV.json", "impacts_muplus_lepEta_bin0_5TeV")
-    #
-    #plotImpacts("cards/impacts_eminus_lepEta_bin0_WpT_bin0_5TeV.json", "impacts_eminus_lepEta_bin0_5TeV")
-    #plotImpacts("cards/impacts_eplus_lepEta_bin0_WpT_bin0_5TeV.json", "impacts_eplus_lepEta_bin0_5TeV")
+    plotImpacts("cards/impacts_muplus_lepEta_bin0_WpT_bin0_5TeV.json", "impacts_muplus_lepEta_bin0_5TeV")
+    plotImpacts("cards/impacts_muminus_lepEta_bin0_WpT_bin0_5TeV.json", "impacts_muminus_lepEta_bin0_5TeV")
+    plotImpacts("cards/impacts_eplus_lepEta_bin0_WpT_bin0_5TeV.json", "impacts_eplus_lepEta_bin0_5TeV")
+    plotImpacts("cards/impacts_eminus_lepEta_bin0_WpT_bin0_5TeV.json", "impacts_eminus_lepEta_bin0_5TeV")
 
 
     # plot the impacts on QCD
