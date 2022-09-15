@@ -152,11 +152,13 @@ def result2json(ifilename, poiname, ofilename):
     to json file, which will be used to make impact plots later
     """
     nameMap = {
-        "SysWeight1" : "mc",
-        "SysWeight2" : "FSR",
-        "SysWeight3" : "bkg",
-        "SysWeight4" : "tagpt",
+        "SysWeight1" : "eff_MC",
+        "SysWeight2" : "eff_FSR",
+        "SysWeight3" : "eff_bkg",
+        "SysWeight4" : "eff_tagpt",
         "SysWeight6" : "Prefire",
+        "SysWeight8": "PrefireECAL",
+        "SysWeight10": "PrefireMuon",
         "SysRecoil2" : "recoil_eta",
         "SysRecoil3" : "recoil_keys",
         "SysRecoil6" : "recoil_stat0",
@@ -169,15 +171,18 @@ def result2json(ifilename, poiname, ofilename):
         "SysRecoil13": "recoil_stat7",
         "SysRecoil14": "recoil_stat8",
         "SysRecoil15": "recoil_stat9",
+        "ScaledMCshape": "QCD_SigContam",
     }
 
     def getNuisName(nuis):
-        if nuis in list(nameMap.keys()):
-            return nameMap[nuis]
-        elif bool(re.match(r"\w*bin\d+shape", nuis)):
-            return "QCD_" + nuis
-        else:
-            return nuis
+        result = nuis
+        for key, val in nameMap.items():
+            if nuis.endswith(key):
+                result = val
+                break
+        if bool(re.match(r"\w*bin\d+shape", nuis)):
+            result = "QCD_" + nuis
+        return result.replace("lepEta_bin0_WpT_bin0_", "")
 
     ifile = ROOT.TFile(ifilename)
     himpact = ifile.Get("nuisance_impact_mu")
