@@ -265,9 +265,13 @@ class SampleManager(object):
         for mc in self.mcs:
             assert self.is5TeV == mc.is5TeV, "for MC {} is at 5TeV? {}, inconsistent with the samplemanager {}".format(mc.name, mc.is5TeV, self.is5TeV)
 
+        # collection to save all histograms, stacks, etc, for further uses
+        # For future improvements, some of them are sample-related, 
+        # so can probably go to Sample class
         self.hdatas  = {}
         self.hsmcs   = {}
         self.hratios = {}
+        self.hmcs    = {}
 
         # count the number of events in data and MC
         self.counts = []
@@ -390,15 +394,19 @@ class SampleManager(object):
         h_data.SetLineColor(1)
         h_data.SetMarkerStyle(20)
         h_data.SetMarkerSize(1)
+        if drawconfigs.donormalizebin:
+            h_data.Scale(1.0, "width")
         legends.append("Data")
 
         # count the number of events only need to be done once
         docounting = (len(self.counts)==0)
+        intoption = "width" if drawconfigs.donormalizebin == "width" else ""
 
         if docounting:
-            self.counts.append(h_data.Integral(0, h_data.GetNbinsX()+1))
+            self.counts.append(h_data.Integral(0, h_data.GetNbinsX()+1, intoption))
 
         hgroupedmcs = OrderedDict()
+        hmcs = {}
         group_to_renormalize = ""
         for imc in range(len(h_mcs)):
             # scale the MC to the xsec
@@ -406,9 +414,11 @@ class SampleManager(object):
             if self.mcs[imc].renormalizefactor!=1.0:
                 print("renormalize MC {} with a factor or {}".format(self.mcs[imc].name, self.mcs[imc].renormalizefactor))
                 h_mcs[imc].Scale( self.mcs[imc].renormalizefactor )
+            if drawconfigs.donormalizebin:
+                h_mcs[imc].Scale(1.0, "width")
 
             if docounting:
-                self.counts.append( h_mcs[imc].Integral(0, h_mcs[imc].GetNbinsX()+1) )
+                self.counts.append( h_mcs[imc].Integral(0, h_mcs[imc].GetNbinsX()+1, intoption) )
     
             groupname = self.mcs[imc].groupname
             if groupname not in hgroupedmcs:
@@ -423,13 +433,16 @@ class SampleManager(object):
             else:
                 # group mc already exist. Add to the histogram
                 hgroupedmcs[groupname].Add( h_mcs[imc].GetValue() )
+            
+            # save the histogram to collection
+            hmcs[self.mcs[imc].name] = h_mcs[imc].Clone(h_mcs[imc].GetName().replace("_mc_","_"+self.mcs[imc].name))
 
         if group_to_renormalize:
-            ndata = h_data.Integral(0, h_data.GetNbinsX()+1)
+            ndata = h_data.Integral(0, h_data.GetNbinsX()+1, intoption)
             nmc=0
             for gname, ghisto in hgroupedmcs.items():
                 if gname!=group_to_renormalize:
-                    nmc += ghisto.Integral(0, ghisto.GetNbinsX()+1)
+                    nmc += ghisto.Integral(0, ghisto.GetNbinsX()+1, intoption)
             weight = float(ndata-nmc) / hgroupedmcs[group_to_renormalize].Integral(0, hgroupedmcs[group_to_renormalize].GetNbinsX()+1)
             print("Renormalize group for {}, with {} data, {} MC and weight {}".format(group_to_renormalize, ndata, nmc, weight))
             hgroupedmcs[group_to_renormalize].Scale(weight)
@@ -437,9 +450,8 @@ class SampleManager(object):
         hsname = "hs_" + drawconfigs.outputname
         hs_gmc = ROOT.THStack( hsname, hsname)
         for h_gmc in reversed(list(hgroupedmcs.values())):
-            if drawconfigs.donormalizebin:
-                # scale to bin width
-                h_gmc.Scale(1.0, "width")
+            #if drawconfigs.donormalizebin:
+            #    h_gmc.Scale(1.0, "width")
             hs_gmc.Add( h_gmc )
 
         if not drawconfigs.legends:
@@ -449,12 +461,11 @@ class SampleManager(object):
             # change default outputname to the histo name
             drawconfigs.outputname = hname
 
-        if drawconfigs.donormalizebin:
-            h_data.Scale(1.0, "width")
-
         self.hdatas[ drawconfigs.outputname] = h_data
         self.hsmcs[  drawconfigs.outputname] = hs_gmc
+        self.hmcs[   drawconfigs.outputname] = hmcs
         self.hratios[drawconfigs.outputname] = DrawHistos( [h_data, hs_gmc], drawconfigs.legends, drawconfigs.xmin, drawconfigs.xmax, drawconfigs.xlabel, drawconfigs.ymin, drawconfigs.ymax, drawconfigs.ylabel, drawconfigs.outputname, dology=drawconfigs.dology, dologx=drawconfigs.dologx, showratio=drawconfigs.showratio, yrmax = drawconfigs.yrmax, yrmin = drawconfigs.yrmin, yrlabel = drawconfigs.yrlabel, donormalize=drawconfigs.donormalize, ratiobase=drawconfigs.ratiobase, legendPos = drawconfigs.legendPos, redrawihist = drawconfigs.redrawihist, extraText = drawconfigs.extraText, noCMS = drawconfigs.noCMS, addOverflow = drawconfigs.addOverflow, addUnderflow = drawconfigs.addUnderflow, nMaxDigits = drawconfigs.nMaxDigits, is5TeV = self.is5TeV, lheader = drawconfigs.lheader)
+    
 
 
     def launchDraw(self):

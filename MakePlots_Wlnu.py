@@ -3,6 +3,7 @@ import ROOT
 import numpy as np
 from collections import OrderedDict
 from modules.SampleManager import DrawConfig, Sample, SampleManager
+from CMSPLOTS.myFunction import DrawHistos
 import argparse
 
 ROOT.gROOT.SetBatch(True)
@@ -110,12 +111,14 @@ def main():
             sampMan = SampleManager(DataSamp, [Wl0Samp, Wl1Samp, Wl2Samp, TTbarSamp, TT1LepSamp, TT0LepSamp, WWSamp, WZSamp, ZZSamp, ZXXSamp, Wx0Samp, Wx1Samp, Wx2Samp])
         else:
             sampMan = SampleManager(DataSamp, [Wl1Samp, Wl2Samp])
-        sampMan.groupMCs(["wx0", "wx1", "wx2"], 'wx', 216, 'wx')
+        wxname = "wx"
+        sampMan.groupMCs(["wx0", "wx1", "wx2"], wxname, 216, 'wx')
         sampMan.groupMCs(["WW", "WZ", "ZZ"], 'vv', 216, 'vv')
         sampMan.groupMCs(['ZXX'], 'zxx', 216, 'zxx')
         sampMan.groupMCs(["ttbar_dilepton", "ttbar_1lepton", "ttbar_0lepton"], "ttbar", 96, "t#bar{t}")
         label = "W#rightarrow#mu#nu" if doMuon else "W#rightarrow e#nu"
-        sampMan.groupMCs(['wl0', 'wl1', 'wl2'], "wlnu", 92,"W#rightarrow#mu#nu")
+        signame = "wlnu"
+        sampMan.groupMCs(['wl0', 'wl1', 'wl2'], signame, 92,"W#rightarrow#mu#nu")
 
         # for the signal samples
         if not doTest:
@@ -278,9 +281,9 @@ def main():
     sampMan.cacheDraw("deltaPhi", "histo_wjets_"+lepname+"_deltaphi",      dphi_bins,  DrawConfig(xmin=0., xmax=2*phimax, xlabel='#Delta #phi(#mu, MET)', dology=False, ymax=2e6), weightname="weight_0_WpT_bin0_lepEta_bin0")
 
     # mt
-    sampMan.cacheDraw("mtCorr", "histo_wjets_"+lepname+"_mtcorr",      mt_bins, DrawConfig(xmin=40, xmax=120, xlabel="m_{T} [GeV]", dology=False, ymax=7e4), weightname="weight_0_WpT_bin0_lepEta_bin0")
-    sampMan.cacheDraw("mtCorr", "histo_wjets_"+lepname+"plus_mtcorr",  mt_bins, DrawConfig(xmin=40, xmax=120, xlabel="m_{T} [GeV]", dology=False, ymax=4e4), weightname = "weight_"+lepname+"plus_0_WpT_bin0_lepEta_bin0")
-    sampMan.cacheDraw("mtCorr", "histo_wjets_"+lepname+"minus_mtcorr", mt_bins, DrawConfig(xmin=40, xmax=120, xlabel="m_{T} [GeV]", dology=False, ymax=3.5e4), weightname = "weight_"+lepname+"minus_0_WpT_bin0_lepEta_bin0")
+    sampMan.cacheDraw("mtCorr", "histo_wjets_"+lepname+"_mtcorr",      mt_bins, DrawConfig(xmin=0, xmax=120, xlabel="m_{T} [GeV]", dology=False, ymax=7e4), weightname="weight_0_WpT_bin0_lepEta_bin0")
+    sampMan.cacheDraw("mtCorr", "histo_wjets_"+lepname+"plus_mtcorr",  mt_bins, DrawConfig(xmin=0, xmax=120, xlabel="m_{T} [GeV]", dology=False, ymax=4e4), weightname = "weight_"+lepname+"plus_0_WpT_bin0_lepEta_bin0")
+    sampMan.cacheDraw("mtCorr", "histo_wjets_"+lepname+"minus_mtcorr", mt_bins, DrawConfig(xmin=0, xmax=120, xlabel="m_{T} [GeV]", dology=False, ymax=3.5e4), weightname = "weight_"+lepname+"minus_0_WpT_bin0_lepEta_bin0")
 
     # wpt
     sampMan.cacheDraw("WpT", "histo_wjets_"+lepname+"_wpt",        300, 0,  300, DrawConfig(xmin=0, xmax=300, xlabel="p^{W}_{T} [GeV]", dology=True, ymax=1e6, ymin=1e1), weightname="weight_0_WpT_bin0_lepEta_bin0")
@@ -326,16 +329,35 @@ def main():
                             h_list.append( samp.rdf.Histo1D((hname+str(isamp), hname, mass_bins), "mT_1", "weight_{}_{}_{}_{}_{}".format(chg, str(i), wpt, lepeta, wpttruth)))
                         h_sigs[hname] = h_list
 
-
     # Draw all these histograms
     sampMan.launchDraw()
-    sampMan.dumpCounts()
 
     #sampMan.cacheDraw("WpT", "histo_wjets_"+lepname+"minus_wpt_test",   300, 0,  300, DrawConfig(xmin=0, xmax=300, xlabel="p^{W}_{T} [GeV]", dology=True, ymax=1e6, ymin=1e1), weightname="weight_"+lepname+"minus_0_WpT_bin0_lepEta_bin0")
     #sampMan.launchDraw()
 
+    #
+    # draw the mT distributions of different processes for comparisons
+    #
+    for chg in chgbins:
+        for wpt in wptbins:
+            for lepeta in etabins:
+                labels = []
+                hists = []
+                hmcs = sampMan.hmcs["histo_wjets_{}_mT_1_{}_{}".format(chg, wpt, lepeta)]
+                icolor = 1
+                for key, val in hmcs.items():
+                    if any(x in key for x in ["WW", "WZ", "ZZ", "ttbar_0lepton", "ttbar_dilepton"]):
+                        continue
+                    labels.append(key)
+                    hists.append(val)
+                    val.SetLineColor(icolor)
+                    val.SetMarkerColor(icolor)
+                    icolor += 1
+                DrawHistos(hists, labels, xmin, xmax, "m_{T} [GeV]", 0., 0.24, "A.U.", "Comparison_mTShape_wjets_{}_mT_1_{}_{}".format(chg, wpt, lepeta), dology=False, addOverflow=True, addUnderflow=True, donormalize = True, is5TeV = do5TeV, legendPos=[0.30, 0.92, 0.90, 0.72], legendNCols=4, legendoptions="LE", drawoptions="LE") 
+
     # 
     # merge the signal MC histograms in different samples
+    # mostly for WpT usage
     #
     def addSignals(hname):
         h_list = h_sigs[hname]
@@ -351,15 +373,19 @@ def main():
         h_sigsMerged[hname] = hadded
 
     #
+    # preparing the outputs
+    #
+    output_suffix = lepname + "nu"
+    if doWpT:
+        output_suffix += "_WpT"
+    if do5TeV:
+        output_suffix += "_5TeV"
+    output_suffix += ".root"
+
+    #
     # write out mT histograms for combine
     #
-    postfix = lepname + "nu"
-    if doWpT:
-        postfix += "_WpT"
-    if do5TeV:
-        postfix += "_5TeV"
-    postfix += ".root"
-    outfile = ROOT.TFile.Open("root/output_shapes_"+postfix, "recreate")
+    outfile = ROOT.TFile.Open("root/output_shapes_"+output_suffix, "recreate")
 
     # Data
     #odir = outfile.mkdir("Data")
@@ -396,6 +422,37 @@ def main():
                         #hcen.SetDirectory(odir)
                         hcen.SetDirectory(outfile)
                         hcen.Write()
+
+                    # vary the relative xsec between the sub samples
+                    # only for 13TeV
+                    if not do5TeV:
+                        # vary the xsec by 10%
+                        xsecUnc = 0.10 
+                        hmcs = sampMan.hmcs["histo_wjets_{}_mT_1_{}_{}".format(chg, wpt, lepeta)]
+                        # hard coding
+                        print("keys for mcs: ", hmcs.keys())
+                        if all(x in hmcs.keys() for x in ["wl0", "wl1", "wl2"]):
+                            hmc_sig_up =  hmcs['wl0'].Clone("histo_wjets_{}_mT_1_{}_{}_grouped_{}0_SysXsecUp".format(chg, wpt, lepeta, signame))
+                            hmc_sig_up.Add(hmcs['wl1'], 1.0 + xsecUnc)
+                            hmc_sig_up.Add(hmcs['wl2'], 1.0 + xsecUnc)
+                            hmc_sig_up.SetDirectory(outfile)
+                            hmc_sig_up.Write()
+                            hmc_sig_dn =  hmcs['wl0'].Clone("histo_wjets_{}_mT_1_{}_{}_grouped_{}0_SysXsecDown".format(chg, wpt, lepeta, signame)) 
+                            hmc_sig_dn.Add(hmcs['wl1'], 1.0 - xsecUnc)
+                            hmc_sig_dn.Add(hmcs['wl2'], 1.0 - xsecUnc)
+                            hmc_sig_dn.SetDirectory(outfile)
+                            hmc_sig_dn.Write()
+                        if all(x in hmcs.keys() for x in ['wx0', 'wx1', 'wx2']):
+                            hmc_wx_up = hmcs['wx0'].Clone("histo_wjets_{}_mT_1_{}_{}_grouped_{}10_SysXsecUp".format(chg, wpt, lepeta, wxname))
+                            hmc_wx_up.Add(hmcs['wx1'], 1.0 + xsecUnc)
+                            hmc_wx_up.Add(hmcs['wx2'], 1.0 + xsecUnc)
+                            hmc_wx_up.SetDirectory(outfile)
+                            hmc_wx_up.Write()
+                            hmc_wx_dn = hmcs['wx0'].Clone("histo_wjets_{}_mT_1_{}_{}_grouped_{}10_SysXsecDown".format(chg, wpt, lepeta, wxname))
+                            hmc_wx_dn.Add(hmcs['wx1'], 1.0 - xsecUnc)
+                            hmc_wx_dn.Add(hmcs['wx2'], 1.0 - xsecUnc)
+                            hmc_wx_dn.SetDirectory(outfile)
+                            hmc_wx_dn.Write()
 
                     # recoil systematics
                     for i in [2, 3, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16]:
@@ -475,6 +532,21 @@ def main():
                                 hdn.Write()
 
     outfile.Close()
+
+    #
+    # save all the unstacked mc histograms for understanding and debugging
+    #
+    outfile = ROOT.TFile.Open("root/output_sigshapes_"+output_suffix, "recreate")
+    for chg in chgbins:
+        for wpt in wptbins:
+            for lepeta in etabins:
+                hmcs = sampMan.hmcs["histo_wjets_{}_mT_1_{}_{}".format(chg, wpt, lepeta)]
+                for key, val in hmcs.items():
+                    val.SetDirectory(outfile)
+                    val.Write()
+    outfile.Close()
+
+    sampMan.dumpCounts()
 
     print("Program end...")
 

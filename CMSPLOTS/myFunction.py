@@ -413,6 +413,8 @@ def DrawHistos(myhistos, mylabels, xmin, xmax, xlabel, ymin, ymax, ylabel, outpu
 
     myhistos_clone = []
     for ihisto in myhistos:
+        # clone the histogram for plotting, 
+        # so the original histogram is unchanged
         ihcolone = ihisto.Clone("%s_Clone" % ihisto.GetName())
         # ihcolone.SetDirectory(0)
         myhistos_clone.append(ihcolone)
