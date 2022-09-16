@@ -145,6 +145,32 @@ def MakePostPlot(ifilename: str, channel: str, bins: np.array, suffix: str, show
 
     return nevts
 
+def GetPOIValue(ifilename, poiname = ""):
+    """
+    return the POI val and error given a postfit root file
+    """
+    f = ROOT.TFile(ifilename)
+    tree = f.Get("fitresults")
+    tree.GetEntry(0)
+    val = getattr(tree, poiname)
+    err = abs(getattr(tree, poiname+"_err"))
+    return val, err
+
+def ComparePOIs(vals_x: np.array, vals_pos: np.array, errs_pos: np.array, vals_neg: np.array, errs_neg: np.array):
+    """
+    compare the POI values with different selections
+    """
+    print(vals_x)
+    gpos = ROOT.TGraphErrors(len(vals_x), vals_x, vals_pos, np.zeros(len(vals_x)), errs_pos)
+    gpos.SetLineColor(2)
+    gpos.SetMarkerColor(2)
+    gpos.SetMarkerStyle(20)
+    gneg = ROOT.TGraphErrors(len(vals_x), vals_x, vals_neg, np.zeros(len(vals_x)), errs_neg)
+    gneg.SetLineColor(4)
+    gneg.SetMarkerColor(4)
+    gneg.SetMarkerStyle(22)
+    DrawHistos([gpos, gneg], ['W^{+}#rightarrow#mu^{+}#nu', 'W^{-}#rightarrow#mu^{-}#bar{#nu}'], 0, 60, "m_{T} [GeV]", 1.01, 1.10, "POI", "test_mu", dology=False, showratio=False, donormalize=False, drawoptions=['LEP', 'LEP'], legendPos = [0.2, 0.8, 0.5, 0.9], redrawihist = 0, noCMS = True, nMaxDigits = 3)
+
 
 def result2json(ifilename, poiname, ofilename):
     """
