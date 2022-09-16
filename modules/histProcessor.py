@@ -1,6 +1,7 @@
 import ROOT
 import re
 import numpy as np
+import os
 from CMSPLOTS.myFunction import AddOverflowsTH1, RebinHisto
 
 ROOT.gROOT.SetBatch(True)
@@ -29,6 +30,9 @@ def ProcessHists(ifile, ofile, mass_bins, includeUnderflow = False, includeOverf
     hnames = finput.GetListOfKeys()
     hnames = [hname.GetName() for hname in hnames]
 
+    outdir = ofile.rpartition('/')[0]
+    if not os.path.exists(outdir):
+        os.makedirs(outdir)
     foutput = ROOT.TFile(ofile, "RECREATE")
 
     for hname in hnames:
@@ -68,6 +72,9 @@ def CopyandMergeTau(iname, oname):
     print("wx string is ", wxstr)
     print("wlnu string is ", wlnustr)
 
+    outdir = oname.rpartition('/')[0]
+    if not os.path.exists(outdir):
+        os.makedirs(outdir)
     foutput = ROOT.TFile(oname, "RECREATE")
     for hname in hnames:
         h = finput.Get(hname)

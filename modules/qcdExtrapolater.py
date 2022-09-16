@@ -116,6 +116,9 @@ def ExtrapolateQCD(fname, oname, channels, wptbin, etabins, fname_scaled=None, i
         # qcd templates with scaled MC subtraction
         fqcd_scaled = ROOT.TFile.Open(fname_scaled)
 
+    outdir = oname.rpartition('/')[0]
+    if not os.path.exists(outdir):
+        os.makedirs(outdir)
     ofile = ROOT.TFile.Open(oname, "recreate")
   
     if isinstance(channels, str):

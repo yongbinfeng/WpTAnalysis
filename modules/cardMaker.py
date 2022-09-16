@@ -44,7 +44,7 @@ class Process(object):
             self.xsecUnc = "-1.0"
 
 
-def MakeCards(fname_mc, fname_qcd, channel, wptbin, etabin, doWpT = False, rebinned = False, is5TeV = False, nMTBins = 9):
+def MakeCards(fname_mc, fname_qcd, channel, wptbin, etabin, doWpT = False, rebinned = False, is5TeV = False, nMTBins = 9, outdir = "cards"):
     prefix = ""
     if rebinned:
         prefix = "Rebinned_"
@@ -187,11 +187,11 @@ def MakeCards(fname_mc, fname_qcd, channel, wptbin, etabin, doWpT = False, rebin
     #
     # writing datacards
     #
-    if not os.path.exists("cards"):
-        os.makedirs("cards")
-    cardname = f"cards/datacard_{channel}_{etabin}_{wptbin}.txt"
+    if not os.path.exists(outdir):
+        os.makedirs(outdir)
+    cardname = f"{outdir}/datacard_{channel}_{etabin}_{wptbin}.txt"
     if is5TeV:
-        cardname = f"cards/datacard_{channel}_{etabin}_{wptbin}_5TeV.txt"
+        cardname = f"{outdir}/datacard_{channel}_{etabin}_{wptbin}_5TeV.txt"
     ofile = open(cardname, "w")
     ofile.write("imax 1 number of channels\n")
 
@@ -295,7 +295,7 @@ def MakeCards(fname_mc, fname_qcd, channel, wptbin, etabin, doWpT = False, rebin
     ofile.write(recoilgroup+"\n")
 
     ofile.close()
-    return ofile.name.split('/')[-1]
+    return cardname
 
 
 def combineCards(labels, cards, oname):
@@ -308,3 +308,23 @@ def combineCards(labels, cards, oname):
     cmd += " > {}; cd ../".format(oname)
     print(("combine cards with {}".format(cmd)))
     os.system(cmd)
+
+def GenerateRunCommand(card_plus: str, card_minus: str, output: str, prefix: str = "./"):
+    """
+    generate the script with commands to run combine.
+    inputs can probably be improved here
+    """
+    card_plus = prefix + "/" + card_plus
+    card_minus = prefix + "/" + card_minus
+    output = prefix + "/" + output
+
+    cmd = ""
+    cmd += "!/bin/bash\n\n"
+    cmd = f"combineCards.py {card_plus} {card_minus} > {output}.txt\n"
+    cmd += f"text2hdf5.py {output}.txt\n"
+    cmd += f"combinetf.py {output}.hdf5 --binByBinStat --computeHistErrors --saveHists --doImpacts --output {output}.root\n"
+
+    # write outputs to scripts
+    with open(f"{output}.sh", "w") as f:
+        f.write(cmd)
+    os.system(f"chmod +x {output}.sh")
