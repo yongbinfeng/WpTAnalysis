@@ -156,20 +156,23 @@ def GetPOIValue(ifilename, poiname = ""):
     err = abs(getattr(tree, poiname+"_err"))
     return val, err
 
-def ComparePOIs(vals_x: np.array, vals_pos: np.array, errs_pos: np.array, vals_neg: np.array, errs_neg: np.array):
+def ComparePOIs(vals_x: np.array, vals: list, errs: list, labels: list, colors: list, markers: list, output: str):
     """
     compare the POI values with different selections
     """
     print(vals_x)
-    gpos = ROOT.TGraphErrors(len(vals_x), vals_x, vals_pos, np.zeros(len(vals_x)), errs_pos)
-    gpos.SetLineColor(2)
-    gpos.SetMarkerColor(2)
-    gpos.SetMarkerStyle(20)
-    gneg = ROOT.TGraphErrors(len(vals_x), vals_x, vals_neg, np.zeros(len(vals_x)), errs_neg)
-    gneg.SetLineColor(4)
-    gneg.SetMarkerColor(4)
-    gneg.SetMarkerStyle(22)
-    DrawHistos([gpos, gneg], ['W^{+}#rightarrow#mu^{+}#nu', 'W^{-}#rightarrow#mu^{-}#bar{#nu}'], 0, 60, "m_{T} [GeV]", 1.01, 1.10, "POI", "test_mu", dology=False, showratio=False, donormalize=False, drawoptions=['LEP', 'LEP'], legendPos = [0.2, 0.8, 0.5, 0.9], redrawihist = 0, noCMS = True, nMaxDigits = 3)
+    graphs = []
+    for idx in range(len(vals)):
+        val = vals[idx]
+        err = errs[idx]
+        color = colors[idx]
+        marker = markers[idx]
+        g = ROOT.TGraphErrors(len(vals_x), vals_x+0.5*idx, val, np.zeros(len(vals_x)), err)
+        g.SetLineColor(color)
+        g.SetMarkerColor(color)
+        g.SetMarkerStyle(markers[idx])
+        graphs.append(g)
+    DrawHistos(graphs, labels, -5, 60, "m_{T} [GeV]", 1.01, 1.10, "POI", output, dology=False, showratio=False, donormalize=False, drawoptions='EP', legendPos = [0.2, 0.8, 0.8, 0.9], noCMS = True, nMaxDigits = 3, legendNCols = 2)
 
 
 def result2json(ifilename, poiname, ofilename):
