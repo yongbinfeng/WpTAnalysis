@@ -309,22 +309,24 @@ def combineCards(labels, cards, oname):
     print(("combine cards with {}".format(cmd)))
     os.system(cmd)
 
-def GenerateRunCommand(card_plus: str, card_minus: str, output: str, prefix: str = "./"):
+def GenerateRunCommand(card_plus: str, card_minus: str, prefix: str = "./"):
     """
     generate the script with commands to run combine.
     inputs can probably be improved here
     """
-    card_plus = prefix + "/" + card_plus
-    card_minus = prefix + "/" + card_minus
-    output = prefix + "/" + output
+    workdir = prefix + card_plus.rpartition('/')[0]
+    card_plus = card_plus.split('/')[-1]
+    card_minus = card_minus.split('/')[-1]
+    output = card_plus.replace("plus", "combined").replace(".txt", "")
 
     cmd = ""
-    cmd += "!/bin/bash\n\n"
-    cmd = f"combineCards.py {card_plus} {card_minus} > {output}.txt\n"
+    cmd += "#!/bin/bash\n\n"
+    cmd += f"cd {workdir}\n"
+    cmd += f"combineCards.py plus={card_plus} minus={card_minus} > {output}.txt\n"
     cmd += f"text2hdf5.py {output}.txt\n"
     cmd += f"combinetf.py {output}.hdf5 --binByBinStat --computeHistErrors --saveHists --doImpacts --output {output}.root\n"
 
     # write outputs to scripts
-    with open(f"{output}.sh", "w") as f:
+    with open(f"{workdir}/{output}.sh", "w") as f:
         f.write(cmd)
-    os.system(f"chmod +x {output}.sh")
+    os.system(f"chmod +x {workdir}/{output}.sh")
