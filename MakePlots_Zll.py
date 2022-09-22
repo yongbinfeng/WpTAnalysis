@@ -147,6 +147,11 @@ def main():
         sampMan.DefineMC("weight_{}".format(str(i)), "TMath::IsNaN(weight_{}_tmp) ? 0.: weight_{}_tmp".format(str(i), str(i)))
         DataSamp.Define("weight_{}".format(str(i)),  "1.0")
 
+    # theory uncertainties
+    for i in range(109):
+        sampMan.DefineMC(f"weight_theory_{i}", f"evtWeight[0] * mcnorm * lheweight[{i}]")
+        DataSamp.Define(f"weight_theory_{i}",  "1.0")
+
     sampMan.DefineAll("weight_noEcal", "prefireEcal == 0 ? 1 : (weight_0 / prefireEcal)")
     sampMan.DefineAll("weight_noMuon", "prefireMuon == 0 ? 1 : (weight_0 / prefireMuon)")
 
@@ -226,6 +231,8 @@ def main():
     sampMan.cacheDraw("zmass", "histo_zjets_zmass_" + lepname, mass_bins, DrawConfig(xmin=60, xmax=120, xlabel='m_{{{leplabel}{leplabel}}} [GeV]'.format(leplabel=leplabel)))
     for i in [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]:
         sampMan.cacheDraw("zmass", "histo_zjets_zmass_{}_weight_{}".format(lepname, str(i)),  15, 60, 120, DrawConfig(xmin=60, xmax=120, xlabel="m_{{{leplabel}{leplabel}}} [GeV]".format(leplabel=leplabel), dology=True, donormalizebin=False, addOverflow=False, addUnderflow=False), weightname = "weight_{}".format(str(i)))
+    for i in range(109):
+        sampMan.cacheDraw("zmass", f"histo_zjets_zmass_{lepname}_theoryUnc_{i}", 15, 60, 120, DrawConfig(xmin=60, xmax=120, xlabel=f"m_{{{leplabel}{leplabel}}} [GeV]", dology=True, donormalizebin=False, addOverflow=False, addUnderflow=False), weightname = f"weight_theory_{i}")
 
     sampMan.launchDraw()
 
@@ -238,7 +245,7 @@ def main():
     hratiopanelDown = sampMan.hratios[hnameDown][0]
     print((hratiopanel.GetNbinsX()))
     for ibin in range(hratiopanel.GetNbinsX() + 1):
-        print(("ibin {} bin content {} up {} down {}".format(ibin, hratiopanel.GetBinContent(ibin), hratiopanelUp.GetBinContent(ibin), hratiopanelDown.GetBinContent(ibin))))
+        #print(("ibin {} bin content {} up {} down {}".format(ibin, hratiopanel.GetBinContent(ibin), hratiopanelUp.GetBinContent(ibin), hratiopanelDown.GetBinContent(ibin))))
         hratiopanel.SetBinContent(ibin, 1.0)
         hratiopanel.SetBinError(ibin, 0.5*abs(hratiopanelUp.GetBinContent(ibin) - hratiopanelDown.GetBinContent(ibin)))
     drawconfigs = DrawConfig(xmin=-2.5, xmax=2.5, xlabel='y_{{{leplabel}{leplabel}}}'.format(leplabel=leplabel), ymax=1e7, ylabel='Events / 1', yrmin=0.81, yrmax=1.19, outputname = hname + "_withUnc")
@@ -252,7 +259,7 @@ def main():
     #    print("integral: ", h.Integral())
     #    print("bin contents: ", h.Print("all"))
 
-    output_suffix = lepname + "nu"
+    output_suffix = lepname
     if do5TeV:
         output_suffix += "_5TeV"
     output_suffix += ".root"
@@ -322,6 +329,32 @@ def main():
             if i<6:
                 hdn.SetDirectory(outfile)
                 hdn.Write()
+    
+    # theory uncertainties
+    for i in range(109):
+        hsmcs_up = sampMan.hsmcs[f"histo_zjets_zmass_{lepname}_theoryUnc_{i}"]
+        hlists_up = list(hsmcs_up.GetHists())
+        for ih in range(len(hlists_up)):
+            # loop over different processes/samps
+            hcen = hlists_central[ih]
+            hup  = hlists_up[ih]
+            # should we normalize hup or no?
+            hup.Scale(hcen.Integral()/hup.Integral())
+
+            suffix = f"TheoryUnc{i}Up"
+            hup.SetName("{}_{}".format(hcen.GetName(), suffix))
+
+            suffix = f"TheoryUnc{i}Down"
+            hdn  = hcen.Clone("{}_{}".format(hcen.GetName(), suffix))
+            for ibin in range(1, hup.GetNbinsX()+1):
+                hup.SetBinError(ibin, 0.)
+                hdn.SetBinContent(ibin, 2*hcen.GetBinContent(ibin) - hup.GetBinContent(ibin))
+                hdn.SetBinError(ibin, 0.)
+
+            hup.SetDirectory(outfile)
+            hup.Write()
+            hdn.SetDirectory(outfile)
+            hdn.Write()
 
     outfile.Close()
     print("Program end...")
