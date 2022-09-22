@@ -1,32 +1,37 @@
+from xml import dom
 import ROOT
 import numpy as np
 from collections import OrderedDict
 import sys
-#sys.path.append("/afs/cern.ch/work/y/yofeng/public/CMSPLOTS")
-from CMSPLOTS.tdrstyle import setTDRStyle
-from CMSPLOTS.myFunction import DrawHistos, THStack2TH1
+from CMSPLOTS.myFunction import DrawHistos
 import CMSPLOTS.CMS_lumi
 import pickle
-
-from SampleManager import DrawConfig, Sample, SampleManager
+from modules.SampleManager import DrawConfig, Sample, SampleManager
+import argparse
 
 ROOT.gROOT.SetBatch(True)
 ROOT.ROOT.EnableImplicitMT(10)
 
-dotest = 0
-
-doMuon = False
-
-# analyze the 5TeV data
-# if set to false will analyze the 13TeV data
-do5TeV = False
-
 def main():
     print("Program start...")
 
+    parser = argparse.ArgumentParser(description="Make plots for Wlnu analysis")
+    parser.add_argument("--doTest", action="store_true", dest="doTest", help="Run on a subset of samples for debugging; false runs on all dataset.")
+    parser.add_argument("--do5TeV", action="store_true", dest="do5TeV", help="Analyze the 5TeV data; false runs on 13TeV data")
+    parser.add_argument("--doElectron", action="store_true", dest="doElectron", help="Analyze the electron channel; false runs the muon channel")
+    args = parser.parse_args()
+
+    doTest = args.doTest
+    do5TeV = args.do5TeV
+    doMuon = not args.doElectron
+
+    print("doMuon: ", doMuon)
+    print("doTest:", doTest)
+    print("do5TeV:", do5TeV)
+
     if not do5TeV:
         if doMuon:
-            if dotest:
+            if doTest:
                 input_data    = "inputs/zmumu/input_data.txt"
                 input_ttbar   = "inputs/zmumu/input_ttbar_dilepton.txt"
             else:
@@ -66,17 +71,15 @@ def main():
             input_ttbar   = "inputs_5TeV/zee/input_ttbar.txt"
             input_ww      = "inputs_5TeV/zee/input_ww.txt"
             input_wz      = "inputs_5TeV/zee/input_wz.txt"
-            ## to be fixed to z->ee at 5TeV
-            input_zz      = "inputs_5TeV/zee/input_zz.txt"
-            #input_zz2l    = "inputs_5TeV/zee/input_zz2l.txt"
-            #input_zz4l    = "inputs_5TeV/zee/input_zz4l.txt"
+            input_zz2l    = "inputs_5TeV/zee/input_zz2l.txt"
+            input_zz4l    = "inputs_5TeV/zee/input_zz4l.txt"
             input_zxx     = "inputs_5TeV/zee/input_zxx.txt"
 
     DataSamp  = Sample(input_data, isMC=False, legend="Data", name="Data")
     lepchannel = "Z#rightarrow#mu^{+}#mu^{-}" if doMuon else "Z#rightarrow e^{+}e^{-}"
     if not do5TeV:
         TTbarSamp = Sample(input_ttbar, color=46,  legend="t#bar{t}", name="ttbar2lep")
-        if not dotest:
+        if not doTest:
             DYSamp    = Sample(input_dy,    color=92,  legend=lepchannel, name="DY")
             WWSamp  = Sample(input_ww,  color=38,  legend="WW2L",     name="WW")
             WZSamp  = Sample(input_wz,  color=39,  legend="WZ3L",     name="WZ")
@@ -85,7 +88,7 @@ def main():
             TT1LepSamp = Sample(input_ttbar_1lep,  color=47, legend="t#bar{t}", name="ttbar1lep")
             TT0LepSamp = Sample(input_ttbar_0lep,  color=48, legend="t#bar{t}", name="ttbar0lep")
 
-        if not dotest:
+        if not doTest:
             sampMan = SampleManager(DataSamp, [DYSamp, TTbarSamp, WWSamp, WZSamp, ZZSamp, ZXXSamp, TT1LepSamp, TT0LepSamp])
         else:
             sampMan = SampleManager(DataSamp, [TTbarSamp])
@@ -99,19 +102,12 @@ def main():
         TTbarSamp = Sample(input_ttbar, color=96, legend="t#bar{t}", name="ttbar", is5TeV = True)
         WWSamp    = Sample(input_ww,    color=38, legend="WW2L",     name="WW",    is5TeV = True)
         WZSamp    = Sample(input_wz,    color=39, legend="WZ3L",     name="WZ",    is5TeV = True)
-        if not doMuon:
-            ZZSamp    = Sample(input_zz,    color=37, legend="ZZ",       name="ZZ",    is5TeV = True)
-        else:
-            ZZ2LSamp  = Sample(input_zz2l,  color=37, legend="ZZ2L",     name="ZZ2L",  is5TeV = True)
-            ZZ4LSamp  = Sample(input_zz4l,  color=37, legend="ZZ4L",     name="ZZ4L",  is5TeV = True)
+        ZZ2LSamp  = Sample(input_zz2l,  color=37, legend="ZZ2L",     name="ZZ2L",  is5TeV = True)
+        ZZ4LSamp  = Sample(input_zz4l,  color=37, legend="ZZ4L",     name="ZZ4L",  is5TeV = True)
         ZXXSamp   = Sample(input_zxx,   color=40, legend="ZXX",      name="ZXX",   is5TeV = True)
 
-        if doMuon:
-            sampMan = SampleManager(DataSamp, [DYSamp, TTbarSamp, WWSamp, WZSamp, ZZ2LSamp, ZZ4LSamp, ZXXSamp], is5TeV = True)
-            sampMan.groupMCs(["WW", "WZ", "ZZ2L", "ZZ4L", "ZXX"], "EWK", 216, "EWK")
-        else:
-            sampMan = SampleManager(DataSamp, [DYSamp, TTbarSamp, WWSamp, WZSamp, ZZSamp, ZXXSamp], is5TeV = True)
-            sampMan.groupMCs(["WW", "WZ", "ZZ", "ZXX"], "EWK", 216, "EWK")
+        sampMan = SampleManager(DataSamp, [DYSamp, TTbarSamp, WWSamp, WZSamp, ZZ2LSamp, ZZ4LSamp, ZXXSamp], is5TeV = True)
+        sampMan.groupMCs(["WW", "WZ", "ZZ2L", "ZZ4L", "ZXX"], "EWK", 216, "EWK")
 
     sampMan.DefineAll("zpt", "Z.Pt()")
     sampMan.DefineAll("zmass", "ZMass")
@@ -171,7 +167,7 @@ def main():
 
     eta_bins = np.concatenate((np.linspace(-2.4, -2.0, 3),np.linspace(-1.8,1.8,37), np.linspace(2.0, 2.4, 3)))
     pt_bins = np.concatenate((np.linspace(24, 35, 6),np.linspace(36,55,20), np.linspace(57, 63, 4), np.linspace(66,70,2)))
-    mass_bins = np.concatenate((np.linspace(70, 76, 3),np.linspace(78,86,5), np.linspace(87, 96, 10), np.linspace(98,104,5), np.linspace(106, 110, 2)))
+    mass_bins = np.array([60, 64, 68, 72, 74, 76, 78, 80, 82, 84.0, 86.0, 87.0, 88.0, 89.0, 90.0, 91., 92., 93., 94., 96., 98., 100., 102., 105., 108., 112., 116., 120.])
     u_bins = np.concatenate((np.linspace(0, 20, 11),np.linspace(24,80,15), np.linspace(85, 109, 4), np.linspace(120,150,3)))
 
     # z pt befor and after pt reweighting
@@ -227,7 +223,7 @@ def main():
     #sampMan.cacheDraw("ucor1", "histo_zjets_mumu_pfmet_ucor1_pt", u1_bins, DrawConfig(xmin=-20.0, xmax=100.0, xlabel="u_{#parallel} [GeV]", extraText='#mu#mu channel'))
     #sampMan.cacheDraw("ucor2", "histo_zjets_mumu_pfmet_ucor2_pt", u2_bins, DrawConfig(xmin=-30.0, xmax=30.0, xlabel= "u_{#perp  } [GeV]", extraText='#mu#mu channel'))
 
-    sampMan.cacheDraw("zmass", "histo_zjets_zmass_" + lepname, mass_bins, DrawConfig(xmin=70, xmax=110, xlabel='m_{{{leplabel}{leplabel}}} [GeV]'.format(leplabel=leplabel)))
+    sampMan.cacheDraw("zmass", "histo_zjets_zmass_" + lepname, mass_bins, DrawConfig(xmin=60, xmax=120, xlabel='m_{{{leplabel}{leplabel}}} [GeV]'.format(leplabel=leplabel)))
     for i in [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]:
         sampMan.cacheDraw("zmass", "histo_zjets_zmass_{}_weight_{}".format(lepname, str(i)),  15, 60, 120, DrawConfig(xmin=60, xmax=120, xlabel="m_{{{leplabel}{leplabel}}} [GeV]".format(leplabel=leplabel), dology=True, donormalizebin=False, addOverflow=False, addUnderflow=False), weightname = "weight_{}".format(str(i)))
 
@@ -256,21 +252,16 @@ def main():
     #    print("integral: ", h.Integral())
     #    print("bin contents: ", h.Print("all"))
 
-    postfix = lepname
+    output_suffix = lepname + "nu"
     if do5TeV:
-        postfix += "_5TeV"
-    postfix += ".root"
-    outfile = ROOT.TFile.Open("root/output_shapes_"+postfix, "recreate")
+        output_suffix += "_5TeV"
+    output_suffix += ".root"
+    outfile = ROOT.TFile.Open("root/output_shapes_"+output_suffix, "recreate")
 
     # Data
-    odir = outfile.mkdir("Data")
-    outfile.cd("Data")
     hdata = sampMan.hdatas["histo_zjets_zmass_{}_weight_0".format(lepname)]
-    hdata.SetDirectory(odir)
+    hdata.SetDirectory(outfile)
     hdata.Write()
-
-    odir = outfile.mkdir("MCTemplates")
-    outfile.cd("MCTemplates")
 
     hsmcs_central = sampMan.hsmcs["histo_zjets_zmass_{}_weight_0".format(lepname)]
     hlists_central = list(hsmcs_central.GetHists())
@@ -278,7 +269,7 @@ def main():
     # central values for MC
     for ih in range(len(hlists_central)):
         hcen = hlists_central[ih]
-        hcen.SetDirectory(odir)
+        hcen.SetDirectory(outfile)
         hcen.Write()
 
     if lepname == "mumu":
@@ -326,17 +317,15 @@ def main():
                 for ibin in range(1, hup.GetNbinsX()+1):
                     hdn.SetBinContent(ibin, 2*hcen.GetBinContent(ibin) - hup.GetBinContent(ibin))
 
-            hup.SetDirectory(odir)
+            hup.SetDirectory(outfile)
             hup.Write()
             if i<6:
-                hdn.SetDirectory(odir)
+                hdn.SetDirectory(outfile)
                 hdn.Write()
 
     outfile.Close()
     print("Program end...")
 
-    input()
-    
     return 
 
 if __name__ == "__main__":
