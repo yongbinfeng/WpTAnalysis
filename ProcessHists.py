@@ -80,7 +80,7 @@ if "__main__" == __name__:
             fqcd_rebin = f"root/test{key}/output_qcdshape_enu_Rebin.root"
             fqcd_input_scaled = "root/output_qcdshape_enu_applyScaling.root"
             fqcd_rebin_scaled = f"root/test{key}/output_qcdshape_enu_Rebin_applyScaling.root"
-            fqcd_output = f"root/test{key}/cdshape_extrapolated_enu.root"
+            fqcd_output = f"root/test{key}/qcdshape_extrapolated_enu.root"
 
             RunPreparations(fsig_input, fsig_rebin, fsig_mergeTau, fqcd_input, fqcd_rebin, fqcd_input_scaled, fqcd_rebin_scaled, fqcd_output, "e", outdir_card = f"cards/test{key}", mass_bins = val)
     if do5TeV:
