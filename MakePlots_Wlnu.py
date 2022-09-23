@@ -224,11 +224,11 @@ def main():
     sampMan.DefineAll("lepEta_bin1", "abs(lep.Eta()) <= 1.4442") 
     sampMan.DefineAll("lepEta_bin2", "abs(lep.Eta()) > 1.4442")
 
-    if doMuon:
-        etabins = ["lepEta_bin0"]
-    else:
-        etabins = ["lepEta_bin0", "lepEta_bin1", "lepEta_bin2"]
-    #etabins = ["lepEta_bin0", "lepEta_bin1", "lepEta_bin2"]
+    #if doMuon:
+    #    etabins = ["lepEta_bin0"]
+    #else:
+    #    etabins = ["lepEta_bin0", "lepEta_bin1", "lepEta_bin2"]
+    etabins = ["lepEta_bin0"]
     
     # sample weight
     # 0 is the central one with all corrections
@@ -249,6 +249,16 @@ def main():
                     for wpttruth in wpttruthbins:
                         for samp in signalSamps:
                             samp.Define("weight_{}_{}_{}_{}_{}".format(chg, str(i), wpt, lepeta, wpttruth), "weight_{}_{}_{}_{} * {}".format(chg, str(i),  wpt, lepeta, wpttruth))
+                
+    # weights with theory variations
+    for i in range(109):
+        for wpt in wptbins:
+            for lepeta in etabins:
+                sampMan.DefineMC(f"weight_theory_{i}_{wpt}_{lepeta}", f"(TMath::IsNaN(evtWeight[0])) ? 0. : evtWeight[0] * mcnorm * {wpt} * {lepeta} * lheweight[{i}]")
+                DataSamp.Define(f"weight_theory_{i}_{wpt}_{lepeta}",  f"1.0 * {wpt} * {lepeta}")
+
+                for chg in chgbins:
+                    sampMan.DefineAll(f"weight_{chg}_theory_{i}_{wpt}_{lepeta}", f"weight_theory_{i}_{wpt}_{lepeta} * {chg}")
 
     #
     # Some histograms for simple data-MC comparison
@@ -319,7 +329,7 @@ def main():
         for i in [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]:
             for wpt in wptbins:
                 for lepeta in etabins:
-                    sampMan.cacheDraw("mT_1", "histo_wjets_{}_mtcorr_weight_{}_{}_{}".format(chg, str(i), wpt, lepeta),  mass_bins, DrawConfig(xmin=xmin, xmax=xmax, xlabel="m_{T} [GeV]", dology=False, ymax=ymaxs[chg], donormalizebin=False, addOverflow=False, addUnderflow=False), weightname = "weight_{}_{}_{}_{}".format(chg, str(i), wpt, lepeta))
+                    sampMan.cacheDraw("mT_1", f"histo_wjets_{chg}_mtcorr_weight_{i}_{wpt}_{lepeta}", mass_bins, DrawConfig(xmin=xmin, xmax=xmax, xlabel="m_{T} [GeV]", dology=False, ymax=ymaxs[chg], donormalizebin=False, addOverflow=False, addUnderflow=False), weightname = f"weight_{chg}_{i}_{wpt}_{lepeta}")
 
                     # for signal MC, draw the histogram in different truth WpT bins
                     for wpttruth in wpttruthbins:
@@ -328,6 +338,12 @@ def main():
                         for isamp, samp in enumerate(signalSamps):
                             h_list.append( samp.rdf.Histo1D((hname+str(isamp), hname, mass_bins), "mT_1", "weight_{}_{}_{}_{}_{}".format(chg, str(i), wpt, lepeta, wpttruth)))
                         h_sigs[hname] = h_list
+        
+        # variations on the theory uncertainties
+        for i in range(109):
+            for wpt in wptbins:
+                for lepeta in etabins:
+                    sampMan.cacheDraw("mT_1", f"histo_wjets_{chg}_mtcorr_weight_theory_{i}_{wpt}_{lepeta}", mass_bins, DrawConfig(xmin=xmin, xmax=xmax, xlabel="m_{T} [GeV]", dology=False, ymax=ymaxs[chg], donormalizebin=False, addOverflow=False, addUnderflow=False), weightname = f"weight_{chg}_theory_{i}_{wpt}_{lepeta}")
 
     # Draw all these histograms
     sampMan.launchDraw()
@@ -531,6 +547,36 @@ def main():
                                 hdn.SetDirectory(outfile)
                                 hdn.Write()
 
+                    # weights/corrections
+                    for i in range(109):
+                        if wpttruth == "MCTemplates":
+                            hsmcs_up = sampMan.hsmcs[f"histo_wjets_{chg}_mtcorr_weight_theory_{i}_{wpt}_{lepeta}"]
+                            hlists_up = list(hsmcs_up.GetHists())
+                        else:
+                            # signal MC
+                            hname = "histo_wjets_{}_mtcorr_weight_{}_{}_{}_{}_signalMC".format(chg, str(i), wpt, lepeta, wpttruth)
+                            hlists_up = [h_sigsMerged[hname]]
+                        for ih in range(len(hlists_up)):
+                            # loop over different processes
+                            hcen = hlists_central[ih]
+                            hup  = hlists_up[ih]
+                            # should we do normalization here?
+                            hup.Scale(hcen.Integral()/hup.Integral())
+                            
+                            suffix = f"TheoryUnc{i}Up"
+                            hup.SetName("{}_{}".format(hcen.GetName(), suffix))
+                            
+                            suffix = f"TheoryUnc{i}Down"
+                            hdn  = hcen.Clone("{}_{}".format(hcen.GetName(), suffix))
+                            for ibin in range(1, hup.GetNbinsX()+1):
+                                hdn.SetBinContent(ibin, 2*hcen.GetBinContent(ibin) - hup.GetBinContent(ibin))
+                            
+                            #hup.SetDirectory(odir)
+                            hup.SetDirectory(outfile)
+                            hup.Write()
+                            hdn.SetDirectory(outfile)
+                            hdn.Write()
+
     outfile.Close()
 
     #
@@ -550,7 +596,7 @@ def main():
 
     print("Program end...")
 
-    input()
+    #input()
     
     return 
 

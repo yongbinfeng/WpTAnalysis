@@ -145,6 +145,35 @@ def MakePostPlot(ifilename: str, channel: str, bins: np.array, suffix: str, show
 
     return nevts
 
+def GetPOIValue(ifilename, poiname = ""):
+    """
+    return the POI val and error given a postfit root file
+    """
+    f = ROOT.TFile(ifilename)
+    tree = f.Get("fitresults")
+    tree.GetEntry(0)
+    val = getattr(tree, poiname)
+    err = abs(getattr(tree, poiname+"_err"))
+    return val, err
+
+def ComparePOIs(vals_x: np.array, vals: list, errs: list, labels: list, colors: list, markers: list, output: str):
+    """
+    compare the POI values with different selections
+    """
+    print(vals_x)
+    graphs = []
+    for idx in range(len(vals)):
+        val = vals[idx]
+        err = errs[idx]
+        color = colors[idx]
+        marker = markers[idx]
+        g = ROOT.TGraphErrors(len(vals_x), vals_x+0.5*idx, val, np.zeros(len(vals_x)), err)
+        g.SetLineColor(color)
+        g.SetMarkerColor(color)
+        g.SetMarkerStyle(markers[idx])
+        graphs.append(g)
+    DrawHistos(graphs, labels, -5, 60, "m_{T} [GeV]", 1.01, 1.10, "POI", output, dology=False, showratio=False, donormalize=False, drawoptions='EP', legendPos = [0.2, 0.8, 0.8, 0.9], noCMS = True, nMaxDigits = 3, legendNCols = 2)
+
 
 def result2json(ifilename, poiname, ofilename):
     """

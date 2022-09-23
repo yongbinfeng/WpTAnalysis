@@ -182,6 +182,13 @@ def MakeCards(fname_mc, fname_qcd, channel, wptbin, etabin, doWpT = False, rebin
         #qcdstats += [prefix+"_Pol2shape"]
         qcdstats += [prefix+"_ScaledMCshape"]
 
+    # theory systematics
+    qcdscale_indices = [1, 2, 3, 4, 6, 8]
+    qcdscalesys = ["TheoryUnc" + str(idx) for idx in qcdscale_indices]
+
+    pdf_indices = list(range(9, 109))
+    pdfsys = ["TheoryUnc" + str(idx) for idx in pdf_indices]
+
     othersys = ['SysTauFrac']
 
     #
@@ -225,6 +232,12 @@ def MakeCards(fname_mc, fname_qcd, channel, wptbin, etabin, doWpT = False, rebin
         lines[sys] = "{:<30} {:<10}".format(sys, "shape")
 
     for sys in qcdstats:
+        lines[sys] = "{:<30} {:<10}".format(sys, "shape")
+    
+    for sys in qcdscalesys:
+        lines[sys] = "{:<30} {:<10}".format(sys, "shape")
+    
+    for sys in pdfsys:
         lines[sys] = "{:<30} {:<10}".format(sys, "shape")
 
     for sys in othersys:
@@ -274,6 +287,14 @@ def MakeCards(fname_mc, fname_qcd, channel, wptbin, etabin, doWpT = False, rebin
             temp = "1.0" if proc.isQCD else "-"
             lines[sys] += " {:<10}".format(temp)
 
+        for sys in qcdscalesys:
+            temp = "1.0" if proc.isSignal else "-"
+            lines[sys] += " {:<10}".format(temp)
+        
+        for sys in pdfsys:
+            temp = "1.0" if proc.isSignal else "-"
+            lines[sys] += " {:<10}".format(temp)
+
         for sys in othersys:
             temp = "1.0" if proc.isSignal else "-"
             lines[sys] += " {:<10}".format(temp)
@@ -287,12 +308,24 @@ def MakeCards(fname_mc, fname_qcd, channel, wptbin, etabin, doWpT = False, rebin
     recoilgroup = "Recoil group ="
     for sys in recoilsys:
         recoilgroup += " " + sys
+    
+    # add the qcd scale group
+    qcdscalegroup = "QCDscale group ="
+    for sys in qcdscalesys:
+        qcdscalegroup += " " + sys
+    
+    # add the pdf group 
+    pdfgroup = "PDF group ="
+    for sys in pdfsys:
+        pdfgroup += " " + sys
 
     # write these systematic lines
     for line in list(lines.values()):
         ofile.write(line+"\n")
     ofile.write(qcdgroup+"\n")
     ofile.write(recoilgroup+"\n")
+    ofile.write(qcdscalegroup+"\n")
+    ofile.write(pdfgroup+"\n")
 
     ofile.close()
     return cardname

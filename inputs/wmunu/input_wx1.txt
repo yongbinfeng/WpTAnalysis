@@ -1,10 +1,3 @@
-/eos/user/y/yofeng/LowPU/NTupleModTest/Wmunu/ntuples_0_1/wx1_select.raw_10Sections_0.root
-/eos/user/y/yofeng/LowPU/NTupleModTest/Wmunu/ntuples_0_1/wx1_select.raw_10Sections_1.root
-/eos/user/y/yofeng/LowPU/NTupleModTest/Wmunu/ntuples_0_1/wx1_select.raw_10Sections_2.root
-/eos/user/y/yofeng/LowPU/NTupleModTest/Wmunu/ntuples_0_1/wx1_select.raw_10Sections_3.root
-/eos/user/y/yofeng/LowPU/NTupleModTest/Wmunu/ntuples_0_1/wx1_select.raw_10Sections_4.root
-/eos/user/y/yofeng/LowPU/NTupleModTest/Wmunu/ntuples_0_1/wx1_select.raw_10Sections_5.root
-/eos/user/y/yofeng/LowPU/NTupleModTest/Wmunu/ntuples_0_1/wx1_select.raw_10Sections_6.root
-/eos/user/y/yofeng/LowPU/NTupleModTest/Wmunu/ntuples_0_1/wx1_select.raw_10Sections_7.root
-/eos/user/y/yofeng/LowPU/NTupleModTest/Wmunu/ntuples_0_1/wx1_select.raw_10Sections_8.root
-/eos/user/y/yofeng/LowPU/NTupleModTest/Wmunu/ntuples_0_1/wx1_select.raw_10Sections_9.root
+/eos/home-y/yofeng/Ntuples_LowPU/13TeV/NtupleMod/Wmunu/wx1_select.raw_3Sections_0.root
+/eos/home-y/yofeng/Ntuples_LowPU/13TeV/NtupleMod/Wmunu/wx1_select.raw_3Sections_1.root
+/eos/home-y/yofeng/Ntuples_LowPU/13TeV/NtupleMod/Wmunu/wx1_select.raw_3Sections_2.root

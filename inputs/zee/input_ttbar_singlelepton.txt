@@ -1,3 +1,3 @@
-/eos/user/y/yofeng/LowPU/NTupleModTest/Zee/ntuples_0_1/top2_select_3Sections_0.root
-/eos/user/y/yofeng/LowPU/NTupleModTest/Zee/ntuples_0_1/top2_select_3Sections_1.root
-/eos/user/y/yofeng/LowPU/NTupleModTest/Zee/ntuples_0_1/top2_select_3Sections_2.root
+/eos/home-y/yofeng/Ntuples_LowPU/13TeV/NtupleMod/Zee/top2_select_3Sections_0.root
+/eos/home-y/yofeng/Ntuples_LowPU/13TeV/NtupleMod/Zee/top2_select_3Sections_1.root
+/eos/home-y/yofeng/Ntuples_LowPU/13TeV/NtupleMod/Zee/top2_select_3Sections_2.root
