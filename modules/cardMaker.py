@@ -1,6 +1,10 @@
 """
-code to generate the W(lnv) cards for tfCombine
+code to generate the W(lnv) cards for tfCombine. 
+The desig can be improved, for example: different processes and 
+different systematics uncertainties, with maps between i process and j systematic.
+Then the processes and systematics can be naturally grouped into different subcategories
 """
+
 from collections import OrderedDict
 import os
 
@@ -20,7 +24,8 @@ class Process(object):
         self.isQCD = kwargs.get('isQCD', False) # fake QCD
         self.xsecUnc = kwargs.get('xsecUnc', "0.10") # uncertainty on the cross section
 
-        # a bit hacky - by default the fits run on lpc
+        # a bit hacky, to point to the correct file location
+        # - by default the fits run on lpc
         prefix_LPC = "/uscms/home/yfeng/nobackup/WpT/Cards/TestCode/WpTAnalysis/"
         self.fname = prefix_LPC + kwargs.get('fname', 'test.root')
 
@@ -43,6 +48,16 @@ class Process(object):
             self.isV = False
             self.xsecUnc = "-1.0"
 
+class Nuisance(object):
+    """
+    define one nuisance and related information for making cards
+    """
+    def __init__(self, **kwargs):
+        self.name = kwargs.get('name', 'lumi')
+        self.type = kwargs.get('type', 'lnN')
+        assert self.type in ['lnN', 'shape'], "Nuisance type can only be lnN or shape"
+        # value is only useful for lnN variation
+        self.value = kwargs.get('value', '1.026')
 
 def MakeCards(fname_mc, fname_qcd, channel, wptbin, etabin, doWpT = False, rebinned = False, is5TeV = False, nMTBins = 9, outdir = "cards"):
     prefix = ""
@@ -51,21 +66,19 @@ def MakeCards(fname_mc, fname_qcd, channel, wptbin, etabin, doWpT = False, rebin
 
     # from lumi    
     unc_lumi = {}
-    unc_lumi['13TeV'] = 1.017
-    unc_lumi['5TeV'] = 1.019
+    unc_lumi['lumi_13TeV'] = 1.017
+    unc_lumi['lumi_5TeV'] = 1.019
 
     # from eff calculations
     unc_effstat = {}
-    unc_effstat['13TeV'] = {}
-    unc_effstat['13TeV']['muplus'] = 1.0022
-    unc_effstat['13TeV']['muminus'] = 1.0021
-    unc_effstat['13TeV']['eplus'] = 1.0059
-    unc_effstat['13TeV']['eminus'] = 1.0053
-    unc_effstat['5TeV'] = {}
-    unc_effstat['5TeV']['muplus'] = 1.0023
-    unc_effstat['5TeV']['muminus'] = 1.0021
-    unc_effstat['5TeV']['eplus'] = 1.0080
-    unc_effstat['5TeV']['eminus'] = 1.0077
+    unc_effstat['effstat_muplus_13TeV'] = 1.0022
+    unc_effstat['effstat_muminus_13TeV'] = 1.0021
+    unc_effstat['effstat_eplus_13TeV'] = 1.0059
+    unc_effstat['effstat_eminus_13TeV'] = 1.0053
+    unc_effstat['effstat_muplus_13TeV'] = 1.0023
+    unc_effstat['effstat_muminus_13TeV'] = 1.0021
+    unc_effstat['effstat_eplus_13TeV'] = 1.0080
+    unc_effstat['effstat_eminus_13TeV'] = 1.0077
 
     # data
     data = Process(name = "data_obs", fname = fname_mc,
@@ -156,6 +169,16 @@ def MakeCards(fname_mc, fname_qcd, channel, wptbin, etabin, doWpT = False, rebin
     processes = sigs + [ttbar, zxx, vv, qcd]
     
     lepname = "mu" if "mu" in channel else "e"
+    era = "13TeV" if not is5TeV else "5TeV"
+
+    sysgroups = OrderedDict()
+
+    sysgroups["lumisys"] = ["lumi_" + era]
+
+    sysgroups["mcsecsys"] = []
+    for proc in processes:
+        if not proc.isSignal and proc.isMC:
+            sysgroups["mcsecsys"].append("norm_" + proc.name)
 
     # correction systematics
     # in Aram's ntuples, defined here: https://github.com/MiT-HEP/MitEwk13TeV/blob/CMSSW_94X/NtupleMod/eleNtupleMod.C#L71
@@ -163,33 +186,34 @@ def MakeCards(fname_mc, fname_qcd, channel, wptbin, etabin, doWpT = False, rebin
     # 1 is MC, 2 is FSR, 3 is Bkg, 4 is tagpt, 
     # 8 is ecal prefire
     # 10 is muon prefire
-    sfsys = ["SysWeight1", lepname+"_SysWeight2", lepname+"_SysWeight3", lepname+"_SysWeight4", "SysWeight8", "SysWeight10"]
+    sysgroups["sfsys"] = ["SysWeight1", lepname+"_SysWeight2", lepname+"_SysWeight3", lepname+"_SysWeight4", "SysWeight8", "SysWeight10"]
+
+    sysgroups["sfstatsys"] = ["effstat_" + channel + "_" + era]
 
     # recoil correction systematics
     # in Aram's ntuples, defined here: https://github.com/MiT-HEP/MitEwk13TeV/blob/CMSSW_94X/NtupleMod/eleNtupleMod.C#L65
     # 1 is central correction, 2 is correction with different eta bins, 3 is correction using Gaussian kernels, 
     # 6-15 are corrections with different statistical uncertainties
-    recoilsys = ['SysRecoil2', 'SysRecoil3', 'SysRecoil6', 'SysRecoil7', 'SysRecoil8', 'SysRecoil9', 'SysRecoil10', 'SysRecoil11',
-                 'SysRecoil12', 'SysRecoil13', 'SysRecoil14', 'SysRecoil15']
+    sysgroups["recoilsys"] = ['SysRecoil2', 'SysRecoil3', 'SysRecoil6', 'SysRecoil7', 'SysRecoil8', 'SysRecoil9', 'SysRecoil10', 'SysRecoil11', 'SysRecoil12', 'SysRecoil13', 'SysRecoil14', 'SysRecoil15']
 
     # qcd stat
     # this is hard coded for now. Will be improved later
     #prefix = etabin.split("_")[1]+"_"+wptbin
     prefix = channel + "_" + etabin + "_" + wptbin
     nbins = nMTBins
-    qcdstats = [prefix+"_bin"+str(i)+"shape" for i in range(1, nbins+1)]
+    sysgroups["qcdstats"] = [prefix+"_bin"+str(i)+"shape" for i in range(1, nbins+1)]
     if True:
         #qcdstats += [prefix+"_Pol2shape"]
-        qcdstats += [prefix+"_ScaledMCshape"]
+        sysgroups["qcdstats"] += [prefix+"_ScaledMCshape"]
 
     # theory systematics
     qcdscale_indices = [1, 2, 3, 4, 6, 8]
-    qcdscalesys = ["TheoryUnc" + str(idx) for idx in qcdscale_indices]
+    sysgroups["qcdscalesys"] = ["TheoryUnc" + str(idx) for idx in qcdscale_indices]
 
     pdf_indices = list(range(9, 109))
-    pdfsys = ["TheoryUnc" + str(idx) for idx in pdf_indices]
+    sysgroups["pdfsys"] = ["TheoryUnc" + str(idx) for idx in pdf_indices]
 
-    othersys = ['SysTauFrac']
+    sysgroups["othersys"] = ['SysTauFrac']
 
     #
     # writing datacards
@@ -212,35 +236,38 @@ def MakeCards(fname_mc, fname_qcd, channel, wptbin, etabin, doWpT = False, rebin
         ofile.write("shapes {pname:<30} * {fname:<40} {hname:<50} {hsys}$SYSTEMATIC\n".format(pname = proc.name, fname = proc.fname, hname = proc.hname, hsys = proc.hsys))
     ofile.write("\n")
 
-    # systematic uncertainties
     lines = OrderedDict()
     lines["bin"]        = "{:<40}".format("bin")
     lines["proc_name"]  = "{:<40}".format("process")
     lines["proc_index"] = "{:<40}".format("process")
     lines["rate"]       = "{:<40}".format("rate")
 
-    lines['lumi'] = "{:<30} {:<10}".format("lumi_13TeV" if not is5TeV else "lumi_5TeV", "lnN")
-    for proc in processes:
-        if not proc.isSignal and proc.isMC:
-            lines["norm_"+proc.name] = "{:<30} {:<10}".format("norm_"+proc.name, "lnN")
+    # systematic uncertainties
+    for sys in sysgroups["lumisys"]:
+        lines[sys] = "{:<30} {:<10}".format(sys, "lnN")
+
+    for sys in sysgroups["mcsecsys"]:
+        lines[sys] = "{:<30} {:<10}".format(sys, "lnN")
     
-    for sys in sfsys:
-        lines[sys] = "{:<30} {:<10}".format(sys, "shape")
-    lines["effstat"] = "{:<30} {:<10}".format("effstat_" + channel, "lnN")
-
-    for sys in recoilsys:
-        lines[sys] = "{:<30} {:<10}".format(sys, "shape")
-
-    for sys in qcdstats:
+    for sys in sysgroups["sfsys"]:
         lines[sys] = "{:<30} {:<10}".format(sys, "shape")
     
-    for sys in qcdscalesys:
-        lines[sys] = "{:<30} {:<10}".format(sys, "shape")
-    
-    for sys in pdfsys:
+    for sys in sysgroups["sfstatsys"]:
+        lines[sys] = "{:<30} {:<10}".format(sys, "lnN")
+
+    for sys in sysgroups["recoilsys"]:
         lines[sys] = "{:<30} {:<10}".format(sys, "shape")
 
-    for sys in othersys:
+    for sys in sysgroups["qcdstats"]:
+        lines[sys] = "{:<30} {:<10}".format(sys, "shape")
+    
+    for sys in sysgroups["qcdscalesys"]:
+        lines[sys] = "{:<30} {:<10}".format(sys, "shape")
+    
+    for sys in sysgroups["pdfsys"]:
+        lines[sys] = "{:<30} {:<10}".format(sys, "shape")
+
+    for sys in sysgroups["othersys"]:
         lines[sys] = "{:<30} {:<10}".format(sys, "shape")
 
     # fill in the per-process information
@@ -258,78 +285,57 @@ def MakeCards(fname_mc, fname_qcd, channel, wptbin, etabin, doWpT = False, rebin
         lines["rate"] += " {:<10}".format("-1.0")
 
         temp = "-"
-        if proc.isMC and not is5TeV:
-            temp = unc_lumi['13TeV']
-        if proc.isMC and is5TeV:
-            temp = unc_lumi['5TeV']
-        lines['lumi'] += " {:<10}".format(temp)
+        for lumi in sysgroups["lumisys"]:
+            if proc.isMC:
+                temp = unc_lumi[lumi]
+            lines[lumi] += " {:<10}".format(temp)
+
         for proc2 in processes:
             if not proc2.isSignal and proc2.isMC:
                 temp = proc.xsecUnc if proc.name == proc2.name else "-"
                 lines["norm_"+proc2.name] += " {:<10}".format(temp)
 
-        for sys in sfsys:
+        for sys in sysgroups["sfsys"]:
             temp = "1.0" if not proc.isQCD else "-"
             lines[sys] += " {:<10}".format(temp)
 
-        temp = "-"
-        if proc.isSignal and not is5TeV:
-            temp = unc_effstat['13TeV'][channel]
-        elif proc.isSignal and is5TeV:
-            temp = unc_effstat['5TeV'][channel]
-        lines['effstat'] += " {:<10}".format(temp)
+        for sys in sysgroups["sfstatsys"]:
+            temp = "-"
+            if proc.isSignal:
+                temp = unc_effstat[sys]
+            lines[sys] += " {:<10}".format(temp)
 
-        for sys in recoilsys:
+        for sys in sysgroups["recoilsys"]:
             temp = "1.0" if proc.isV else "-"
             lines[sys] += " {:<10}".format(temp)
 
-        for sys in qcdstats:
+        for sys in sysgroups["qcdstats"]:
             temp = "1.0" if proc.isQCD else "-"
             lines[sys] += " {:<10}".format(temp)
 
-        for sys in qcdscalesys:
+        for sys in sysgroups["qcdscalesys"]:
             temp = "1.0" if proc.isSignal else "-"
             lines[sys] += " {:<10}".format(temp)
         
-        for sys in pdfsys:
+        for sys in sysgroups["pdfsys"]:
             temp = "1.0" if proc.isSignal else "-"
             lines[sys] += " {:<10}".format(temp)
 
-        for sys in othersys:
+        for sys in sysgroups["othersys"]:
             temp = "1.0" if proc.isSignal else "-"
             lines[sys] += " {:<10}".format(temp)
-
-    # add the QCD group 
-    qcdgroup = "QCD group ="
-    for sys in qcdstats:
-        qcdgroup += " " + sys
-
-    # add the recoil group
-    recoilgroup = "Recoil group ="
-    for sys in recoilsys:
-        recoilgroup += " " + sys
-    
-    # add the qcd scale group
-    qcdscalegroup = "QCDscale group ="
-    for sys in qcdscalesys:
-        qcdscalegroup += " " + sys
-    
-    # add the pdf group 
-    pdfgroup = "PDF group ="
-    for sys in pdfsys:
-        pdfgroup += " " + sys
 
     # write these systematic lines
     for line in list(lines.values()):
         ofile.write(line+"\n")
-    ofile.write(qcdgroup+"\n")
-    ofile.write(recoilgroup+"\n")
-    ofile.write(qcdscalegroup+"\n")
-    ofile.write(pdfgroup+"\n")
 
+    for sysgroup, systematics in sysgroups.items():
+        ofile.write(sysgroup+" group =")
+        for sys in systematics:
+            ofile.write(" " + sys)
+        ofile.write("\n")
     ofile.close()
     return cardname
-
 
 def combineCards(labels, cards, oname):
     """
