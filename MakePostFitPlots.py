@@ -17,6 +17,10 @@ showPULL = True
 if doInclusive:
     MakePostPlot("cards/test_mu.root", "muplus", mass_bins, "", showPULL)
     MakePostPlot("cards/test_mu.root", "muminus", mass_bins, "", showPULL, startbin = len(mass_bins)-1)
+
+    MakePostPlot("cards/test_mu_withXsecSys.root", "muplus", mass_bins, "_withXsecSys", showPULL)
+    MakePostPlot("cards/test_mu_withXsecSys.root", "muminus", mass_bins, "_withXsecSys", showPULL, startbin = len(mass_bins)-1)
+
     MakePostPlot("cards/test_e.root",  "eplus", mass_bins, "", showPULL)
     MakePostPlot("cards/test_e.root",  "eminus", mass_bins, "", showPULL, startbin = len(mass_bins)-1)
     MakePostPlot("cards/test_5TeV.root", "muplus", mass_bins, "_5TeV", showPULL, is5TeV=True)
@@ -26,6 +30,9 @@ if doInclusive:
     #
     result2json("cards/test_mu.root", "w_muminus_sig_mu", "cards/impacts_muminus_lepEta_bin0_WpT_bin0.json")
     result2json("cards/test_mu.root", "w_muplus_sig_mu", "cards/impacts_muplus_lepEta_bin0_WpT_bin0.json")
+    result2json("cards/test_mu_withXsecSys.root", "w_muminus_sig_mu", "cards/impacts_muminus_lepEta_bin0_WpT_bin0_withXsecSys.json")
+    result2json("cards/test_mu_withXsecSys.root", "w_muplus_sig_mu", "cards/impacts_muplus_lepEta_bin0_WpT_bin0_withXsecSys.json")
+
     result2json("cards/test_e.root",  "w_eplus_sig_mu",  "cards/impacts_eplus_lepEta_bin0_WpT_bin0.json")
     result2json("cards/test_e.root",  "w_eminus_sig_mu",  "cards/impacts_eminus_lepEta_bin0_WpT_bin0.json")
 
@@ -36,6 +43,10 @@ if doInclusive:
 
     plotImpacts("cards/impacts_muplus_lepEta_bin0_WpT_bin0.json", "impacts_muplus_lepEta_bin0")
     plotImpacts("cards/impacts_muminus_lepEta_bin0_WpT_bin0.json", "impacts_muminus_lepEta_bin0")
+
+    plotImpacts("cards/impacts_muplus_lepEta_bin0_WpT_bin0_withXsecSys.json", "impacts_muplus_lepEta_bin0_withXsecSys")
+    plotImpacts("cards/impacts_muminus_lepEta_bin0_WpT_bin0_withXsecSys.json", "impacts_muminus_lepEta_bin0_withXsecSys")
+
     plotImpacts("cards/impacts_eplus_lepEta_bin0_WpT_bin0.json",       "impacts_eplus_lepEta_bin0")
     plotImpacts("cards/impacts_eminus_lepEta_bin0_WpT_bin0.json",       "impacts_eminus_lepEta_bin0")
 
