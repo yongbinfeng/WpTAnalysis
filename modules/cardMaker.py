@@ -1,8 +1,5 @@
 """
 code to generate the W(lnv) cards for tfCombine. 
-The desig can be improved, for example: different processes and 
-different systematics uncertainties, with maps between i process and j systematic.
-Then the processes and systematics can be naturally grouped into different subcategories
 """
 
 from collections import OrderedDict
@@ -48,6 +45,7 @@ class Process(object):
             self.isV = False
             self.xsecUnc = "-1.0"
 
+
 class Nuisance(object):
     """
     define one nuisance and related information for making cards
@@ -56,10 +54,87 @@ class Nuisance(object):
         self.name = kwargs.get('name', 'lumi')
         self.type = kwargs.get('type', 'lnN')
         assert self.type in ['lnN', 'shape'], "Nuisance type can only be lnN or shape"
-        # value is only useful for lnN variation
-        self.value = kwargs.get('value', '1.026')
+        # valuemap saves how much one process is affected by the nuisance parameter
+        # key is the process name, value is the uncertainty
+        self.valuemap = kwargs.get('valuemap', {})
+    
+    def __getitem__(self, key):
+        return self.valuemap.get(key, '-')
+    
+    def __setitem__(self, key, val):
+        self.valuemap[key] = val
+
+
+def WriteCard(data, processes, nuisgroups, cardname):
+    """
+    write the datacard provided with data, processes, and nuisances
+    """
+    dirpath = cardname.rpartition('/')[0]
+    if not os.path.exists(dirpath):
+        print(f"Make the directory {dirpath}")
+        os.makedirs(dirpath)
+
+    ofile = open(cardname, "w")
+    ofile.write("imax 1 number of channels\n")
+    ofile.write("jmax {} number of processes -1\n".format(len(processes)-1))
+    ofile.write("kmax * number of nuisance parameters\n\n")
+    # observation
+    ofile.write("Observation -1\n\n")
+    ofile.write("shapes {pname:<30} * {fname:<40} {hname:<50}\n".format(pname = "data_obs", fname = data.fname, hname = data.hname))
+
+    for proc in processes:
+        ofile.write("shapes {pname:<30} * {fname:<40} {hname:<50} {hsys}$SYSTEMATIC\n".format(pname = proc.name, fname = proc.fname, hname = proc.hname, hsys = proc.hsys))
+    ofile.write("\n")
+
+    ofile.write("{:<40}".format("bin"))
+    for proc in processes:
+        # one data card is one bin
+        ofile.write(" {binname:<10}".format(binname="bin1"))
+    ofile.write("\n")
+
+    ofile.write("{:<40}".format("process"))
+    for proc in processes:
+        ofile.write(" {pname:<10}".format(pname=proc.name))
+    ofile.write("\n")
+
+    ofile.write("{:<40}".format("process"))
+    isig = 0
+    ibkg = 1
+    for proc in processes:
+        if proc.isSignal or proc.isQCD:
+            ofile.write(f" {isig:<10}")
+            isig -= 1
+        else:
+            ofile.write(f" {ibkg:<10}")
+            ibkg += 1
+    ofile.write("\n")
+
+    ofile.write("{:<40}".format("rate"))
+    for proc in processes:
+        ofile.write(" {:<10}".format("-1.0"))
+    ofile.write("\n\n")
+
+    ## write out all systematics
+    for nuisgroup in nuisgroups.values():
+        for nuis in nuisgroup:
+            ofile.write(f"{nuis.name:<30} {nuis.type:<10}")
+            for proc in processes:
+                ofile.write(" {:<10}".format(nuis[proc.name]))
+            ofile.write("\n")
+    ofile.write("\n")
+
+    # write out nuisance groups
+    for gname, gnuisances in nuisgroups.items():
+        ofile.write(f"{gname:<30} group =")
+        for nuis in gnuisances:
+            ofile.write(f" {nuis.name}")
+        ofile.write("\n")
+
+    ofile.close()
+    
 
 def MakeCards(fname_mc, fname_qcd, channel, wptbin, etabin, doWpT = False, rebinned = False, is5TeV = False, nMTBins = 9, outdir = "cards"):
+    # prefix of all histo names
     prefix = ""
     if rebinned:
         prefix = "Rebinned_"
@@ -165,20 +240,29 @@ def MakeCards(fname_mc, fname_qcd, channel, wptbin, etabin, doWpT = False, rebin
                   isQCD = True,
                 )
 
+    # list of all processes
     #processes = sigs + [ttbar, zxx, wtau, vv, qcd]
     processes = sigs + [ttbar, zxx, vv, qcd]
     
     lepname = "mu" if "mu" in channel else "e"
     era = "13TeV" if not is5TeV else "5TeV"
 
-    sysgroups = OrderedDict()
+    # define different nuisance parameters, their groups,
+    # and the impacts on each process
+    nuisgroups = OrderedDict()
 
-    sysgroups["lumisys"] = ["lumi_" + era]
+    nuis_lumi = Nuisance(name = "lumi_" + era, type = "lnN")
+    for proc in processes:
+        if proc.isMC:
+            nuis_lumi[proc.name] = unc_lumi[nuis_lumi.name]
+    nuisgroups["lumisys"] = [nuis_lumi]
 
-    sysgroups["mcsecsys"] = []
+    nuisgroups["mcsecsys"] = []
     for proc in processes:
         if not proc.isSignal and proc.isMC:
-            sysgroups["mcsecsys"].append("norm_" + proc.name)
+            nuis_norm = Nuisance(name = "norm_" + proc.name, type = "lnN")
+            nuis_norm[proc.name] = proc.xsecUnc
+            nuisgroups["mcsecsys"].append(nuis_norm)
 
     # correction systematics
     # in Aram's ntuples, defined here: https://github.com/MiT-HEP/MitEwk13TeV/blob/CMSSW_94X/NtupleMod/eleNtupleMod.C#L71
@@ -186,155 +270,98 @@ def MakeCards(fname_mc, fname_qcd, channel, wptbin, etabin, doWpT = False, rebin
     # 1 is MC, 2 is FSR, 3 is Bkg, 4 is tagpt, 
     # 8 is ecal prefire
     # 10 is muon prefire
-    sysgroups["sfsys"] = ["SysWeight1", lepname+"_SysWeight2", lepname+"_SysWeight3", lepname+"_SysWeight4", "SysWeight8", "SysWeight10"]
+    # correlate MC systematic, ECAL and muon prefire 
+    # between electron and muon channel
+    # uncorrelate FSR, bkg, tagpt in electron ahd muon channel
+    nuis_SysWeight1 = Nuisance(name = "Sysweight1", type = "shape")
+    nuis_SysWeight2 = Nuisance(name = lepname + "_Sysweight2", type = "shape")
+    nuis_SysWeight3 = Nuisance(name = lepname + "_Sysweight3", type = "shape")
+    nuis_SysWeight4 = Nuisance(name = lepname + "_Sysweight4", type = "shape")
+    nuis_SysWeight8 = Nuisance(name = "Sysweight8", type = "shape")
+    nuis_SysWeight10 = Nuisance(name = "Sysweight10", type = "shape")
+    nuisgroups["sfsys"] = [nuis_SysWeight1, nuis_SysWeight2, nuis_SysWeight3, nuis_SysWeight4, nuis_SysWeight8, nuis_SysWeight10]
+    for proc in processes:
+        if not proc.isQCD:
+            # all the samples except the QCD apply the corrections
+            # so they should be affected by sf systematics
+            for sysweight in nuisgroups["sfsys"]:
+                sysweight[proc.name] = 1.0
 
-    sysgroups["sfstatsys"] = ["effstat_" + channel + "_" + era]
+    nuis_effstat = Nuisance(name = "effstat_" + channel + "_" + era, type = "shape")
+    for proc in processes:
+        if proc.isSignal:
+            # only apply eff/sf stat uncertainty to signals for now
+            nuis_effstat[proc.name] = unc_effstat[nuis_effstat.name]
+    nuisgroups["sfstatsys"] = [nuis_effstat]
 
     # recoil correction systematics
     # in Aram's ntuples, defined here: https://github.com/MiT-HEP/MitEwk13TeV/blob/CMSSW_94X/NtupleMod/eleNtupleMod.C#L65
     # 1 is central correction, 2 is correction with different eta bins, 3 is correction using Gaussian kernels, 
     # 6-15 are corrections with different statistical uncertainties
-    sysgroups["recoilsys"] = ['SysRecoil2', 'SysRecoil3', 'SysRecoil6', 'SysRecoil7', 'SysRecoil8', 'SysRecoil9', 'SysRecoil10', 'SysRecoil11', 'SysRecoil12', 'SysRecoil13', 'SysRecoil14', 'SysRecoil15']
+    nuisgroups["recoilsys"] = []
+    recoil_indices = ["2", "3", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"]
+    for iuvar in recoil_indices:
+        nuis_SysRecoil = Nuisance(name = "SysRecoil" + iuvar, type = "shape")
+        for proc in processes:
+            if proc.isV:
+                # all the V processes (including W and Z) apply the recoil corrections
+                nuis_SysRecoil[proc.name] = 1.0
+        nuisgroups["recoilsys"].append(nuis_SysRecoil)
 
     # qcd stat
     # this is hard coded for now. Will be improved later
-    #prefix = etabin.split("_")[1]+"_"+wptbin
+    nuisgroups["qcdstats"] = []
     prefix = channel + "_" + etabin + "_" + wptbin
     nbins = nMTBins
-    sysgroups["qcdstats"] = [prefix+"_bin"+str(i)+"shape" for i in range(1, nbins+1)]
+    for ibin in range(1, nbins+1):
+        nuis_QCDStat = Nuisance(name = prefix + f"_bin{ibin}", type = "shape")
+        for proc in processes:
+            if proc.isQCD:
+                nuis_QCDStat[proc.name] = 1.0
+        nuisgroups["qcdstats"].append(nuis_QCDStat)
+
     if True:
-        #qcdstats += [prefix+"_Pol2shape"]
-        sysgroups["qcdstats"] += [prefix+"_ScaledMCshape"]
+        nuis_QCDMCCont = Nuisance(name = prefix + "_ScaledMCshape", type = "shape")
+        for proc in processes:
+            if proc.isQCD:
+                nuis_QCDMCCont[proc.name] = 1.0
+        nuisgroups["qcdstats"].append(nuis_QCDMCCont)
 
     # theory systematics
+    # qcd scale
     qcdscale_indices = [1, 2, 3, 4, 6, 8]
-    sysgroups["qcdscalesys"] = ["TheoryUnc" + str(idx) for idx in qcdscale_indices]
+    nuisgroups["qcdscalesys"] = []
+    for iscale in qcdscale_indices:
+        nuis_QCDScale = Nuisance(name = "QCDScale" + str(iscale), type = "shape")
+        for proc in processes:
+            if proc.isSignal:
+                nuis_QCDScale[proc.name] = 1.0
+        nuisgroups["qcdscalesys"].append(nuis_QCDScale)
 
+    # pdf variations
+    nuisgroups["pdfsys"] = []
     pdf_indices = list(range(9, 109))
-    sysgroups["pdfsys"] = ["TheoryUnc" + str(idx) for idx in pdf_indices]
+    for ipdf in pdf_indices:
+        nuis_PDF = Nuisance(name = "PDFSet" + str(ipdf), type = "shape")
+        for proc in processes:
+            if proc.isSignal:
+                nuis_PDF[proc.name] = 1.0
 
-    sysgroups["othersys"] = ['SysTauFrac']
+    # tau fraction variation in the signal process
+    nuis_TauFrac = Nuisance(name = "SysTauFrac", type = "shape")
+    for proc in processes:
+        if proc.isSignal:
+            nuis_TauFrac[proc.name] = 1.0
+    nuisgroups["othersys"] = [nuis_TauFrac]
 
     #
     # writing datacards
     #
-    if not os.path.exists(outdir):
-        os.makedirs(outdir)
     cardname = f"{outdir}/datacard_{channel}_{etabin}_{wptbin}.txt"
     if is5TeV:
         cardname = f"{outdir}/datacard_{channel}_{etabin}_{wptbin}_5TeV.txt"
-    ofile = open(cardname, "w")
-    ofile.write("imax 1 number of channels\n")
+    WriteCard(data, processes, nuisgroups, cardname)
 
-    ofile.write("jmax {} number of processes -1\n".format(len(processes)-1))
-    ofile.write("kmax * number of nuisance parameters\n\n")
-    # observation
-    ofile.write("Observation -1\n\n")
-    ofile.write("shapes {pname:<30} * {fname:<40} {hname:<50}\n".format(pname = "data_obs", fname = data.fname, hname = data.hname))
-
-    for proc in processes:
-        ofile.write("shapes {pname:<30} * {fname:<40} {hname:<50} {hsys}$SYSTEMATIC\n".format(pname = proc.name, fname = proc.fname, hname = proc.hname, hsys = proc.hsys))
-    ofile.write("\n")
-
-    lines = OrderedDict()
-    lines["bin"]        = "{:<40}".format("bin")
-    lines["proc_name"]  = "{:<40}".format("process")
-    lines["proc_index"] = "{:<40}".format("process")
-    lines["rate"]       = "{:<40}".format("rate")
-
-    # systematic uncertainties
-    for sys in sysgroups["lumisys"]:
-        lines[sys] = "{:<30} {:<10}".format(sys, "lnN")
-
-    for sys in sysgroups["mcsecsys"]:
-        lines[sys] = "{:<30} {:<10}".format(sys, "lnN")
-    
-    for sys in sysgroups["sfsys"]:
-        lines[sys] = "{:<30} {:<10}".format(sys, "shape")
-    
-    for sys in sysgroups["sfstatsys"]:
-        lines[sys] = "{:<30} {:<10}".format(sys, "lnN")
-
-    for sys in sysgroups["recoilsys"]:
-        lines[sys] = "{:<30} {:<10}".format(sys, "shape")
-
-    for sys in sysgroups["qcdstats"]:
-        lines[sys] = "{:<30} {:<10}".format(sys, "shape")
-    
-    for sys in sysgroups["qcdscalesys"]:
-        lines[sys] = "{:<30} {:<10}".format(sys, "shape")
-    
-    for sys in sysgroups["pdfsys"]:
-        lines[sys] = "{:<30} {:<10}".format(sys, "shape")
-
-    for sys in sysgroups["othersys"]:
-        lines[sys] = "{:<30} {:<10}".format(sys, "shape")
-
-    # fill in the per-process information
-    isig = 0
-    ibkg = 1
-    for proc in processes:
-        lines["bin"] += " {binname:<10}".format(binname="bin1")
-        lines["proc_name"] += " {pname:<10}".format(pname = proc.name)
-        if proc.isSignal or proc.isQCD:
-            lines["proc_index"] += " {pindex:<10}".format(pindex = isig)
-            isig -= 1
-        else:
-            lines["proc_index"] += " {pindex:<10}".format(pindex = ibkg)
-            ibkg += 1
-        lines["rate"] += " {:<10}".format("-1.0")
-
-        temp = "-"
-        for lumi in sysgroups["lumisys"]:
-            if proc.isMC:
-                temp = unc_lumi[lumi]
-            lines[lumi] += " {:<10}".format(temp)
-
-        for proc2 in processes:
-            if not proc2.isSignal and proc2.isMC:
-                temp = proc.xsecUnc if proc.name == proc2.name else "-"
-                lines["norm_"+proc2.name] += " {:<10}".format(temp)
-
-        for sys in sysgroups["sfsys"]:
-            temp = "1.0" if not proc.isQCD else "-"
-            lines[sys] += " {:<10}".format(temp)
-
-        for sys in sysgroups["sfstatsys"]:
-            temp = "-"
-            if proc.isSignal:
-                temp = unc_effstat[sys]
-            lines[sys] += " {:<10}".format(temp)
-
-        for sys in sysgroups["recoilsys"]:
-            temp = "1.0" if proc.isV else "-"
-            lines[sys] += " {:<10}".format(temp)
-
-        for sys in sysgroups["qcdstats"]:
-            temp = "1.0" if proc.isQCD else "-"
-            lines[sys] += " {:<10}".format(temp)
-
-        for sys in sysgroups["qcdscalesys"]:
-            temp = "1.0" if proc.isSignal else "-"
-            lines[sys] += " {:<10}".format(temp)
-        
-        for sys in sysgroups["pdfsys"]:
-            temp = "1.0" if proc.isSignal else "-"
-            lines[sys] += " {:<10}".format(temp)
-
-        for sys in sysgroups["othersys"]:
-            temp = "1.0" if proc.isSignal else "-"
-            lines[sys] += " {:<10}".format(temp)
-
-    # write these systematic lines
-    for line in list(lines.values()):
-        ofile.write(line+"\n")
-
-    for sysgroup, systematics in sysgroups.items():
-        ofile.write(sysgroup+" group =")
-        for sys in systematics:
-            ofile.write(" " + sys)
-        ofile.write("\n")
-    ofile.close()
     return cardname
 
 def combineCards(labels, cards, oname):
