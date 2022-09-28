@@ -75,7 +75,7 @@ def main():
             input_zz4l    = "inputs_5TeV/zee/input_zz4l.txt"
             input_zxx     = "inputs_5TeV/zee/input_zxx.txt"
 
-    DataSamp  = Sample(input_data, isMC=False, legend="Data", name="Data")
+    DataSamp  = Sample(input_data, isMC=False, legend="Data", name="Data", doTheoryVariation=False)
     lepchannel = "Z#rightarrow#mu^{+}#mu^{-}" if doMuon else "Z#rightarrow e^{+}e^{-}"
     if not do5TeV:
         TTbarSamp = Sample(input_ttbar, color=46,  legend="t#bar{t}", name="ttbar2lep")
@@ -142,14 +142,14 @@ def main():
 
     # sample weights
     for i in [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]:
-        sampMan.DefineMC("weight_{}_tmp".format(str(i)), "evtWeight[{}] * mcnorm".format(str(i)))
+        sampMan.DefineMC("weight_{}_tmp".format(str(i)), f"evtWeight[{i}] * self.fnorm")
         # fix a few very rare nan cases
         sampMan.DefineMC("weight_{}".format(str(i)), "TMath::IsNaN(weight_{}_tmp) ? 0.: weight_{}_tmp".format(str(i), str(i)))
         DataSamp.Define("weight_{}".format(str(i)),  "1.0")
 
     # theory uncertainties
-    for i in range(109):
-        sampMan.DefineMC(f"weight_theory_{i}", f"evtWeight[0] * mcnorm * lheweight[{i}]")
+    for i in range(111):
+        sampMan.DefineMC(f"weight_theory_{i}", f"evtWeight[0] * lheweight[{i}] * self.fnorms_varied[{i}]")
         DataSamp.Define(f"weight_theory_{i}",  "1.0")
 
     sampMan.DefineAll("weight_noEcal", "prefireEcal == 0 ? 1 : (weight_0 / prefireEcal)")
@@ -161,7 +161,6 @@ def main():
     else:
         lepname = "ee"
         leplabel = "e"
-
 
     met_pt_bins = np.array([0., 2.0, 4., 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 33, 36, 39, 42, 45, 48, 51, 55, 60, 65, 70, 75, 80, 90, 100, 110, 120, 135, 150, 165, 180, 200])
     u1_bins = np.array([-20.0, -16, -12, -10, -8, -6, -4, -2, 0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32, 34, 36, 38, 40, 42, 44, 46, 48, 50, 53, 56, 59, 64, 68, 72, 76, 80, 85, 90, 100])
@@ -231,7 +230,7 @@ def main():
     sampMan.cacheDraw("zmass", "histo_zjets_zmass_" + lepname, mass_bins, DrawConfig(xmin=60, xmax=120, xlabel='m_{{{leplabel}{leplabel}}} [GeV]'.format(leplabel=leplabel)))
     for i in [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]:
         sampMan.cacheDraw("zmass", "histo_zjets_zmass_{}_weight_{}".format(lepname, str(i)),  15, 60, 120, DrawConfig(xmin=60, xmax=120, xlabel="m_{{{leplabel}{leplabel}}} [GeV]".format(leplabel=leplabel), dology=True, donormalizebin=False, addOverflow=False, addUnderflow=False), weightname = "weight_{}".format(str(i)))
-    for i in range(109):
+    for i in range(111):
         sampMan.cacheDraw("zmass", f"histo_zjets_zmass_{lepname}_theoryUnc_{i}", 15, 60, 120, DrawConfig(xmin=60, xmax=120, xlabel=f"m_{{{leplabel}{leplabel}}} [GeV]", dology=True, donormalizebin=False, addOverflow=False, addUnderflow=False), weightname = f"weight_theory_{i}")
 
     sampMan.launchDraw()
@@ -331,30 +330,48 @@ def main():
                 hdn.Write()
     
     # theory uncertainties
-    for i in range(109):
+    for i in range(111):
         hsmcs_up = sampMan.hsmcs[f"histo_zjets_zmass_{lepname}_theoryUnc_{i}"]
         hlists_up = list(hsmcs_up.GetHists())
         for ih in range(len(hlists_up)):
             # loop over different processes/samps
             hcen = hlists_central[ih]
             hup  = hlists_up[ih]
-            # should we normalize hup or no?
-            hup.Scale(hcen.Integral()/hup.Integral())
 
-            suffix = f"TheoryUnc{i}Up"
+            if i == 0:
+                suffix = "MuFUp"
+            elif i == 1:
+                suffix = "MuFDown"
+            elif i == 2:
+                suffix = "MuRUp"
+            elif i == 5:
+                suffix = "MuRDown"
+            elif i == 3:
+                suffix = "MuFMuRUp"
+            elif i == 7:
+                suffix = "MuFMuRDown"
+            elif i >= 9 and i < 109:
+                suffix = f"PDFUnc{i-8}Up"
+            elif i == 109:
+                suffix = "alphaSUp"
+            elif i == 110:
+                suffix = "alphaSDown"
+
             hup.SetName("{}_{}".format(hcen.GetName(), suffix))
-
-            suffix = f"TheoryUnc{i}Down"
-            hdn  = hcen.Clone("{}_{}".format(hcen.GetName(), suffix))
             for ibin in range(1, hup.GetNbinsX()+1):
                 hup.SetBinError(ibin, 0.)
-                hdn.SetBinContent(ibin, 2*hcen.GetBinContent(ibin) - hup.GetBinContent(ibin))
-                hdn.SetBinError(ibin, 0.)
+
+            if i >= 9 and i < 109: 
+                suffix = f"PDFUnc{i-8}Down"
+                hdn.SetName("{}_{}".format(hcen.GetName(), suffix))
+                for ibin in range(1, hup.GetNbinsX()+1):
+                    hdn.SetBinContent(ibin, 2*hcen.GetBinContent(ibin) - hup.GetBinContent(ibin))
+                    hdn.SetBinError(ibin, 0.)
+                hdn.SetDirectory(outfile)
+                hdn.Write()
 
             hup.SetDirectory(outfile)
             hup.Write()
-            hdn.SetDirectory(outfile)
-            hdn.Write()
 
     outfile.Close()
     print("Program end...")
