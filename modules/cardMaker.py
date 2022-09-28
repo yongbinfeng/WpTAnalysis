@@ -273,12 +273,12 @@ def MakeCards(fname_mc, fname_qcd, channel, wptbin, etabin, doWpT = False, rebin
     # correlate MC systematic, ECAL and muon prefire 
     # between electron and muon channel
     # uncorrelate FSR, bkg, tagpt in electron ahd muon channel
-    nuis_SysWeight1 = Nuisance(name = "Sysweight1", type = "shape")
-    nuis_SysWeight2 = Nuisance(name = lepname + "_Sysweight2", type = "shape")
-    nuis_SysWeight3 = Nuisance(name = lepname + "_Sysweight3", type = "shape")
-    nuis_SysWeight4 = Nuisance(name = lepname + "_Sysweight4", type = "shape")
-    nuis_SysWeight8 = Nuisance(name = "Sysweight8", type = "shape")
-    nuis_SysWeight10 = Nuisance(name = "Sysweight10", type = "shape")
+    nuis_SysWeight1 = Nuisance(name = "SysWeight1", type = "shape")
+    nuis_SysWeight2 = Nuisance(name = lepname + "_SysWeight2", type = "shape")
+    nuis_SysWeight3 = Nuisance(name = lepname + "_SysWeight3", type = "shape")
+    nuis_SysWeight4 = Nuisance(name = lepname + "_SysWeight4", type = "shape")
+    nuis_SysWeight8 = Nuisance(name = "SysWeight8", type = "shape")
+    nuis_SysWeight10 = Nuisance(name = "SysWeight10", type = "shape")
     nuisgroups["sfsys"] = [nuis_SysWeight1, nuis_SysWeight2, nuis_SysWeight3, nuis_SysWeight4, nuis_SysWeight8, nuis_SysWeight10]
     for proc in processes:
         if not proc.isQCD:
@@ -287,7 +287,7 @@ def MakeCards(fname_mc, fname_qcd, channel, wptbin, etabin, doWpT = False, rebin
             for sysweight in nuisgroups["sfsys"]:
                 sysweight[proc.name] = 1.0
 
-    nuis_effstat = Nuisance(name = "effstat_" + channel + "_" + era, type = "shape")
+    nuis_effstat = Nuisance(name = "effstat_" + channel + "_" + era, type = "lnN")
     for proc in processes:
         if proc.isSignal:
             # only apply eff/sf stat uncertainty to signals for now
@@ -314,7 +314,7 @@ def MakeCards(fname_mc, fname_qcd, channel, wptbin, etabin, doWpT = False, rebin
     prefix = channel + "_" + etabin + "_" + wptbin
     nbins = nMTBins
     for ibin in range(1, nbins+1):
-        nuis_QCDStat = Nuisance(name = prefix + f"_bin{ibin}", type = "shape")
+        nuis_QCDStat = Nuisance(name = prefix + f"_bin{ibin}shape", type = "shape")
         for proc in processes:
             if proc.isQCD:
                 nuis_QCDStat[proc.name] = 1.0
@@ -329,10 +329,9 @@ def MakeCards(fname_mc, fname_qcd, channel, wptbin, etabin, doWpT = False, rebin
 
     # theory systematics
     # qcd scale
-    qcdscale_indices = [1, 2, 3, 4, 6, 8]
     nuisgroups["qcdscalesys"] = []
-    for iscale in qcdscale_indices:
-        nuis_QCDScale = Nuisance(name = "QCDScale" + str(iscale), type = "shape")
+    for par in ["MuF", "MuR", "MuFMuR"]:
+        nuis_QCDScale = Nuisance(name = par, type = "shape")
         for proc in processes:
             if proc.isSignal:
                 nuis_QCDScale[proc.name] = 1.0
@@ -340,12 +339,21 @@ def MakeCards(fname_mc, fname_qcd, channel, wptbin, etabin, doWpT = False, rebin
 
     # pdf variations
     nuisgroups["pdfsys"] = []
-    pdf_indices = list(range(9, 109))
+    pdf_indices = list(range(1, 101))
     for ipdf in pdf_indices:
-        nuis_PDF = Nuisance(name = "PDFSet" + str(ipdf), type = "shape")
+        nuis_PDF = Nuisance(name = f"PDF{ipdf}", type = "shape")
         for proc in processes:
             if proc.isSignal:
                 nuis_PDF[proc.name] = 1.0
+        nuisgroups["pdfsys"].append(nuis_PDF)
+    
+    # alphaS variations
+    nuisgroups["alphaS"] = []
+    nuis_alphaS = Nuisance(name = "alphaS", type = "shape")
+    for proc in processes:
+        if proc.isSignal:
+            nuis_alphaS[proc.name] = 1.0
+    nuisgroups["alphaS"].append(nuis_alphaS)
 
     # tau fraction variation in the signal process
     nuis_TauFrac = Nuisance(name = "SysTauFrac", type = "shape")
