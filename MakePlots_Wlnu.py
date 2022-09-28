@@ -85,7 +85,7 @@ def main():
             input_zxx   = "inputs_5TeV/wenu/input_zxx.txt"
             input_wx    = "inputs_5TeV/wenu/input_wx.txt"
 
-    DataSamp  = Sample(input_data, isMC=False, legend="Data", name="Data", isWSR=True)
+    DataSamp  = Sample(input_data, isMC=False, legend="Data", name="Data", isWSR=True, doTheoryVariation=False)
     if not do5TeV:
         # W -> munu
         #wjetsnorm = 1.06
@@ -236,10 +236,10 @@ def main():
         for wpt in wptbins:
             for lepeta in etabins:
                 #if i!= 5:
-                #    sampMan.DefineMC("weight_{}_{}_{}".format(str(i), wpt, lepeta), "evtWeight[{}] * mcnorm * {} * {}".format(str(i), wpt, lepeta))
+                #    sampMan.DefineMC("weight_{}_{}_{}".format(str(i), wpt, lepeta), "evtWeight[{}] * self.fnorm * {} * {}".format(str(i), wpt, lepeta))
                 #else:
-                #    sampMan.DefineMC("weight_{}_{}_{}".format(str(i), wpt, lepeta), "(evtWeight[0] + TMath::Sqrt(TMath::Abs(evtWeight[{}]))) * mcnorm * {} * {}".format(str(i), wpt, lepeta))
-                sampMan.DefineMC("weight_{}_{}_{}".format(str(i), wpt, lepeta), "(TMath::IsNaN(evtWeight[{}]) ? 0.: evtWeight[{}]) * mcnorm * {} * {}".format(str(i), str(i), wpt, lepeta))
+                #    sampMan.DefineMC("weight_{}_{}_{}".format(str(i), wpt, lepeta), "(evtWeight[0] + TMath::Sqrt(TMath::Abs(evtWeight[{}]))) * self.fnorm * {} * {}".format(str(i), wpt, lepeta))
+                sampMan.DefineMC("weight_{}_{}_{}".format(str(i), wpt, lepeta), "(TMath::IsNaN(evtWeight[{}]) ? 0.: evtWeight[{}]) * self.fnorm * {} * {}".format(str(i), str(i), wpt, lepeta))
                 DataSamp.Define("weight_{}_{}_{}".format(str(i), wpt, lepeta),  "1.0 * {} * {}".format(wpt, lepeta))
 
                 for chg in chgbins:
@@ -251,10 +251,10 @@ def main():
                             samp.Define("weight_{}_{}_{}_{}_{}".format(chg, str(i), wpt, lepeta, wpttruth), "weight_{}_{}_{}_{} * {}".format(chg, str(i),  wpt, lepeta, wpttruth))
                 
     # weights with theory variations
-    for i in range(109):
+    for i in range(111):
         for wpt in wptbins:
             for lepeta in etabins:
-                sampMan.DefineMC(f"weight_theory_{i}_{wpt}_{lepeta}", f"(TMath::IsNaN(evtWeight[0])) ? 0. : evtWeight[0] * mcnorm * {wpt} * {lepeta} * lheweight[{i}]")
+                sampMan.DefineMC(f"weight_theory_{i}_{wpt}_{lepeta}", f"(TMath::IsNaN(evtWeight[0])) ? 0. : evtWeight[0] * self.fnorms_varied[{i}] * {wpt} * {lepeta} * lheweight[{i}]")
                 DataSamp.Define(f"weight_theory_{i}_{wpt}_{lepeta}",  f"1.0 * {wpt} * {lepeta}")
 
                 for chg in chgbins:
@@ -340,7 +340,7 @@ def main():
                         h_sigs[hname] = h_list
         
         # variations on the theory uncertainties
-        for i in range(109):
+        for i in range(111):
             for wpt in wptbins:
                 for lepeta in etabins:
                     sampMan.cacheDraw("mT_1", f"histo_wjets_{chg}_mtcorr_weight_theory_{i}_{wpt}_{lepeta}", mass_bins, DrawConfig(xmin=xmin, xmax=xmax, xlabel="m_{T} [GeV]", dology=False, ymax=ymaxs[chg], donormalizebin=False, addOverflow=False, addUnderflow=False), weightname = f"weight_{chg}_theory_{i}_{wpt}_{lepeta}")
@@ -548,7 +548,7 @@ def main():
                                 hdn.Write()
 
                     # weights/corrections
-                    for i in range(109):
+                    for i in range(111):
                         if wpttruth == "MCTemplates":
                             hsmcs_up = sampMan.hsmcs[f"histo_wjets_{chg}_mtcorr_weight_theory_{i}_{wpt}_{lepeta}"]
                             hlists_up = list(hsmcs_up.GetHists())
@@ -560,22 +560,40 @@ def main():
                             # loop over different processes
                             hcen = hlists_central[ih]
                             hup  = hlists_up[ih]
-                            # should we do normalization here?
-                            hup.Scale(hcen.Integral()/hup.Integral())
                             
-                            suffix = f"TheoryUnc{i}Up"
+                            if i == 1:
+                                suffix = "MuRUp"
+                            elif i == 2:
+                                suffix = "MuRDown"
+                            elif i == 3:
+                                suffix = "MuFUp"
+                            elif i == 5:
+                                suffix = "MuFDown"
+                            elif i == 4:
+                                suffix = "MuFMuRUp"
+                            elif i == 8:
+                                suffix = "MuFMuRDown"
+                            elif i >= 10 and i < 110:
+                                suffix = f"PDF{i-9}Up"
+                            elif i == 110:
+                                suffix = "alphaSUp"
                             hup.SetName("{}_{}".format(hcen.GetName(), suffix))
+
+                            if i >= 10:
+                                if i >= 10 and i < 110: 
+                                    suffix = f"PDF{i-9}Down"
+                                if i == 110:
+                                    # alphaS down variation is not saved in W + jets samples
+                                    # use the symmetrized up variation instead
+                                    suffix = "alphaSDown"
+                                hdn  = hcen.Clone("{}_{}".format(hcen.GetName(), suffix))
+                                for ibin in range(1, hup.GetNbinsX()+1):
+                                    hdn.SetBinContent(ibin, 2*hcen.GetBinContent(ibin) - hup.GetBinContent(ibin))
+                                hdn.SetDirectory(outfile)
+                                hdn.Write()
                             
-                            suffix = f"TheoryUnc{i}Down"
-                            hdn  = hcen.Clone("{}_{}".format(hcen.GetName(), suffix))
-                            for ibin in range(1, hup.GetNbinsX()+1):
-                                hdn.SetBinContent(ibin, 2*hcen.GetBinContent(ibin) - hup.GetBinContent(ibin))
-                            
-                            #hup.SetDirectory(odir)
                             hup.SetDirectory(outfile)
                             hup.Write()
-                            hdn.SetDirectory(outfile)
-                            hdn.Write()
 
     outfile.Close()
 
