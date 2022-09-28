@@ -68,48 +68,54 @@ class DrawConfig(object):
 
 
 class Sample(object):
-    def __init__(self, inputfiles, isMC=True, xsec=1.0, color=1, reweightzpt = False, legend="", name="", 
-                 isZSR=True, isWSR=False, applySF=True, bjetVeto=False, nmcevt=-1, additionalnorm=1.0, is5TeV = False):
-        if isMC:
-            if nmcevt>0:
-                self.nmcevt = nmcevt
-            else:
-                self.nmcevt = self.getNMCEvt(inputfiles)
-            self.nmcevt = self.nmcevt
-            self.mcxsec = xsec
-            self.color = color
-            #self.normfactor = LUMI * self.mcxsec / self.nmcevt
-            self.normfactor = 1.0
-            self.reweightzpt = reweightzpt
-            self.is5TeV = is5TeV
-        else:
-            self.nmcevt = 0
-            self.mcxsec = 0
-            self.color = 1
-            self.normfactor = 1.0
-            self.reweightzpt = False
-        self.additionalnorm = additionalnorm
-
-        self.isMC = isMC
-        self.legend = legend
+    def __init__(self, inputfiles, isMC=True, xsec=1.0, color=1, legend="", name="", 
+                 isZSR=True, isWSR=False, nmcevt=-1, additionalnorm=1.0, is5TeV = False,
+                 doTheoryVariation=True):
         self.name = name
-        #if self.name == "wl0":
-        #    # missing two file, scale the nmcEvts down
-        #    self.nmcevt = self.nmcevt * (1-0.039409405)
+        self.mcxsec = xsec
+        self.color = color
+        self.is5TeV = is5TeV
+        self.legend = legend
         self.isZSR = isZSR
         if isWSR:
             # can not be ZSR and WSR at the same time
             self.isZSR = False
         self.isWSR = isWSR
         #assert not (self.isZSR and self.isWSR), "can not be ZSR and WSR at the same time !!"
-        self.applySF = applySF
+        self.additionalnorm = additionalnorm
+        self.isMC = isMC
         # this variable is used in cases where the xsec is allowed to 
         # free-float, or normalized to the rest of (data-MC_sum)
         self.renormalize = False
-        self.renormalizefactor = 1.0
-        self.bjetVeto = bjetVeto
         self.initRDF(inputfiles)
 
+        if isMC:
+            if nmcevt>0:
+                self.nmcevt = nmcevt
+            else:
+                self.nmcevt = self.getNMCEvt(inputfiles)
+
+        # get normalization factor
+        # for data, always 1; for MC, lumi * sec / N
+        self.fnorm = self.calculateNorm()
+
+        if self.isMC and doTheoryVariation:
+            # get sum of weights before selection
+            # to normalize varied weights
+            # 111 is the current saved number of variations
+            self.nmcevts_varied = []
+            self.fnorms_varied = []
+            for ivar in range(111):
+                nevts = self.getNMCEvtWithTheoryVariations(inputfiles, ivar)
+                # sanity check
+                # sometimes the varied weights are dropped in the middle
+                # causing the sum of varied is zero
+                if nevts == 0:
+                    nevts = self.nmcevt
+                self.nmcevts_varied.append(nevts)
+                self.fnorms_varied.append( self.calculateNorm(nevts) )
+
+        # do preprocessing
         self.prepareVars()
         self.select()
 
@@ -133,13 +139,13 @@ class Sample(object):
         #print self.rdf_org.Count().GetValue()
 
     def getNMCEvt(self, inputfiles):
-        print("count total number of MC events from:")
+        #print("count total number of MC events from:")
         Nevt = 0.
         for line in open( inputfiles, "r"):
             fname = line.rstrip()
             if fname.startswith('#'):
                 continue
-            print(fname)
+            #print(fname)
             ifile = ROOT.TFile.Open(fname)
             hist = ifile.Get("hGenWeights")
             Nevt += hist.Integral()
@@ -151,7 +157,7 @@ class Sample(object):
             #    break;
         print("total number of events: {}".format(Nevt))
         return Nevt
-
+    
     def getNMCEvtFromBranch(self):
         hname = "h_evtWeight_"+self.name
         self.rdf_org = self.rdf_org.Define("EvtWeight", "((genWeight > 0) ? 1 : -1)")
@@ -160,6 +166,26 @@ class Sample(object):
         Nneg = h_evts.GetBinContent(1)
         print("total number of events: {}, in which {} are positive, {} are negative".format(Npos+Nneg, Npos, Nneg))
         return Npos-Nneg
+    
+    def getNMCEvtWithTheoryVariations(self, inputfiles: str, ivariation: int) -> int:
+        """
+        hLHEWeightSum saves the sum of weights for each theory variation
+        before the selections. 
+        can be used to normalize the MC histograms
+        with different theory variations.
+        """
+        #print(f"count total number of MC events with theory variation : {ivariation}")
+        Nevt = 0.
+        for line in open( inputfiles, "r"):
+            fname = line.rstrip()
+            if fname.startswith('#'):
+                continue
+            ifile = ROOT.TFile.Open(fname)
+            hist = ifile.Get("hLHEWeightSum")
+            Nevt += hist.GetBinContent(ivariation + 1)
+            ifile.Close()
+        #print("total number of events: {}".format(Nevt))
+        return Nevt
 
     def select(self):
         """ 
@@ -169,7 +195,7 @@ class Sample(object):
         So use rdf_org to hold the pre-selected one.
         """
         if self.isZSR:
-            self.rdf_temp2 = self.rdf_org.Filter("category==1 || category==2 || category==3") \
+            self.rdf = self.rdf_org.Filter("category==1 || category==2 || category==3") \
                                 .Filter("abs(lep1.Eta()) < 2.4 && abs(lep2.Eta()) < 2.4") \
                                 .Define("Z", "(lep1 + lep2)") \
                                 .Define("ZMass", "Z.M()") \
@@ -178,10 +204,6 @@ class Sample(object):
                                 #.Filter("abs(Muon.eta[0]) < {} && abs(Muon.eta[1]) < {}".format(LEPETA, LEPETA))
                                 #.Filter("lep_n==2")
                                 #.Filter("Z_pt < 40.0")
-            if self.bjetVeto:
-                self.rdf = self.rdf_temp2.Filter("jet_CSVLoose_n<1")
-            else:
-                self.rdf = self.rdf_temp2
         elif self.isWSR:
             self.rdf = self.rdf_org.Filter("abs(lep.Eta())<2.4") \
                                    .Filter("lep.Pt()>25.0")
@@ -196,24 +218,46 @@ class Sample(object):
         self.rdf = rdf_postcut
 
     def Define(self, varname, formula):
+        """
+        add the support to replace Sample member values (starting with self.)
+        inside formula; mostly used to scale (MC) samples with their xsecs
+        """
+        if "self." in formula:
+            pieces = formula.split()
+            for piece in pieces:
+                if "self." not in piece:
+                    continue
+                try:
+                    val = eval(piece)
+                    formula = formula.replace(piece, str(val))
+                except:
+                    print(f"Sample {self.name} does not have attribute {piece} in the string {formula}")
+                    sys.exit(1)
         self.rdf = self.rdf.Define(varname, formula)
 
+    def calculateNorm(self, total = -1) -> float:
+        if not self.isMC:
+            # data
+            return 1
+        lumi = LUMI_5TeV if self.is5TeV else LUMI
+        if total < 0:
+            total = self.nmcevt
+        #print(f"lumi {lumi}, weight {lumi/total}")
+        return lumi / total * self.additionalnorm
+
     def prepareVars(self):
+        """
+        sample preprocessing
+        define some common variables (weights, make V, etc.)
+        """
         # define weight
-        #if self.isMC and self.applySF:
-        #    self.rdf_org = self.rdf_org.Define("weight_WoVpt", "( PUWeight * NLOWeight * mu_trigSF * mu_isoSF * mu_trkSF * mu_idSF )")
-        #elif self.isMC:
+        #if self.isMC:
         #    self.rdf_org = self.rdf_org.Define("weight_WoVpt", "( PUWeight * NLOWeight )")
         if self.isMC:
-            lumi = LUMI
-            if self.is5TeV:
-                lumi = LUMI_5TeV
-            print(("lumi {}, weight {}".format(lumi, str(lumi/self.nmcevt))))
-            self.rdf_org = self.rdf_org.Define("mcnorm", str(lumi/self.nmcevt * self.additionalnorm))
             if self.isWSR or self.isZSR:
-                self.rdf_org = self.rdf_org.Define("weight_WoVpt", "evtWeight[0] * mcnorm")
+                self.rdf_org = self.rdf_org.Define("weight_WoVpt", f"evtWeight[0] * {self.fnorm}")
         else:
-            self.rdf_org = self.rdf_org.Define("weight_WoVpt", str(self.additionalnorm))
+            self.rdf_org = self.rdf_org.Define("weight_WoVpt", "1.0")
 
         #if self.isZSR:
         #    pass
@@ -255,7 +299,6 @@ class SampleManager(object):
         self.data = data
         self.mcs = mcs
         self.to_draw = OrderedDict()
-        self.getNormFactors()
         self.initGroups()
 
         self.is5TeV = is5TeV
@@ -302,25 +345,19 @@ class SampleManager(object):
             if mc.groupname in excludeGroups:
                 print("Define {} with {}. Skip sample {} in grouped sample {}".format(varname, formula, mc.name, mc.groupname))
                 continue
-            mc.rdf = mc.rdf.Define(varname, formula)
+            mc.Define(varname, formula)
 
     def DefineSpecificMCs(self, varname, formula, sampnames=[], sampgroupnames=[]):
         for mc in self.mcs:
             if mc.name in sampnames:
                 print("Define {} with {} for sample {}".format(varname, formula, mc.name))
-                mc.rdf = mc.rdf.Define(varname, formula)
+                mc.Define(varname, formula)
             elif mc.groupname in sampgroupnames:
                 print("Define {} with {} for sample {} in grouped sample {}".format(varname, formula, mc.name, mc.groupname))
-                mc.rdf = mc.rdf.Define(varname, formula)
+                mc.Define(varname, formula)
 
     def DefineData(self, varname, formula):
-        self.data.rdf = self.data.rdf.Define(varname, formula)
-
-    def getNormFactors(self):
-        self.normfactors = []
-        for mc in self.mcs:
-            self.normfactors.append( mc.normfactor )
-        print("normalization factors ", self.normfactors)
+        self.data.Define(varname, formula)
 
     def initGroups(self):
         # default group information is the same as the sample itself
@@ -329,7 +366,7 @@ class SampleManager(object):
             mc.groupcolor = mc.color
             mc.grouplegend = mc.legend
 
-    def groupMCs(self, mcnames_to_be_grouped, groupname, groupcolor, grouplegend, renormalize=False, renormalizefactor=1.0):
+    def groupMCs(self, mcnames_to_be_grouped, groupname, groupcolor, grouplegend, renormalize=False):
         for mc in self.mcs:
             if mc.name in mcnames_to_be_grouped:
                 print("Group sample ", mc.name, " to ", groupname)
@@ -338,7 +375,6 @@ class SampleManager(object):
                 mc.grouplegend = grouplegend
                 if renormalize:
                     mc.renormalize = True
-                mc.renormalizefactor = renormalizefactor
                 mcnames_to_be_grouped.remove(mc.name)
 
         if mcnames_to_be_grouped:
@@ -400,25 +436,20 @@ class SampleManager(object):
 
         # count the number of events only need to be done once
         docounting = (len(self.counts)==0)
-        intoption = "width" if drawconfigs.donormalizebin == "width" else ""
+        intgoption = "width" if drawconfigs.donormalizebin == "width" else ""
 
         if docounting:
-            self.counts.append(h_data.Integral(0, h_data.GetNbinsX()+1, intoption))
+            self.counts.append(h_data.Integral(0, h_data.GetNbinsX()+1, intgoption))
 
         hgroupedmcs = OrderedDict()
         hmcs = {}
         group_to_renormalize = ""
         for imc in range(len(h_mcs)):
-            # scale the MC to the xsec
-            h_mcs[imc].Scale( self.normfactors[imc] )
-            if self.mcs[imc].renormalizefactor!=1.0:
-                print("renormalize MC {} with a factor or {}".format(self.mcs[imc].name, self.mcs[imc].renormalizefactor))
-                h_mcs[imc].Scale( self.mcs[imc].renormalizefactor )
             if drawconfigs.donormalizebin:
                 h_mcs[imc].Scale(1.0, "width")
 
             if docounting:
-                self.counts.append( h_mcs[imc].Integral(0, h_mcs[imc].GetNbinsX()+1, intoption) )
+                self.counts.append( h_mcs[imc].Integral(0, h_mcs[imc].GetNbinsX()+1, intgoption) )
     
             groupname = self.mcs[imc].groupname
             if groupname not in hgroupedmcs:
@@ -438,11 +469,11 @@ class SampleManager(object):
             hmcs[self.mcs[imc].name] = h_mcs[imc].Clone(h_mcs[imc].GetName().replace("_mc_","_"+self.mcs[imc].name))
 
         if group_to_renormalize:
-            ndata = h_data.Integral(0, h_data.GetNbinsX()+1, intoption)
+            ndata = h_data.Integral(0, h_data.GetNbinsX()+1, intgoption)
             nmc=0
             for gname, ghisto in hgroupedmcs.items():
                 if gname!=group_to_renormalize:
-                    nmc += ghisto.Integral(0, ghisto.GetNbinsX()+1, intoption)
+                    nmc += ghisto.Integral(0, ghisto.GetNbinsX()+1, intgoption)
             weight = float(ndata-nmc) / hgroupedmcs[group_to_renormalize].Integral(0, hgroupedmcs[group_to_renormalize].GetNbinsX()+1)
             print("Renormalize group for {}, with {} data, {} MC and weight {}".format(group_to_renormalize, ndata, nmc, weight))
             hgroupedmcs[group_to_renormalize].Scale(weight)
@@ -466,7 +497,6 @@ class SampleManager(object):
         self.hmcs[   drawconfigs.outputname] = hmcs
         self.hratios[drawconfigs.outputname] = DrawHistos( [h_data, hs_gmc], drawconfigs.legends, drawconfigs.xmin, drawconfigs.xmax, drawconfigs.xlabel, drawconfigs.ymin, drawconfigs.ymax, drawconfigs.ylabel, drawconfigs.outputname, dology=drawconfigs.dology, dologx=drawconfigs.dologx, showratio=drawconfigs.showratio, yrmax = drawconfigs.yrmax, yrmin = drawconfigs.yrmin, yrlabel = drawconfigs.yrlabel, donormalize=drawconfigs.donormalize, ratiobase=drawconfigs.ratiobase, legendPos = drawconfigs.legendPos, redrawihist = drawconfigs.redrawihist, extraText = drawconfigs.extraText, noCMS = drawconfigs.noCMS, addOverflow = drawconfigs.addOverflow, addUnderflow = drawconfigs.addUnderflow, nMaxDigits = drawconfigs.nMaxDigits, is5TeV = self.is5TeV, lheader = drawconfigs.lheader)
     
-
 
     def launchDraw(self):
         """
