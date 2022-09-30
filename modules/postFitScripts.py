@@ -287,6 +287,35 @@ def result2json(ifilename, poiname, ofilename):
 
     with open(ofilename, 'w') as fp:
         json.dump(results, fp, indent=2)
+    
+def DumpGroupImpacts(ifilename, poiname):
+    """
+    print out the grouped impacts
+    """
+    ifile = ROOT.TFile(ifilename)
+    himpact_grouped = ifile.Get("nuisance_group_impact_mu")
+
+    # find the POI bin for poiname
+    ibinX = -1
+    for binX in range(1, himpact_grouped.GetNbinsX()+1):
+        poi = himpact_grouped.GetXaxis().GetBinLabel(binX)
+        if poi == poiname:
+            ibinX = binX
+            break
+    assert ibinX >=0, "Can not find the POI {} in the postfit file {}. Please check.".format(poiname, ifilename)
+
+    impacts = OrderedDict()
+    for ibinY in range(1, himpact_grouped.GetNbinsY()+1):
+        nuis = himpact_grouped.GetYaxis().GetBinLabel(ibinY)
+        impacts[nuis] = himpact_grouped.GetBinContent(ibinX, ibinY)
+
+    # sort impacts, descending
+    impacts = OrderedDict(sorted(list(impacts.items()), key=lambda x: abs(x[1]), reverse=True))
+
+    print(f"\nPrint grouped nuisance impacts for {poiname} in {ifilename}")
+    for nuis in list(impacts.keys()):
+        print(f"{nuis:20}: {impacts[nuis]*100.0:.3f}")
+    print()
 
 
 def MakeWpTPostFitPlots(jsonNames, suffix=""):
