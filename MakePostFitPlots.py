@@ -1,7 +1,7 @@
 """
 script to make postfit comparisons
 """
-from modules.postFitScripts import MakePostPlot, result2json, MakeWpTPostFitPlots, GetPOIValue, ComparePOIs
+from modules.postFitScripts import MakePostPlot, result2json, MakeWpTPostFitPlots, GetPOIValue, ComparePOIs, DumpGroupImpacts
 from modules.CombineHarvester.plotImpacts import plotImpacts
 from modules.mass_bins import mass_bins
 import ROOT
@@ -25,6 +25,8 @@ if doInclusive:
 
     plotImpacts("cards/impacts_muplus_lepEta_bin0_WpT_bin0_withXsecSys.json", "impacts_muplus_lepEta_bin0_withXsecSys")
     plotImpacts("cards/impacts_muminus_lepEta_bin0_WpT_bin0_withXsecSys.json", "impacts_muminus_lepEta_bin0_withXsecSys")
+
+    DumpGroupImpacts("cards/test_mu_withXsecSys.root", "w_muminus_sig_mu")
 
     mass_bins_test = OrderedDict()
     mass_bins_test[0] = np.array([0., 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 120])
@@ -58,27 +60,29 @@ if doInclusive:
         vals_mu_pos[idx], errs_mu_pos[idx] = GetPOIValue(filename, "w_muplus_sig_mu")
         vals_mu_neg[idx], errs_mu_neg[idx] = GetPOIValue(filename, "w_muminus_sig_mu")
 
-        #MakePostPlot(filename, "muplus",  mass_bins, f"_mT{idx}", showPULL)
-        #MakePostPlot(filename, "muminus", mass_bins, f"_mT{idx}", showPULL, startbin = len(mass_bins)-1)
+        MakePostPlot(filename, "muplus",  mass_bins, f"_mT{idx}", showPULL)
+        MakePostPlot(filename, "muminus", mass_bins, f"_mT{idx}", showPULL, startbin = len(mass_bins)-1)
 
-        #result2json(filename, "w_muplus_sig_mu", f"cards/test{idx}/impacts_muplus.json")
-        #result2json(filename, "w_muminus_sig_mu",  f"cards/test{idx}/impacts_muminus.json")
+        result2json(filename, "w_muplus_sig_mu", f"cards/test{idx}/impacts_muplus.json")
+        result2json(filename, "w_muminus_sig_mu",  f"cards/test{idx}/impacts_muminus.json")
 
-        #plotImpacts(f"cards/test{idx}/impacts_muplus.json",  f"impacts_muplus_mT{idx}")
-        #plotImpacts(f"cards/test{idx}/impacts_muminus.json", f"impacts_muminus_mT{idx}")
+        plotImpacts(f"cards/test{idx}/impacts_muplus.json",  f"impacts_muplus_mT{idx}")
+        plotImpacts(f"cards/test{idx}/impacts_muminus.json", f"impacts_muminus_mT{idx}")
 
         filename = f"cards/test{idx}/datacard_ecombined_lepEta_bin0_WpT_bin0.root"
         vals_e_pos[idx], errs_e_pos[idx] = GetPOIValue(filename, "w_eplus_sig_mu")
         vals_e_neg[idx], errs_e_neg[idx] = GetPOIValue(filename, "w_eminus_sig_mu")
 
-        #MakePostPlot(filename, "eplus",  mass_bins, f"_mT{idx}", showPULL)
-        #MakePostPlot(filename, "eminus", mass_bins, f"_mT{idx}", showPULL, startbin = len(mass_bins)-1)
+        MakePostPlot(filename, "eplus",  mass_bins, f"_mT{idx}", showPULL)
+        MakePostPlot(filename, "eminus", mass_bins, f"_mT{idx}", showPULL, startbin = len(mass_bins)-1)
 
-        #result2json(filename, "w_eplus_sig_mu", f"cards/test{idx}/impacts_eplus.json")
-        #result2json(filename, "w_eminus_sig_mu",  f"cards/test{idx}/impacts_eminus.json")
+        result2json(filename, "w_eplus_sig_mu", f"cards/test{idx}/impacts_eplus.json")
+        result2json(filename, "w_eminus_sig_mu",  f"cards/test{idx}/impacts_eminus.json")
 
-        #plotImpacts(f"cards/test{idx}/impacts_eplus.json",  f"impacts_eplus_mT{idx}")
-        #plotImpacts(f"cards/test{idx}/impacts_eminus.json", f"impacts_eminus_mT{idx}")
+        plotImpacts(f"cards/test{idx}/impacts_eplus.json",  f"impacts_eplus_mT{idx}")
+        plotImpacts(f"cards/test{idx}/impacts_eminus.json", f"impacts_eminus_mT{idx}")
+
+        DumpGroupImpacts(filename, "w_eplus_sig_mu")
 
     errs_mu_pos = np.sqrt(errs_mu_pos**2 - lumi_unc**2)
     errs_mu_neg = np.sqrt(errs_mu_neg**2 - lumi_unc**2)

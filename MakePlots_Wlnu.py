@@ -17,17 +17,20 @@ def main():
     parser.add_argument("--doWpT", action="store_true", dest="doWpT", help="Bin in different W pt bins; false runs inclusively")
     parser.add_argument("--do5TeV", action="store_true", dest="do5TeV", help="Analyze the 5TeV data; false runs on 13TeV data")
     parser.add_argument("--doElectron", action="store_true", dest="doElectron", help="Analyze the electron channel; false runs the muon channel")
+    parser.add_argument("--doTheoryNorm", action="store_true", dest="doTheoryNorm", help="Normalize theory uncertainty variations to original. (So only shape variations are considered.")
     args = parser.parse_args()
 
     doMuon = not args.doElectron
     doTest = args.doTest
     doWpT  = args.doWpT
     do5TeV = args.do5TeV
+    doTheoryNorm = args.doTheoryNorm
 
     print("doMuon: ", doMuon)
     print("doTest:", doTest)
     print("doWpT:", doWpT)
     print("do5TeV:", do5TeV)
+    print("doTheoryNorm", doTheoryNorm)
 
     #ROOT.gROOT.ProcessLine('TFile* f_zpt = TFile::Open("results/zpt_weight.root")')
     #ROOT.gROOT.ProcessLine('TH1D* h_zpt_ratio  = (TH1D*)f_zpt->Get("h_zpt_ratio")')
@@ -578,6 +581,11 @@ def main():
                             elif i == 110:
                                 suffix = "alphaSUp"
                             hup.SetName("{}_{}".format(hcen.GetName(), suffix))
+
+                            if doTheoryNorm:
+                                # normalize the number of events to the central values
+                                # if the theoretical variations are normalized
+                                hup.Scale( hcen.Integral() / hup.Integral() )
 
                             if i >= 10:
                                 if i >= 10 and i < 110: 
