@@ -13,7 +13,7 @@ from modules.SampleManager import DrawConfig
 
 ROOT.gROOT.SetBatch(True)
 
-def MakePostPlot(ifilename: str, channel: str, bins: np.array, suffix: str, showpull: bool = False, is5TeV: bool = False, startbin: int = 0):
+def MakePostPlot(ifilename: str, channel: str, bins: np.array, suffix: str, showpull: bool = False, is5TeV: bool = False, startbin: int = 1):
     """
     compare the unrolled postfit of data and templates
     """
@@ -23,34 +23,58 @@ def MakePostPlot(ifilename: str, channel: str, bins: np.array, suffix: str, show
 
     # get the list of histograms saved in the file
     hkeys = ifile.GetListOfKeys()
+    hkeys = [hkey.GetName() for hkey in hkeys]
     hnames_sig = []
     hnames_qcd = []
     for hkey in hkeys:
-        if bool(re.match(r"expproc_w_"+channel+"_\w*sig_postfit$", hkey.GetName())):
-            hnames_sig.append( hkey.GetName() )
-        elif bool(re.match(r"expproc_QCD_"+channel+"_\w*postfit$", hkey.GetName())):
-            hnames_qcd.append( hkey.GetName() )
+        # w signal
+        if bool(re.match(r"expproc_w_"+channel+"_\w*sig_postfit$", hkey)):
+            hnames_sig.append( hkey )
+        # z signal
+        elif bool(re.match(r"expproc_z_"+channel+"_\w*sig_postfit$", hkey)):
+            hnames_sig.append( hkey )
+        # qcd
+        elif bool(re.match(r"expproc_QCD_"+channel+"_\w*postfit$", hkey)):
+            hnames_qcd.append( hkey )
     assert len(hnames_sig)>=1, "There should be at least one sig histogram in file: {}".format(ifilename)
-    assert len(hnames_qcd)>=1, "There should be at least one QCD histogram in file: {}".format(ifilename)
-
     print(hnames_sig)
+
+    # ewk bkg includes W->tau+nu, z->ll, and diboson process (for w's)
+    # ewk processes for z's
+    hnames_ewks = ["expproc_taunu_postfit", "expproc_zxx_postfit", "expproc_VV_postfit", "expproc_EWK_postfit"]
+    hnames_ttbar = ["expproc_tt_postfit"]
     
     ## read the postfit plots from input file
-    hexpsig = ifile.Get(hnames_sig[0])
-    for hname_sig in hnames_sig[1:]:
-        hexpsig.Add( ifile.Get(hname_sig) )
-    # ewk bkg includes W->tau+nu, z->ll, and diboson process
-    #hexpewk = ifile.Get("expproc_taunu_postfit")
-    #hexpewk.Add( ifile.Get("expproc_zxx_postfit"))
-    hexpewk = ifile.Get("expproc_zxx_postfit")
-    hexpewk.Add( ifile.Get("expproc_VV_postfit"))
-    hexpttbar = ifile.Get("expproc_tt_postfit")
+    hexpsig = None
+    hexpewk = None
+    hexpqcd = None
+    hexpttbar = None
 
-    # qcd process might have contributions from a few different etabins
-    hexpqcd = ifile.Get(hnames_qcd[0])
-    for hname_qcd in hnames_qcd[1:]:
-        hexpqcd.Add( ifile.Get(hname_qcd) )
+    for hkey in hkeys:
+        if hkey in hnames_sig:
+            if hexpewk is None:
+                hexpsig = ifile.Get(hkey)
+            else:
+                hexpsig.Add( ifile.Get(hkey) )
 
+        if hkey in hnames_ewks:
+            if hexpewk is None:
+                hexpewk = ifile.Get(hkey)
+            else:
+                hexpewk.Add( ifile.Get(hkey) )
+        
+        if hkey in hnames_ttbar:
+            if hexpttbar is None:
+                hexpttbar = ifile.Get(hkey)
+            else:
+                hexpttbar.Add( ifile.Get(hkey) )
+        
+        if hkey in hnames_qcd:
+            if hexpqcd is None:
+                hexpqcd = ifile.Get(hkey)
+            else:
+                hexpqcd.Add( ifile.Get(hkey) )
+        
     # the combined prediction of all processes,
     # which should have included the correct total postfit uncertainties
     hexpfull = ifile.Get("expfull_postfit")
@@ -61,6 +85,8 @@ def MakePostPlot(ifilename: str, channel: str, bins: np.array, suffix: str, show
     binnings = (nbins, bins)
     
     #binnings = (newbins.shape[0]-1, newbins)
+    print("channel" , channel)
+    print("suffix" , suffix)
     hdata   = ROOT.TH1D("hdata_{}_{}".format( channel, suffix),  "hdata_{}_{}".format( channel, suffix),  *binnings)
     hsig    = ROOT.TH1D("hsig_{}_{}".format(  channel, suffix),  "hsig_{}_{}".format(  channel, suffix),  *binnings)
     hewk    = ROOT.TH1D("hewk_{}_{}".format(  channel, suffix),  "hewk_{}_{}".format(  channel, suffix),  *binnings)
@@ -68,22 +94,26 @@ def MakePostPlot(ifilename: str, channel: str, bins: np.array, suffix: str, show
     hqcd    = ROOT.TH1D("hqcd_{}_{}".format(  channel, suffix),  "hqcd_{}_{}".format(  channel, suffix),  *binnings)
     hratio  = ROOT.TH1D("hrato_{}_{}".format( channel, suffix),  "hratio_{}_{}".format(channel, suffix),  *binnings)
     hpull   = ROOT.TH1D("hpull_{}_{}".format( channel, suffix),  "hpull_{}_{}".format( channel, suffix),  *binnings)
-    for ibin in range(1, nbins+1):
-        hdata.SetBinContent(ibin,   horgdata.GetBinContent(ibin + startbin))
-        hdata.SetBinError(ibin,     horgdata.GetBinError(ibin + startbin))
-        hsig.SetBinContent(ibin,    hexpsig.GetBinContent(ibin + startbin))
-        hewk.SetBinContent(ibin,    hexpewk.GetBinContent(ibin + startbin))
-        httbar.SetBinContent(ibin,  hexpttbar.GetBinContent(ibin + startbin))
-        hqcd.SetBinContent(ibin,    hexpqcd.GetBinContent(ibin + startbin))
-        hqcd.SetBinError(ibin, hexpqcd.GetBinError(ibin + startbin))
+    for ibin in range(1, nbins + 1):
+        hdata.SetBinContent(ibin,   horgdata.GetBinContent(ibin + startbin-1))
+        hdata.SetBinError(ibin,     horgdata.GetBinError(ibin + startbin-1 ))
+        if hexpsig:
+            hsig.SetBinContent(ibin,    hexpsig.GetBinContent(ibin + startbin-1))
+        if hexpewk:
+            hewk.SetBinContent(ibin,    hexpewk.GetBinContent(ibin + startbin-1))
+        if hexpttbar:
+            httbar.SetBinContent(ibin,  hexpttbar.GetBinContent(ibin + startbin-1))
+        if hexpqcd:
+            hqcd.SetBinContent(ibin,    hexpqcd.GetBinContent(ibin + startbin-1))
+            #hqcd.SetBinError(ibin,      hexpqcd.GetBinError(ibin + startbin))
 
-        hratio.SetBinContent(ibin, hexpfull.GetBinContent(ibin + startbin))
-        hratio.SetBinError(ibin,   hexpfull.GetBinError(ibin + startbin))
+        hratio.SetBinContent(ibin, hexpfull.GetBinContent(ibin + startbin - 1))
+        hratio.SetBinError(ibin,   hexpfull.GetBinError(ibin + startbin - 1))
 
-        diff = horgdata.GetBinContent(ibin + startbin) - hexpfull.GetBinContent(ibin + startbin)
+        diff = horgdata.GetBinContent(ibin + startbin - 1) - hexpfull.GetBinContent(ibin + startbin - 1)
         # take the sigma as sqrt(data**2 + templates**2)
         # not 100% sure if this is the correct way to calculate pull
-        sig = math.sqrt(horgdata.GetBinError(ibin + startbin)**2 + hexpfull.GetBinError(ibin + startbin)**2)
+        sig = math.sqrt(horgdata.GetBinError(ibin + startbin - 1)**2 + hexpfull.GetBinError(ibin + startbin - 1)**2)
         hpull.SetBinContent(ibin, diff/(sig+1e-6))
 
     # deal with the uncertainty bar
@@ -131,7 +161,7 @@ def MakePostPlot(ifilename: str, channel: str, bins: np.array, suffix: str, show
     hs_gmc.Add(hewk)
     hs_gmc.Add(hsig)
 
-    ymaxs = {"muplus": 3.5e4, "muminus": 2.5e4, "eplus": 2.5e4, "eminus": 1.8e4}
+    ymaxs = {"muplus": 3.5e4, "muminus": 2.5e4, "eplus": 2.5e4, "eminus": 1.8e4, "mumu": 2.5e4, "ee": 2.0e4}
     if is5TeV:
         for key, val in ymaxs.items():
             ymaxs[key] = val*0.7
@@ -139,8 +169,19 @@ def MakePostPlot(ifilename: str, channel: str, bins: np.array, suffix: str, show
     siglabels = {"muplus":  "W^{+}#rightarrow#mu^{+}#nu", 
                  "muminus": "W^{-}#rightarrow#mu^{-}#bar{#nu}", 
                  "eplus":   "W^{+}#rightarrow e^{+}#nu", 
-                 "eminus":  "W^{-}#rightarrow e^{-}#bar{#nu}"}
-    drawconfigs = DrawConfig(xmin = bins.min(), xmax = bins.max(), xlabel = "m_{T} [GeV]", ymin = 0, ymax = ymaxs[channel] / (int(nbins/36)+1), ylabel = "Events / GeV", outputname = "histo_wjets_{}_mT_PostFit{}".format(channel, suffix), dology=False, addOverflow=False, addUnderflow=False, yrmin=0.95, yrmax=1.05, yrlabel = "Data / Pred")
+                 "eminus":  "W^{-}#rightarrow e^{-}#bar{#nu}",
+                 "ee":      "Z#rightarrow e^{+}e^{-}",
+                 "mumu":    "Z#rightarrow #mu^{+}#mu^{-}"}
+
+    if "ee" not in channel and "mumu" not in channel:
+        # w's
+        xlabel = "m_{T} [GeV]"
+        outputname = f"histo_wjets_{channel}_{suffix}"
+    else:
+        # z's
+        xlabel = "m_{ll} [GeV]"
+        outputname = f"histo_zjets_{channel}_{suffix}"
+    drawconfigs = DrawConfig(xmin = bins.min(), xmax = bins.max(), xlabel = xlabel, ymin = 0, ymax = ymaxs[channel] / (int(nbins/36)+1), ylabel = "Events / GeV", outputname = outputname, dology=False, addOverflow=False, addUnderflow=False, yrmin=0.95, yrmax=1.05, yrlabel = "Data / Pred")
     DrawHistos( [hdata, hs_gmc], ["Data", siglabels[channel], "EWK", "t#bar{t}", "QCD"], drawconfigs.xmin, drawconfigs.xmax, drawconfigs.xlabel, drawconfigs.ymin, drawconfigs.ymax, drawconfigs.ylabel, drawconfigs.outputname, dology=drawconfigs.dology, dologx=drawconfigs.dologx, showratio=drawconfigs.showratio, yrmax = drawconfigs.yrmax, yrmin = drawconfigs.yrmin, yrlabel = drawconfigs.yrlabel, donormalize=drawconfigs.donormalize, ratiobase=drawconfigs.ratiobase, legendPos = drawconfigs.legendPos, redrawihist = drawconfigs.redrawihist, extraText = drawconfigs.extraText, noCMS = drawconfigs.noCMS, addOverflow = drawconfigs.addOverflow, addUnderflow = drawconfigs.addUnderflow, nMaxDigits = drawconfigs.nMaxDigits, hratiopanel=hratio, drawoptions=['PE', 'HIST same'], showpull=showpull, hpulls=[hpull], W_ref = 600 * int(nbins/36+1), is5TeV = is5TeV) 
 
     return nevts
