@@ -352,7 +352,7 @@ def main():
             elif i == 7:
                 suffix = "MuFMuRDown"
             elif i >= 9 and i < 109:
-                suffix = f"PDFUnc{i-8}Up"
+                suffix = f"PDF{i-8}Up"
             elif i == 109:
                 suffix = "alphaSUp"
             elif i == 110:
@@ -368,7 +368,7 @@ def main():
                 hup.Scale(hcen.Integral()/hup.Integral())
 
             if i >= 9 and i < 109: 
-                suffix = f"PDFUnc{i-8}Down"
+                suffix = f"PDF{i-8}Down"
                 hdn.SetName("{}_{}".format(hcen.GetName(), suffix))
                 for ibin in range(1, hup.GetNbinsX()+1):
                     hdn.SetBinContent(ibin, 2*hcen.GetBinContent(ibin) - hup.GetBinContent(ibin))
