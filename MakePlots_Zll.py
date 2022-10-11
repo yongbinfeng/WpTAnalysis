@@ -19,15 +19,18 @@ def main():
     parser.add_argument("--doTest", action="store_true", dest="doTest", help="Run on a subset of samples for debugging; false runs on all dataset.")
     parser.add_argument("--do5TeV", action="store_true", dest="do5TeV", help="Analyze the 5TeV data; false runs on 13TeV data")
     parser.add_argument("--doElectron", action="store_true", dest="doElectron", help="Analyze the electron channel; false runs the muon channel")
+    parser.add_argument("--doTheoryNorm", action="store_true", dest="doTheoryNorm", help="Normalize the theory curves to the data")
     args = parser.parse_args()
 
     doTest = args.doTest
     do5TeV = args.do5TeV
     doMuon = not args.doElectron
+    doTheoryNorm = args.doTheoryNorm
 
     print("doMuon: ", doMuon)
     print("doTest:", doTest)
     print("do5TeV:", do5TeV)
+    print("doTheoryNorm:", doTheoryNorm)
 
     if not do5TeV:
         if doMuon:
@@ -174,6 +177,8 @@ def main():
     mass_bins = np.array([60, 64, 68, 72, 74, 76, 78, 80, 82, 84.0, 86.0, 87.0, 88.0, 89.0, 90.0, 91., 92., 93., 94., 96., 98., 100., 102., 105., 108., 112., 116., 120.])
     u_bins = np.concatenate((np.linspace(0, 20, 11),np.linspace(24,80,15), np.linspace(85, 109, 4), np.linspace(120,150,3)))
 
+    sampMan.cacheDraw("nPV", "histo_nPV_" + lepname, 10, 0, 10, DrawConfig(xmin=0, xmax=10, xlabel='# PV', ylabel='Events / 1', donormalizebin = False))
+
     # z pt befor and after pt reweighting
     sampMan.cacheDraw("zpt",   "histo_zjets_zpt_WoZptWeight_" + lepname, u_bins, DrawConfig(xmin=0, xmax=150, xlabel='p_{{T}}^{{{leplabel}{leplabel}}} [GeV]'.format(leplabel=leplabel), yrmax=1.19, yrmin=0.81), weightname="weight_WoVpt")
     sampMan.cacheDraw("zmass", "histo_zjets_zmass_" + lepname, mass_bins, DrawConfig(xmin=70, xmax=110, xlabel='m_{{{leplabel}{leplabel}}} [GeV]'.format(leplabel=leplabel)))
@@ -197,8 +202,6 @@ def main():
     sampMan.cacheDraw("zy",    "histo_zjets_zrapidityMuonPrefDown_" + lepname, eta_bins, DrawConfig(xmin=-2.5, xmax=2.5, xlabel='y_{{{leplabel}{leplabel}}}'.format(leplabel=leplabel), ymax=1e7, ylabel='Events / 1', yrmin=0.81, yrmax=1.19), weightname="weight_11")
     sampMan.cacheDraw("zy",    "histo_zjets_zrapidityWoEcalPrefire_" + lepname, eta_bins, DrawConfig(xmin=-2.5, xmax=2.5, xlabel='y_{{{leplabel}{leplabel}}}'.format(leplabel=leplabel), ymax=1e7, ylabel='Events / 1', yrmin=0.81, yrmax=1.19), weightname="weight_noEcal")
     sampMan.cacheDraw("zy",    "histo_zjets_zrapidityWoMuonPrefire_" + lepname, eta_bins, DrawConfig(xmin=-2.5, xmax=2.5, xlabel='y_{{{leplabel}{leplabel}}}'.format(leplabel=leplabel), ymax=1e7, ylabel='Events / 1', yrmin=0.81, yrmax=1.19), weightname="weight_noMuon")
-
-    sampMan.cacheDraw("nPV", "histo_nPV_" + lepname, 10, 0, 10, DrawConfig(xmin=0, xmax=10, xlabel='# PV', ylabel='Events / 1'))
 
     sampMan.cacheDraw("LeadMuon_pt", "histo_leadLep_pt_" + lepname, pt_bins, DrawConfig(xmin=20, xmax=70, xlabel='p_{{T}}(Leading {leplabel}) [GeV]'.format(leplabel=leplabel)))
     # leading lepton eta with prefiring variations
@@ -249,8 +252,6 @@ def main():
         hratiopanel.SetBinError(ibin, 0.5*abs(hratiopanelUp.GetBinContent(ibin) - hratiopanelDown.GetBinContent(ibin)))
     drawconfigs = DrawConfig(xmin=-2.5, xmax=2.5, xlabel='y_{{{leplabel}{leplabel}}}'.format(leplabel=leplabel), ymax=1e7, ylabel='Events / 1', yrmin=0.81, yrmax=1.19, outputname = hname + "_withUnc")
     DrawHistos([sampMan.hdatas[hname], sampMan.hsmcs[hname]], ["Data", lepchannel, "t#bar{t}", "EWK"], drawconfigs.xmin, drawconfigs.xmax, drawconfigs.xlabel, drawconfigs.ymin, drawconfigs.ymax, drawconfigs.ylabel, drawconfigs.outputname, is5TeV=do5TeV, hratiopanel = hratiopanel, dology=drawconfigs.dology, dologx=drawconfigs.dologx, showratio=drawconfigs.showratio, yrmax = drawconfigs.yrmax, yrmin = drawconfigs.yrmin, yrlabel = drawconfigs.yrlabel, donormalize=drawconfigs.donormalize, ratiobase=drawconfigs.ratiobase, legendPos = drawconfigs.legendPos, redrawihist = drawconfigs.redrawihist, extraText = drawconfigs.extraText, noCMS = drawconfigs.noCMS, addOverflow = drawconfigs.addOverflow, addUnderflow = drawconfigs.addUnderflow, nMaxDigits = drawconfigs.nMaxDigits)
-
-    sampMan.dumpCounts()
 
     #htests = sampMan.hsmcs["histo_zjets_zmass_{}_weight_8".format(lepname)]
     #htest = list(htests.GetHists())
@@ -360,6 +361,11 @@ def main():
             hup.SetName("{}_{}".format(hcen.GetName(), suffix))
             for ibin in range(1, hup.GetNbinsX()+1):
                 hup.SetBinError(ibin, 0.)
+            
+            if doTheoryNorm:
+                # normalize the number of events to the central values
+                # if the theory variations are normalized
+                hup.Scale(hcen.Integral()/hup.Integral())
 
             if i >= 9 and i < 109: 
                 suffix = f"PDFUnc{i-8}Down"
@@ -374,6 +380,8 @@ def main():
             hup.Write()
 
     outfile.Close()
+
+    sampMan.dumpCounts()
     print("Program end...")
 
     return 
