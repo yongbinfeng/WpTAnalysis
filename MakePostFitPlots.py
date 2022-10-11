@@ -17,16 +17,16 @@ doRebin = False
 # distribution should be included in the plots
 showPULL = True
 if doInclusive:
-    MakePostPlot("cards/test_mu_withXsecSys.root", "muplus", mass_bins, "_withXsecSys", showPULL)
-    MakePostPlot("cards/test_mu_withXsecSys.root", "muminus", mass_bins, "_withXsecSys", showPULL, startbin = len(mass_bins)-1)
+    #MakePostPlot("cards/test_mu_withXsecSys.root", "muplus", mass_bins, "_withXsecSys", showPULL)
+    #MakePostPlot("cards/test_mu_withXsecSys.root", "muminus", mass_bins, "_withXsecSys", showPULL, startbin = len(mass_bins)-1)
 
-    result2json("cards/test_mu_withXsecSys.root", "w_muminus_sig_mu", "cards/impacts_muminus_lepEta_bin0_WpT_bin0_withXsecSys.json")
-    result2json("cards/test_mu_withXsecSys.root", "w_muplus_sig_mu", "cards/impacts_muplus_lepEta_bin0_WpT_bin0_withXsecSys.json")
+    #result2json("cards/test_mu_withXsecSys.root", "w_muminus_sig_mu", "cards/impacts_muminus_lepEta_bin0_WpT_bin0_withXsecSys.json")
+    #result2json("cards/test_mu_withXsecSys.root", "w_muplus_sig_mu", "cards/impacts_muplus_lepEta_bin0_WpT_bin0_withXsecSys.json")
 
-    plotImpacts("cards/impacts_muplus_lepEta_bin0_WpT_bin0_withXsecSys.json", "impacts_muplus_lepEta_bin0_withXsecSys")
-    plotImpacts("cards/impacts_muminus_lepEta_bin0_WpT_bin0_withXsecSys.json", "impacts_muminus_lepEta_bin0_withXsecSys")
+    #plotImpacts("cards/impacts_muplus_lepEta_bin0_WpT_bin0_withXsecSys.json", "impacts_muplus_lepEta_bin0_withXsecSys")
+    #plotImpacts("cards/impacts_muminus_lepEta_bin0_WpT_bin0_withXsecSys.json", "impacts_muminus_lepEta_bin0_withXsecSys")
 
-    DumpGroupImpacts("cards/test_mu_withXsecSys.root", "w_muminus_sig_mu")
+    #DumpGroupImpacts("cards/test_mu_withXsecSys.root", "w_muminus_sig_mu")
 
     mass_bins_test = OrderedDict()
     mass_bins_test[0] = np.array([0., 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 120])
@@ -40,6 +40,7 @@ if doInclusive:
     mass_bins_test[8] = np.array([40., 50, 60, 70, 80, 90, 100, 120])
     mass_bins_test[9] = np.array([45., 55, 65, 75, 85, 95, 105, 120])
     mass_bins_test[10] = np.array([50., 60, 70, 80, 90, 100, 120])
+    z_mass_bins = np.arange(60.0, 124.0, 4)
 
     vals_x = np.array([0, 5, 10, 15, 20, 25, 30, 35, 40, 45.0, 50.0], dtype='d')
     ntests = len(vals_x)
@@ -55,26 +56,30 @@ if doInclusive:
     lumi_unc = 0.017
 
     for idx in range(ntests):
+    #for idx in range(1):
         mass_bins = mass_bins_test[idx]
         filename = f"cards/test{idx}/datacard_mucombined_lepEta_bin0_WpT_bin0.root"
         vals_mu_pos[idx], errs_mu_pos[idx] = GetPOIValue(filename, "w_muplus_sig_mu")
         vals_mu_neg[idx], errs_mu_neg[idx] = GetPOIValue(filename, "w_muminus_sig_mu")
 
         MakePostPlot(filename, "muplus",  mass_bins, f"_mT{idx}", showPULL)
-        MakePostPlot(filename, "muminus", mass_bins, f"_mT{idx}", showPULL, startbin = len(mass_bins)-1)
+        MakePostPlot(filename, "muminus", mass_bins, f"_mT{idx}", showPULL, startbin = len(mass_bins))
+        MakePostPlot(filename, "mumu", z_mass_bins,  "_mll",     showPULL, startbin = len(mass_bins)*2 - 1)
 
         result2json(filename, "w_muplus_sig_mu", f"cards/test{idx}/impacts_muplus.json")
         result2json(filename, "w_muminus_sig_mu",  f"cards/test{idx}/impacts_muminus.json")
+        result2json(filename, "z_mumu_sig_mu",  f"cards/test{idx}/impacts_mumu.json")
 
         plotImpacts(f"cards/test{idx}/impacts_muplus.json",  f"impacts_muplus_mT{idx}")
         plotImpacts(f"cards/test{idx}/impacts_muminus.json", f"impacts_muminus_mT{idx}")
+        plotImpacts(f"cards/test{idx}/impacts_mumu.json", f"impacts_mumu_mll")
 
         filename = f"cards/test{idx}/datacard_ecombined_lepEta_bin0_WpT_bin0.root"
         vals_e_pos[idx], errs_e_pos[idx] = GetPOIValue(filename, "w_eplus_sig_mu")
         vals_e_neg[idx], errs_e_neg[idx] = GetPOIValue(filename, "w_eminus_sig_mu")
 
         MakePostPlot(filename, "eplus",  mass_bins, f"_mT{idx}", showPULL)
-        MakePostPlot(filename, "eminus", mass_bins, f"_mT{idx}", showPULL, startbin = len(mass_bins)-1)
+        MakePostPlot(filename, "eminus", mass_bins, f"_mT{idx}", showPULL, startbin = len(mass_bins))
 
         result2json(filename, "w_eplus_sig_mu", f"cards/test{idx}/impacts_eplus.json")
         result2json(filename, "w_eminus_sig_mu",  f"cards/test{idx}/impacts_eminus.json")
