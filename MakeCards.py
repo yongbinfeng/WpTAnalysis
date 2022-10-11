@@ -1,4 +1,4 @@
-from modules.cardMaker import MakeCards, combineCards
+from modules.cardMaker import MakeWJetsCards, combineCards
 import os
     
 doMuon = True
@@ -36,7 +36,7 @@ if doMuon:
         cards = []
         for wptbin in wptbins:
             postfix = "" if not doWpT else "_WpT"
-            card = MakeCards(pwd+"/root/"+fnames[channel]+postfix+".root", pwd+"/root/"+fqcds[channel]+"_"+wptbin+".root", channel, wptbin, etabin, doWpT=doWpT)
+            card = MakeWJetsCards(pwd+"/root/"+fnames[channel]+postfix+".root", pwd+"/root/"+fqcds[channel]+"_"+wptbin+".root", channel, wptbin, etabin, doWpT=doWpT)
             cards.append(card)
 
         if doWpT:
@@ -47,8 +47,8 @@ if doElectron:
     channel = "eplus"
     pwd = os.getcwd()
     for wptbin in ["WpT_bin0"]:
-        card1 = MakeCards(pwd+"/root/"+fnames[channel]+".root", pwd+"/root/"+fqcds[channel]+"_"+wptbin+".root", channel, wptbin, "lepEta_bin1")
-        card2 = MakeCards(pwd+"/root/"+fnames[channel]+".root", pwd+"/root/"+fqcds[channel]+"_"+wptbin+".root", channel, wptbin, "lepEta_bin2")
+        card1 = MakeWJetsCards(pwd+"/root/"+fnames[channel]+".root", pwd+"/root/"+fqcds[channel]+"_"+wptbin+".root", channel, wptbin, "lepEta_bin1")
+        card2 = MakeWJetsCards(pwd+"/root/"+fnames[channel]+".root", pwd+"/root/"+fqcds[channel]+"_"+wptbin+".root", channel, wptbin, "lepEta_bin2")
     
     # combine the two cards in 2 eta bins
     combineCards(["Barrel", "Endcap"], [card1, card2], pwd+"/cards/datacard_{}.txt".format(channel))

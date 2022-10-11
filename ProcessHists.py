@@ -3,7 +3,7 @@ import re
 import numpy as np
 from CMSPLOTS.myFunction import AddOverflowsTH1, RebinHisto
 from modules.qcdExtrapolater import ExtrapolateQCD
-from modules.cardMaker import MakeCards, GenerateRunCommand
+from modules.cardMaker import MakeWJetsCards, MakeZJetsCards, GenerateRunCommand
 from modules.histProcessor import ProcessHists, CopyandMergeTau
 from modules.mass_bins import mass_bins
 from collections import OrderedDict
@@ -11,7 +11,7 @@ from collections import OrderedDict
 ROOT.gROOT.SetBatch(True)
 
 
-def RunPreparations(fsig_input, fsig_rebin, fsig_mergeTau, fqcd_input, fqcd_rebin, fqcd_input_scaled, fqcd_rebin_scaled, fqcd_output, lepname = "mu", is5TeV = False, mass_bins = mass_bins, outdir_card = "cards"):
+def RunPreparations(fwsig_input, fwsig_rebin, fwsig_mergeTau, fqcd_input, fqcd_rebin, fqcd_input_scaled, fqcd_rebin_scaled, fqcd_output, lepname = "mu", is5TeV = False, mass_bins = mass_bins, outdir_card = "cards", fzsig_input = None):
     """
     rebin the mT hists for sig and qcd bkg,
     merge tau (wx) process to sig (wlnu),
@@ -21,9 +21,9 @@ def RunPreparations(fsig_input, fsig_rebin, fsig_mergeTau, fqcd_input, fqcd_rebi
     includeUnderflow = False
     includeOverflow = True
 
-    ProcessHists(fsig_input, fsig_rebin, mass_bins, includeUnderflow, includeOverflow)
+    ProcessHists(fwsig_input, fwsig_rebin, mass_bins, includeUnderflow, includeOverflow)
     # merge the tau processes into the signal process
-    CopyandMergeTau(fsig_rebin, fsig_mergeTau)
+    CopyandMergeTau(fwsig_rebin, fwsig_mergeTau)
 
     # for QCD
     ProcessHists(fqcd_input, fqcd_rebin, mass_bins, includeUnderflow, includeOverflow)
@@ -33,14 +33,20 @@ def RunPreparations(fsig_input, fsig_rebin, fsig_mergeTau, fqcd_input, fqcd_rebi
     ExtrapolateQCD(fqcd_rebin, fqcd_output, [lepname+"plus", lepname+"minus"], "WpT_bin0", ["lepEta_bin0"], fname_scaled=fqcd_rebin_scaled, rebinned = True, is5TeV = is5TeV)
 
     # generate card based on the signal and qcd templates
-    card_plus = MakeCards(fsig_mergeTau, fqcd_output, lepname+"plus", "WpT_bin0", "lepEta_bin0", rebinned = True, nMTBins = len(mass_bins)-1, is5TeV = is5TeV, outdir = outdir_card)
-    card_minus = MakeCards(fsig_mergeTau, fqcd_output, lepname+"minus", "WpT_bin0", "lepEta_bin0", rebinned = True, nMTBins = len(mass_bins)-1, is5TeV = is5TeV, outdir = outdir_card)
-    # generate run command
-    GenerateRunCommand(card_plus, card_minus)
+    card_plus = MakeWJetsCards(fwsig_mergeTau, fqcd_output, lepname+"plus", "WpT_bin0", "lepEta_bin0", rebinned = True, nMTBins = len(mass_bins)-1, is5TeV = is5TeV, outdir = outdir_card)
+    card_minus = MakeWJetsCards(fwsig_mergeTau, fqcd_output, lepname+"minus", "WpT_bin0", "lepEta_bin0", rebinned = True, nMTBins = len(mass_bins)-1, is5TeV = is5TeV, outdir = outdir_card)
 
-if "__main__" == __name__:
+    if not fzsig_input:
+        # generate run command
+        GenerateRunCommand(card_plus, card_minus)
+    else:
+        # generate z card
+        card_z = MakeZJetsCards(fzsig_input, lepname+lepname, rebinned = False, is5TeV = is5TeV, outdir = outdir_card)
+        GenerateRunCommand(card_plus, card_minus, card_z = card_z)
+
+if __name__  == "__main__":
     do13TeV = True
-    do5TeV = True
+    do5TeV = False
 
     mass_bins_test = OrderedDict()
     mass_bins_test[0] = np.array([0., 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 120])
@@ -57,10 +63,11 @@ if "__main__" == __name__:
 
     if do13TeV:
         # 13TeV muon
+        fzsig_input = "root/output_shapes_mumu.root"
         for key, val in mass_bins_test.items():
-            fsig_input = "root/output_shapes_munu.root"
-            fsig_rebin = f"root/test{key}/output_shapes_munu_Rebin.root"
-            fsig_mergeTau = f"root/test{key}/output_shapes_munu_mergeTau.root"
+            fwsig_input = "root/output_shapes_munu.root"
+            fwsig_rebin = f"root/test{key}/output_shapes_munu_Rebin.root"
+            fwsig_mergeTau = f"root/test{key}/output_shapes_munu_mergeTau.root"
 
             fqcd_input = "root/output_qcdshape_munu.root"
             fqcd_rebin = f"root/test{key}/output_qcdshape_munu_Rebin.root"
@@ -68,13 +75,14 @@ if "__main__" == __name__:
             fqcd_rebin_scaled = f"root/test{key}/output_qcdshape_munu_Rebin_applyScaling.root"
             fqcd_output = f"root/test{key}/qcdshape_extrapolated_munu.root"
 
-            RunPreparations(fsig_input, fsig_rebin, fsig_mergeTau, fqcd_input, fqcd_rebin, fqcd_input_scaled, fqcd_rebin_scaled, fqcd_output, "mu", outdir_card = f"cards/test{key}", mass_bins = val)
+            RunPreparations(fwsig_input, fwsig_rebin, fwsig_mergeTau, fqcd_input, fqcd_rebin, fqcd_input_scaled, fqcd_rebin_scaled, fqcd_output, "mu", outdir_card = f"cards/test{key}", mass_bins = val, fzsig_input=fzsig_input)
 
         # 13TeV electron
+        fzsig_input = "root/output_shapes_ee.root"
         for key, val in mass_bins_test.items():
-            fsig_input = "root/output_shapes_enu.root"
-            fsig_rebin = f"root/test{key}/output_shapes_enu_Rebin.root"
-            fsig_mergeTau = f"root/test{key}/output_shapes_enu_mergeTau.root"
+            fwsig_input = "root/output_shapes_enu.root"
+            fwsig_rebin = f"root/test{key}/output_shapes_enu_Rebin.root"
+            fwsig_mergeTau = f"root/test{key}/output_shapes_enu_mergeTau.root"
 
             fqcd_input = "root/output_qcdshape_enu.root"
             fqcd_rebin = f"root/test{key}/output_qcdshape_enu_Rebin.root"
@@ -82,12 +90,12 @@ if "__main__" == __name__:
             fqcd_rebin_scaled = f"root/test{key}/output_qcdshape_enu_Rebin_applyScaling.root"
             fqcd_output = f"root/test{key}/qcdshape_extrapolated_enu.root"
 
-            RunPreparations(fsig_input, fsig_rebin, fsig_mergeTau, fqcd_input, fqcd_rebin, fqcd_input_scaled, fqcd_rebin_scaled, fqcd_output, "e", outdir_card = f"cards/test{key}", mass_bins = val)
+            RunPreparations(fwsig_input, fwsig_rebin, fwsig_mergeTau, fqcd_input, fqcd_rebin, fqcd_input_scaled, fqcd_rebin_scaled, fqcd_output, "e", outdir_card = f"cards/test{key}", mass_bins = val, fzsig_input=fzsig_input)
     if do5TeV:
         # 5TeV muon channel
-        fsig_input = "root/output_shapes_munu_5TeV.root"
-        fsig_rebin = "root/output_shapes_munu_Rebin_5TeV.root"
-        fsig_mergeTau = "root/output_shapes_munu_mergeTau_5TeV.root"
+        fwsig_input = "root/output_shapes_munu_5TeV.root"
+        fwsig_rebin = "root/output_shapes_munu_Rebin_5TeV.root"
+        fwsig_mergeTau = "root/output_shapes_munu_mergeTau_5TeV.root"
 
         fqcd_input = "root/output_qcdshape_munu_5TeV.root"
         fqcd_rebin = "root/output_qcdshape_munu_Rebin_5TeV.root"
@@ -95,13 +103,13 @@ if "__main__" == __name__:
         fqcd_rebin_scaled = "root/output_qcdshape_munu_Rebin_applyScaling_5TeV.root"
         fqcd_output = "root/qcdshape_extrapolated_munu_5TeV.root"
 
-        RunPreparations(fsig_input, fsig_rebin, fsig_mergeTau, fqcd_input, fqcd_rebin, fqcd_input_scaled, fqcd_rebin_scaled, fqcd_output, "mu", is5TeV = True)
+        RunPreparations(fwsig_input, fwsig_rebin, fwsig_mergeTau, fqcd_input, fqcd_rebin, fqcd_input_scaled, fqcd_rebin_scaled, fqcd_output, "mu", is5TeV = True)
 
 
         # 5TeV electron channel
-        fsig_input = "root/output_shapes_enu_5TeV.root"
-        fsig_rebin = "root/output_shapes_enu_Rebin_5TeV.root"
-        fsig_mergeTau = "root/output_shapes_enu_mergeTau_5TeV.root"
+        fwsig_input = "root/output_shapes_enu_5TeV.root"
+        fwsig_rebin = "root/output_shapes_enu_Rebin_5TeV.root"
+        fwsig_mergeTau = "root/output_shapes_enu_mergeTau_5TeV.root"
 
         fqcd_input = "root/output_qcdshape_enu_5TeV.root"
         fqcd_rebin = "root/output_qcdshape_enu_Rebin_5TeV.root"
@@ -109,5 +117,5 @@ if "__main__" == __name__:
         fqcd_rebin_scaled = "root/output_qcdshape_enu_Rebin_applyScaling_5TeV.root"
         fqcd_output = "root/qcdshape_extrapolated_enu_5TeV.root"
 
-        RunPreparations(fsig_input, fsig_rebin, fsig_mergeTau, fqcd_input, fqcd_rebin, fqcd_input_scaled, fqcd_rebin_scaled, fqcd_output, "e", is5TeV = True)
+        RunPreparations(fwsig_input, fwsig_rebin, fwsig_mergeTau, fqcd_input, fqcd_rebin, fqcd_input_scaled, fqcd_rebin_scaled, fqcd_output, "e", is5TeV = True)
 

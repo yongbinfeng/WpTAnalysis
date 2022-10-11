@@ -133,7 +133,7 @@ def WriteCard(data, processes, nuisgroups, cardname):
     ofile.close()
     
 
-def MakeCards(fname_mc, fname_qcd, channel, wptbin, etabin, doWpT = False, rebinned = False, is5TeV = False, nMTBins = 9, outdir = "cards"):
+def MakeWJetsCards(fname_mc, fname_qcd, channel, wptbin, etabin, doWpT = False, rebinned = False, is5TeV = False, nMTBins = 9, outdir = "cards"):
     # prefix of all histo names
     prefix = ""
     if rebinned:
@@ -150,10 +150,10 @@ def MakeCards(fname_mc, fname_qcd, channel, wptbin, etabin, doWpT = False, rebin
     unc_effstat['effstat_muminus_13TeV'] = 1.0021
     unc_effstat['effstat_eplus_13TeV'] = 1.0059
     unc_effstat['effstat_eminus_13TeV'] = 1.0053
-    unc_effstat['effstat_muplus_13TeV'] = 1.0023
-    unc_effstat['effstat_muminus_13TeV'] = 1.0021
-    unc_effstat['effstat_eplus_13TeV'] = 1.0080
-    unc_effstat['effstat_eminus_13TeV'] = 1.0077
+    unc_effstat['effstat_muplus_5TeV'] = 1.0023
+    unc_effstat['effstat_muminus_5TeV'] = 1.0021
+    unc_effstat['effstat_eplus_5TeV'] = 1.0080
+    unc_effstat['effstat_eminus_5TeV'] = 1.0077
 
     # data
     data = Process(name = "data_obs", fname = fname_mc,
@@ -372,6 +372,166 @@ def MakeCards(fname_mc, fname_qcd, channel, wptbin, etabin, doWpT = False, rebin
 
     return cardname
 
+
+def MakeZJetsCards(fname, channel, rebinned = False, is5TeV = False, outdir = "cards"):
+    """
+    Generate the combine datacard for Z+jets signal region
+    """
+    # prefix of all histo names
+    prefix = ""
+    if rebinned:
+        prefix = "Rebinned_"
+
+    # from lumi    
+    unc_lumi = {}
+    unc_lumi['lumi_13TeV'] = 1.017
+    unc_lumi['lumi_5TeV'] = 1.019
+
+    # from eff calculations
+    unc_effstat = {}
+    unc_effstat['effstat_muplus_13TeV'] = 1.0020
+    unc_effstat['effstat_muminus_13TeV'] = 1.0020
+    unc_effstat['effstat_eplus_13TeV'] = 1.0041
+    unc_effstat['effstat_eminus_13TeV'] = 1.0041
+    unc_effstat['effstat_muplus_5TeV'] = 1.0019
+    unc_effstat['effstat_muminus_5TeV'] = 1.0019
+    unc_effstat['effstat_eplus_5TeV'] = 1.0061
+    unc_effstat['effstat_eminus_13TeV'] = 1.0061
+
+    # data
+    data = Process(name = "data_obs", fname = fname,
+                   hname = prefix + f"histo_zjets_zmass_{channel}_weight_0_data",
+                   isObs = True,
+                   )
+    # sig processes
+    sigs = []
+    sig = Process(name = "z_"+channel+"_sig", fname = fname, 
+                 hname = prefix + f"histo_zjets_zmass_{channel}_weight_0_grouped_DY0",
+                 hsys = prefix + f"histo_zjets_zmass_{channel}_weight_0_grouped_DY0_",
+                 isSignal = True,
+                 isMC = True,
+                 isV = True,
+                 isQCD = False
+                 ) 
+    sigs.append(sig)
+
+    # ttbar bkg
+    sname = "ttbar1" if not is5TeV else "ttbar1"
+    ttbar = Process(name = "tt", fname = fname,
+                    hname = prefix + f"histo_zjets_zmass_{channel}_weight_0_grouped_ttbar1",
+                    hsys = prefix + f"histo_zjets_zmass_{channel}_weight_0_grouped_ttbar1_",
+                    isSignal = False,
+                    isMC = True,
+                    isV = False,
+                    isQCD = False,
+                    xsecUnc = "1.10"
+                )
+    # EWK bkg
+    sname = "EWK2" if not is5TeV else "EWK2"
+    ewk = Process(name = "EWK", fname = fname,
+                 hname = prefix + f"histo_zjets_zmass_{channel}_weight_0_grouped_EWK2",
+                 hsys = prefix + f"histo_zjets_zmass_{channel}_weight_0_grouped_EWK2_",
+                 isSignal = False,
+                 isMC = True,
+                 isV = False,
+                 isQCD = False,
+                 xsecUnc = "1.10"
+                 )
+
+    # list of all processes
+    #processes = sigs + [ttbar, zxx, wtau, vv, qcd]
+    processes = sigs + [ttbar, ewk]
+    
+    lepname = "mu" if "mu" in channel else "e"
+    era = "13TeV" if not is5TeV else "5TeV"
+
+    # define different nuisance parameters, their groups,
+    # and the impacts on each process
+    nuisgroups = OrderedDict()
+
+    nuis_lumi = Nuisance(name = "lumi_" + era, type = "lnN")
+    for proc in processes:
+        if proc.isMC:
+            nuis_lumi[proc.name] = unc_lumi[nuis_lumi.name]
+    nuisgroups["lumisys"] = [nuis_lumi]
+
+    nuisgroups["mcsecsys"] = []
+    for proc in processes:
+        if not proc.isSignal and proc.isMC:
+            nuis_norm = Nuisance(name = "norm_" + proc.name, type = "lnN")
+            nuis_norm[proc.name] = proc.xsecUnc
+            nuisgroups["mcsecsys"].append(nuis_norm)
+
+    # correction systematics
+    # in Aram's ntuples, defined here: https://github.com/MiT-HEP/MitEwk13TeV/blob/CMSSW_94X/NtupleMod/eleNtupleMod.C#L71
+    # and here: https://github.com/MiT-HEP/MitEwk13TeV/blob/CMSSW_94X/NtupleMod/muonNtupleMod.C#L81
+    # 1 is MC, 2 is FSR, 3 is Bkg, 4 is tagpt, 
+    # 8 is ecal prefire
+    # 10 is muon prefire
+    # correlate MC systematic, ECAL and muon prefire 
+    # between electron and muon channel
+    # uncorrelate FSR, bkg, tagpt in electron ahd muon channel
+    nuis_SysWeight1 = Nuisance(name = "SysWeight1", type = "shape")
+    nuis_SysWeight2 = Nuisance(name = lepname + "_SysWeight2", type = "shape")
+    nuis_SysWeight3 = Nuisance(name = lepname + "_SysWeight3", type = "shape")
+    nuis_SysWeight4 = Nuisance(name = lepname + "_SysWeight4", type = "shape")
+    nuis_SysWeight8 = Nuisance(name = "SysWeight8", type = "shape")
+    nuis_SysWeight10 = Nuisance(name = "SysWeight10", type = "shape")
+    nuisgroups["sfsys"] = [nuis_SysWeight1, nuis_SysWeight2, nuis_SysWeight3, nuis_SysWeight4, nuis_SysWeight8, nuis_SysWeight10]
+    for proc in processes:
+        if not proc.isQCD:
+            # all the samples except the QCD apply the corrections
+            # so they should be affected by sf systematics
+            for sysweight in nuisgroups["sfsys"]:
+                sysweight[proc.name] = 1.0
+
+    nuis_effstat_plus = Nuisance(name = "effstat_" + lepname + "plus_" + era, type = "lnN")
+    nuis_effstat_minus = Nuisance(name = "effstat_" + lepname + "minus_" + era, type = "lnN")
+    for proc in processes:
+        if proc.isSignal:
+            # only apply eff/sf stat uncertainty to signals for now
+            nuis_effstat_plus[proc.name] = unc_effstat[nuis_effstat_plus.name]
+            nuis_effstat_minus[proc.name] = unc_effstat[nuis_effstat_minus.name]
+    nuisgroups["sfstatsys"] = [nuis_effstat_plus, nuis_effstat_minus]
+
+    # theory systematics
+    # qcd scale
+    nuisgroups["qcdscalesys"] = []
+    for par in ["MuF", "MuR", "MuFMuR"]:
+        nuis_QCDScale = Nuisance(name = par, type = "shape")
+        for proc in processes:
+            if proc.isSignal:
+                nuis_QCDScale[proc.name] = 1.0
+        nuisgroups["qcdscalesys"].append(nuis_QCDScale)
+
+    # pdf variations
+    nuisgroups["pdfsys"] = []
+    pdf_indices = list(range(1, 101))
+    for ipdf in pdf_indices:
+        nuis_PDF = Nuisance(name = f"PDF{ipdf}", type = "shape")
+        for proc in processes:
+            if proc.isSignal:
+                nuis_PDF[proc.name] = 1.0
+        nuisgroups["pdfsys"].append(nuis_PDF)
+    
+    # alphaS variations
+    nuisgroups["alphaS"] = []
+    nuis_alphaS = Nuisance(name = "alphaS", type = "shape")
+    for proc in processes:
+        if proc.isSignal:
+            nuis_alphaS[proc.name] = 1.0
+    nuisgroups["alphaS"].append(nuis_alphaS)
+
+    #
+    # writing datacards
+    #
+    cardname = f"{outdir}/datacard_{channel}.txt"
+    if is5TeV:
+        cardname = f"{outdir}/datacard_{channel}_5TeV.txt"
+    WriteCard(data, processes, nuisgroups, cardname)
+
+    return cardname
+
 def combineCards(labels, cards, oname):
     """
     genrate and run the command to combine cards in different bins
@@ -383,7 +543,7 @@ def combineCards(labels, cards, oname):
     print(("combine cards with {}".format(cmd)))
     os.system(cmd)
 
-def GenerateRunCommand(card_plus: str, card_minus: str, prefix: str = "./"):
+def GenerateRunCommand(card_plus: str, card_minus: str, prefix: str = "./", card_z = None):
     """
     generate the script with commands to run combine.
     inputs can probably be improved here
@@ -391,12 +551,18 @@ def GenerateRunCommand(card_plus: str, card_minus: str, prefix: str = "./"):
     workdir = prefix + card_plus.rpartition('/')[0]
     card_plus = card_plus.split('/')[-1]
     card_minus = card_minus.split('/')[-1]
+    if card_z:
+        card_z = card_z.split('/')[-1]
     output = card_plus.replace("plus", "combined").replace(".txt", "")
 
     cmd = ""
     cmd += "#!/bin/bash\n\n"
     cmd += f"cd {workdir}\n"
-    cmd += f"combineCards.py plus={card_plus} minus={card_minus} > {output}.txt\n"
+    cmd += f"combineCards.py plus={card_plus} minus={card_minus}"
+    if card_z:
+        # include the z card in the combine
+        cmd += f" z={card_z}"
+    cmd += f"> {output}.txt\n"
     cmd += f"text2hdf5.py {output}.txt\n"
     cmd += f"combinetf.py {output}.hdf5 --binByBinStat --computeHistErrors --saveHists --doImpacts --output {output}.root\n"
 
