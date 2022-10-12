@@ -301,7 +301,7 @@ def MakeWJetsCards(fname_mc, fname_qcd, channel, wptbin, etabin, doWpT = False, 
     nuisgroups["recoilsys"] = []
     recoil_indices = ["2", "3", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"]
     for iuvar in recoil_indices:
-        nuis_SysRecoil = Nuisance(name = "SysRecoil" + iuvar, type = "shape")
+        nuis_SysRecoil = Nuisance(name = lepname + "_SysRecoil" + iuvar, type = "shape")
         for proc in processes:
             if proc.isV:
                 # all the V processes (including W and Z) apply the recoil corrections

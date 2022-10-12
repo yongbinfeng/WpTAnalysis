@@ -492,7 +492,7 @@ def main():
                             #    suffix = lepname + "_" + lepeta + "_" + wpt + "_SysRecoil" + str(i)
                             #else:
                             #    suffix = lepname + "_" + "SysRecoil" + str(i)
-                            suffix = "SysRecoil" + str(i)
+                            suffix = lepname + "_SysRecoil" + str(i)
 
                             hup.SetName("{}_{}Up".format(hcen.GetName(), suffix))
 
@@ -533,7 +533,6 @@ def main():
                                 #hup.SetName("{}_SysWeight{}Down".format(hcen.GetName(), str(i-1)))
                                 hup.SetName("{}_{}".format(hcen.GetName(), suffix))
 
-
                             if i<6 or i==12 or i==13:
                                 # for prefire, the up and down weights are calculated seperately
                                 suffix = prefix + "SysWeight" + str(i) + "Down"
@@ -550,7 +549,7 @@ def main():
                                 hdn.SetDirectory(outfile)
                                 hdn.Write()
 
-                    # weights/corrections
+                    # theory uncertainties
                     for i in range(111):
                         if wpttruth == "MCTemplates":
                             hsmcs_up = sampMan.hsmcs[f"histo_wjets_{chg}_mtcorr_weight_theory_{i}_{wpt}_{lepeta}"]
