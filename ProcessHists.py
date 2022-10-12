@@ -36,18 +36,18 @@ def RunPreparations(fwsig_input, fwsig_rebin, fwsig_mergeTau, fqcd_input, fqcd_r
     card_plus = MakeWJetsCards(fwsig_mergeTau, fqcd_output, lepname+"plus", "WpT_bin0", "lepEta_bin0", rebinned = True, nMTBins = len(mass_bins)-1, is5TeV = is5TeV, outdir = outdir_card)
     card_minus = MakeWJetsCards(fwsig_mergeTau, fqcd_output, lepname+"minus", "WpT_bin0", "lepEta_bin0", rebinned = True, nMTBins = len(mass_bins)-1, is5TeV = is5TeV, outdir = outdir_card)
 
-    if not fzsig_input:
-        # generate run command
-        GenerateRunCommand(card_plus, card_minus)
-    else:
+    card_z = None
+    if fzsig_input:
         # generate z card
         card_z = MakeZJetsCards(fzsig_input, lepname+lepname, rebinned = False, is5TeV = is5TeV, outdir = outdir_card)
-        GenerateRunCommand(card_plus, card_minus, card_z = card_z)
+
+    return card_plus, card_minus, card_z
 
 if __name__  == "__main__":
     do13TeV = True
     do5TeV = False
 
+    # scan fit range
     mass_bins_test = OrderedDict()
     mass_bins_test[0] = np.array([0., 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 120])
     mass_bins_test[1] = np.array([5., 15, 25, 35, 45, 55, 65, 75, 85, 95, 105, 120])
@@ -62,9 +62,19 @@ if __name__  == "__main__":
     mass_bins_test[10] = np.array([50., 60, 70, 80, 90, 100, 120])
 
     if do13TeV:
+        card_mu_plus = None
+        card_mu_minus = None
+        card_zmumu = None
+        card_e_plus = None
+        card_e_minus = None
+        card_zee = None
+
         # 13TeV muon
-        fzsig_input = "root/output_shapes_mumu.root"
+        fzsig_mumu_input = "root/output_shapes_mumu.root"
+        fzsig_ee_input = "root/output_shapes_ee.root"
+
         for key, val in mass_bins_test.items():
+            # muon channel
             fwsig_input = "root/output_shapes_munu.root"
             fwsig_rebin = f"root/test{key}/output_shapes_munu_Rebin.root"
             fwsig_mergeTau = f"root/test{key}/output_shapes_munu_mergeTau.root"
@@ -75,11 +85,9 @@ if __name__  == "__main__":
             fqcd_rebin_scaled = f"root/test{key}/output_qcdshape_munu_Rebin_applyScaling.root"
             fqcd_output = f"root/test{key}/qcdshape_extrapolated_munu.root"
 
-            RunPreparations(fwsig_input, fwsig_rebin, fwsig_mergeTau, fqcd_input, fqcd_rebin, fqcd_input_scaled, fqcd_rebin_scaled, fqcd_output, "mu", outdir_card = f"cards/test{key}", mass_bins = val, fzsig_input=fzsig_input)
+            card_mu_plus, card_mu_minus, card_zmumu = RunPreparations(fwsig_input, fwsig_rebin, fwsig_mergeTau, fqcd_input, fqcd_rebin, fqcd_input_scaled, fqcd_rebin_scaled, fqcd_output, "mu", outdir_card = f"cards/test{key}", mass_bins = val, fzsig_input=fzsig_mumu_input)
 
-        # 13TeV electron
-        fzsig_input = "root/output_shapes_ee.root"
-        for key, val in mass_bins_test.items():
+            # electron channel
             fwsig_input = "root/output_shapes_enu.root"
             fwsig_rebin = f"root/test{key}/output_shapes_enu_Rebin.root"
             fwsig_mergeTau = f"root/test{key}/output_shapes_enu_mergeTau.root"
@@ -90,7 +98,12 @@ if __name__  == "__main__":
             fqcd_rebin_scaled = f"root/test{key}/output_qcdshape_enu_Rebin_applyScaling.root"
             fqcd_output = f"root/test{key}/qcdshape_extrapolated_enu.root"
 
-            RunPreparations(fwsig_input, fwsig_rebin, fwsig_mergeTau, fqcd_input, fqcd_rebin, fqcd_input_scaled, fqcd_rebin_scaled, fqcd_output, "e", outdir_card = f"cards/test{key}", mass_bins = val, fzsig_input=fzsig_input)
+            card_e_plus, card_e_minus, card_zee = RunPreparations(fwsig_input, fwsig_rebin, fwsig_mergeTau, fqcd_input, fqcd_rebin, fqcd_input_scaled, fqcd_rebin_scaled, fqcd_output, "e", outdir_card = f"cards/test{key}", mass_bins = val, fzsig_input=fzsig_ee_input)
+
+            # combine all datacard into a big fit
+            GenerateRunCommand([card_mu_plus, card_mu_minus, card_zmumu, card_e_plus, card_e_minus, card_zee], ["muplus", "muminus", "zmumu", "eplus", "eminus", "zee"])
+
+
     if do5TeV:
         # 5TeV muon channel
         fwsig_input = "root/output_shapes_munu_5TeV.root"

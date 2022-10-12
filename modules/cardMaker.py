@@ -543,25 +543,29 @@ def combineCards(labels, cards, oname):
     print(("combine cards with {}".format(cmd)))
     os.system(cmd)
 
-def GenerateRunCommand(card_plus: str, card_minus: str, prefix: str = "./", card_z = None):
+def GenerateRunCommand(cards: list, channels: list, prefix: str = "./"):
     """
     generate the script with commands to run combine.
     inputs can probably be improved here
     """
-    workdir = prefix + card_plus.rpartition('/')[0]
-    card_plus = card_plus.split('/')[-1]
-    card_minus = card_minus.split('/')[-1]
-    if card_z:
-        card_z = card_z.split('/')[-1]
-    output = card_plus.replace("plus", "combined").replace(".txt", "")
+    assert len(cards) == len(channels), "cards and channels should have the same length"
+
+    # these partitions can be changed depending on the directories and organizations
+    card0 = cards[0]
+    workdir = prefix + card0.rpartition('/')[0]
+    output = "card_combined"
+
+    for idx, card in enumerate(cards):
+        cards[idx] = card.split('/')[-1]
 
     cmd = ""
     cmd += "#!/bin/bash\n\n"
     cmd += f"cd {workdir}\n"
-    cmd += f"combineCards.py plus={card_plus} minus={card_minus}"
-    if card_z:
-        # include the z card in the combine
-        cmd += f" z={card_z}"
+    cmd += f"combineCards.py"
+    for channel, card in zip(channels, cards):
+        if card == None:
+            continue
+        cmd += f" {channel}={card}"
     cmd += f"> {output}.txt\n"
     cmd += f"text2hdf5.py {output}.txt\n"
     cmd += f"combinetf.py {output}.hdf5 --binByBinStat --computeHistErrors --saveHists --doImpacts --output {output}.root\n"
