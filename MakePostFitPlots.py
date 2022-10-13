@@ -44,10 +44,16 @@ if doInclusive:
 
     vals_x = np.array([0, 5, 10, 15, 20, 25, 30, 35, 40, 45.0, 50.0], dtype='d')
     ntests = len(vals_x)
+    vals_lep_pos = np.zeros(ntests)
+    vals_lep_neg = np.zeros(ntests)
+    errs_lep_pos = np.zeros(ntests)
+    errs_lep_neg = np.zeros(ntests)
+
     vals_mu_pos = np.zeros(ntests)
     errs_mu_pos = np.zeros(ntests)
     vals_mu_neg = np.zeros(ntests)
     errs_mu_neg = np.zeros(ntests)
+
     vals_e_pos = np.zeros(ntests)
     errs_e_pos = np.zeros(ntests)
     vals_e_neg = np.zeros(ntests)
@@ -56,55 +62,93 @@ if doInclusive:
     lumi_unc = 0.017
 
     for idx in range(ntests):
-    #for idx in range(1):
+    #for idx in range(4,5):
         mass_bins = mass_bins_test[idx]
-        filename = f"cards/test{idx}/datacard_mucombined_lepEta_bin0_WpT_bin0.root"
-        vals_mu_pos[idx], errs_mu_pos[idx] = GetPOIValue(filename, "w_muplus_sig_mu")
-        vals_mu_neg[idx], errs_mu_neg[idx] = GetPOIValue(filename, "w_muminus_sig_mu")
+
+        #filename = f"cards/test{idx}/datacard_mucombined_lepEta_bin0_WpT_bin0.root"
+        filename = f"cards/test{idx}/card_combined.root"
+        filename_e = f"cards/test{idx}/card_combined_e.root"
+        filename_mu = f"cards/test{idx}/card_combined_mu.root"
+
+        vals_lep_pos[idx], errs_lep_pos[idx] = GetPOIValue(filename, "w_lepplus_sig_mu")
+        vals_lep_neg[idx], errs_lep_neg[idx] = GetPOIValue(filename, "w_lepminus_sig_mu")
+        #vals_mu_pos[idx], errs_mu_pos[idx] = GetPOIValue(filename_mu, "w_lepplus_sig_mu")
+        #vals_mu_neg[idx], errs_mu_neg[idx] = GetPOIValue(filename_mu, "w_lepminus_sig_mu")
 
         MakePostPlot(filename, "muplus",  mass_bins, f"_mT{idx}", showPULL)
         MakePostPlot(filename, "muminus", mass_bins, f"_mT{idx}", showPULL, startbin = len(mass_bins))
-        MakePostPlot(filename, "mumu", z_mass_bins,  "_mll",     showPULL, startbin = len(mass_bins)*2 - 1)
+        MakePostPlot(filename, "mumu", z_mass_bins,  f"_mT{idx}", showPULL, startbin = len(mass_bins)*2 - 1)
+        MakePostPlot(filename, "eplus",  mass_bins,  f"_mT{idx}", showPULL, startbin = len(mass_bins)*2 + len(z_mass_bins) - 2)
+        MakePostPlot(filename, "eminus", mass_bins,  f"_mT{idx}", showPULL, startbin = len(mass_bins)*3 + len(z_mass_bins) - 3)
+        MakePostPlot(filename, "ee",   z_mass_bins,  f"_mT{idx}", showPULL, startbin = len(mass_bins)*4 + len(z_mass_bins) - 4)
 
-        result2json(filename, "w_muplus_sig_mu", f"cards/test{idx}/impacts_muplus.json")
-        result2json(filename, "w_muminus_sig_mu",  f"cards/test{idx}/impacts_muminus.json")
-        result2json(filename, "z_mumu_sig_mu",  f"cards/test{idx}/impacts_mumu.json")
+        result2json(filename_mu, "w_lepplus_sig_mu", f"cards/test{idx}/impacts_muplus.json")
+        result2json(filename_mu, "w_lepminus_sig_mu",  f"cards/test{idx}/impacts_muminus.json")
+        result2json(filename_mu, "z_leplep_sig_mu",  f"cards/test{idx}/impacts_mumu.json")
+        result2json(filename_e, "w_lepplus_sig_mu",  f"cards/test{idx}/impacts_eplus.json")
+        result2json(filename_e, "w_lepminus_sig_mu",  f"cards/test{idx}/impacts_eminus.json")
+        result2json(filename_e, "z_leplep_sig_mu",  f"cards/test{idx}/impacts_ee.json")
+
+        result2json(filename, "w_lepplus_sig_mu", f"cards/test{idx}/impacts_lepplus.json")
+        result2json(filename, "w_lepminus_sig_mu",  f"cards/test{idx}/impacts_lepminus.json")
+        result2json(filename, "z_leplep_sig_mu",  f"cards/test{idx}/impacts_leplep.json")
 
         plotImpacts(f"cards/test{idx}/impacts_muplus.json",  f"impacts_muplus_mT{idx}")
         plotImpacts(f"cards/test{idx}/impacts_muminus.json", f"impacts_muminus_mT{idx}")
         plotImpacts(f"cards/test{idx}/impacts_mumu.json", f"impacts_mumu_mll")
-
-        filename = f"cards/test{idx}/datacard_ecombined_lepEta_bin0_WpT_bin0.root"
-        vals_e_pos[idx], errs_e_pos[idx] = GetPOIValue(filename, "w_eplus_sig_mu")
-        vals_e_neg[idx], errs_e_neg[idx] = GetPOIValue(filename, "w_eminus_sig_mu")
-
-        MakePostPlot(filename, "eplus",  mass_bins, f"_mT{idx}", showPULL)
-        MakePostPlot(filename, "eminus", mass_bins, f"_mT{idx}", showPULL, startbin = len(mass_bins))
-
-        result2json(filename, "w_eplus_sig_mu", f"cards/test{idx}/impacts_eplus.json")
-        result2json(filename, "w_eminus_sig_mu",  f"cards/test{idx}/impacts_eminus.json")
-
         plotImpacts(f"cards/test{idx}/impacts_eplus.json",  f"impacts_eplus_mT{idx}")
         plotImpacts(f"cards/test{idx}/impacts_eminus.json", f"impacts_eminus_mT{idx}")
+        plotImpacts(f"cards/test{idx}/impacts_ee.json", f"impacts_ee_mll")
 
-        DumpGroupImpacts(filename, "w_eplus_sig_mu")
+        plotImpacts(f"cards/test{idx}/impacts_lepplus.json",  f"impacts_lepplus_mT{idx}")
+        plotImpacts(f"cards/test{idx}/impacts_lepminus.json", f"impacts_lepminus_mT{idx}")
+        plotImpacts(f"cards/test{idx}/impacts_leplep.json", f"impacts_leplep_mll_mT{idx}")
 
-    errs_mu_pos = np.sqrt(errs_mu_pos**2 - lumi_unc**2)
-    errs_mu_neg = np.sqrt(errs_mu_neg**2 - lumi_unc**2)
-    errs_e_pos = np.sqrt(errs_e_pos**2 - lumi_unc**2)
-    errs_e_neg = np.sqrt(errs_e_neg**2 - lumi_unc**2)
+        #vals_e_pos[idx], errs_e_pos[idx] = GetPOIValue(filename, "w_eplus_sig_mu")
+        #vals_e_neg[idx], errs_e_neg[idx] = GetPOIValue(filename, "w_eminus_sig_mu")
+
+        #MakePostPlot(filename, "eplus",  mass_bins, f"_mT{idx}", showPULL)
+        #MakePostPlot(filename, "eminus", mass_bins, f"_mT{idx}", showPULL, startbin = len(mass_bins))
+
+        #result2json(filename, "w_eplus_sig_mu", f"cards/test{idx}/impacts_eplus.json")
+        #result2json(filename, "w_eminus_sig_mu",  f"cards/test{idx}/impacts_eminus.json")
+
+        #plotImpacts(f"cards/test{idx}/impacts_eplus.json",  f"impacts_eplus_mT{idx}")
+        #plotImpacts(f"cards/test{idx}/impacts_eminus.json", f"impacts_eminus_mT{idx}")
+
+        DumpGroupImpacts(filename, "w_lepplus_sig_mu")
+        DumpGroupImpacts(filename, "w_lepminus_sig_mu")
+        DumpGroupImpacts(filename, "z_leplep_sig_mu")
+
+        DumpGroupImpacts(filename_mu, "w_lepplus_sig_mu")
+        DumpGroupImpacts(filename_mu, "w_lepminus_sig_mu")
+        DumpGroupImpacts(filename_mu, "z_leplep_sig_mu")
+
+        DumpGroupImpacts(filename_e, "w_lepplus_sig_mu")
+        DumpGroupImpacts(filename_e, "w_lepminus_sig_mu")
+        DumpGroupImpacts(filename_e, "z_leplep_sig_mu")
+
+    #errs_mu_pos = np.sqrt(errs_mu_pos**2 - lumi_unc**2)
+    #errs_mu_neg = np.sqrt(errs_mu_neg**2 - lumi_unc**2)
+    #errs_e_pos = np.sqrt(errs_e_pos**2 - lumi_unc**2)
+    #errs_e_neg = np.sqrt(errs_e_neg**2 - lumi_unc**2)
+    errs_lep_pos = np.sqrt(errs_lep_pos**2 - lumi_unc**2)
+    errs_lep_neg = np.sqrt(errs_lep_neg**2 - lumi_unc**2)
 
     labels = [
         "W^{+} #rightarrow #mu^{+}#nu",
         "W^{-} #rightarrow #mu^{-}#bar{#nu}",
         "W^{+} #rightarrow e^{+}#nu",
         "W^{-} #rightarrow e^{-}#bar{#nu}",
+        "W^{+} #rightarrow #ell^{+}#nu",
+        "W^{-} #rightarrow #ell^{-}#bar{#nu}",
     ]
     markers = [22, 23, 26, 32]
     colors = [2, 4, 6, 8]
-    ComparePOIs(vals_x, [vals_mu_pos, vals_mu_neg], [errs_mu_pos, errs_mu_neg], labels[:2], colors[:2], markers[:2], "test_mu")
-    ComparePOIs(vals_x, [vals_e_pos, vals_e_neg], [errs_e_pos, errs_e_neg], labels[2:], colors[2:], markers[2:], "test_e")
-    ComparePOIs(vals_x, [vals_mu_pos, vals_mu_neg, vals_e_pos, vals_e_neg], [errs_mu_pos, errs_mu_neg, errs_e_pos, errs_e_neg], labels, colors, markers, "test")
+    #ComparePOIs(vals_x, [vals_mu_pos, vals_mu_neg], [errs_mu_pos, errs_mu_neg], labels[:2], colors[:2], markers[:2], "test_mu")
+    #ComparePOIs(vals_x, [vals_e_pos, vals_e_neg], [errs_e_pos, errs_e_neg], labels[2:], colors[2:], markers[2:], "test_e")
+    #ComparePOIs(vals_x, [vals_mu_pos, vals_mu_neg, vals_e_pos, vals_e_neg], [errs_mu_pos, errs_mu_neg, errs_e_pos, errs_e_neg], labels, colors, markers, "test")
+    ComparePOIs(vals_x, [vals_lep_pos, vals_lep_neg], [errs_lep_pos, errs_lep_neg], labels[4:], colors[:2], markers[:2], "test_lep")
 
     #MakePostPlot("cards/test_mu.root", "muplus", mass_bins, "", showPULL)
     #MakePostPlot("cards/test_mu.root", "muminus", mass_bins, "", showPULL, startbin = len(mass_bins)-1)
