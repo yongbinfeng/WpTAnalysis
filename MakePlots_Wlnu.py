@@ -521,9 +521,12 @@ def main():
                             hcen = hlists_central[ih]
                             hup  = hlists_up[ih]
                             prefix = ""
-                            if i == 2 or i==3 or i==4 or i==5 or i==12 or i==13:
+                            if i == 2 or i==3 or i==4 or i==12 or i==13:
                                 # the systematics that should be decorrelated between lepton flavors
                                 prefix = lepname + "_"
+                            if i==5:
+                                # stat unc, decorrelate the plus and minus
+                                prefix = chg + "_"
                             if i<=6 or i==8 or i==10 or i==12 or i==13:
                                 suffix = prefix + "SysWeight" + str(i) + "Up"
                                 #hup.SetName("{}_SysWeight{}Up".format(hcen.GetName(), str(i)))

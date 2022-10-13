@@ -28,13 +28,13 @@ def MakePostPlot(ifilename: str, channel: str, bins: np.array, suffix: str, show
     hnames_qcd = []
     for hkey in hkeys:
         # w signal
-        if bool(re.match(r"expproc_w_"+channel+"_\w*sig_postfit$", hkey)):
+        if bool(re.match(r"expproc_w_\w*sig_postfit$", hkey)):
             hnames_sig.append( hkey )
         # z signal
-        elif bool(re.match(r"expproc_z_"+channel+"_\w*sig_postfit$", hkey)):
+        elif bool(re.match(r"expproc_z_\w*sig_postfit$", hkey)):
             hnames_sig.append( hkey )
         # qcd
-        elif bool(re.match(r"expproc_QCD_"+channel+"_\w*postfit$", hkey)):
+        elif bool(re.match(r"expproc_QCD_\w*postfit$", hkey)):
             hnames_qcd.append( hkey )
     assert len(hnames_sig)>=1, "There should be at least one sig histogram in file: {}".format(ifilename)
     print(hnames_sig)
@@ -52,7 +52,7 @@ def MakePostPlot(ifilename: str, channel: str, bins: np.array, suffix: str, show
 
     for hkey in hkeys:
         if hkey in hnames_sig:
-            if hexpewk is None:
+            if hexpsig is None:
                 hexpsig = ifile.Get(hkey)
             else:
                 hexpsig.Add( ifile.Get(hkey) )

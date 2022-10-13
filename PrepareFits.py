@@ -102,7 +102,7 @@ if __name__  == "__main__":
             card_e_plus, card_e_minus, card_zee = RunPreparations(fwsig_input, fwsig_rebin, fwsig_mergeTau, fqcd_input, fqcd_rebin, fqcd_input_scaled, fqcd_rebin_scaled, fqcd_output, "e", outdir_card = f"cards/test{key}", mass_bins = val, fzsig_input=fzsig_ee_input, applyLFU=applyLFU)
 
             # combine all datacard into a big fit
-            GenerateRunCommand([card_mu_plus, card_mu_minus, card_zmumu, card_e_plus, card_e_minus, card_zee], ["muplus", "muminus", "zmumu", "eplus", "eminus", "zee"])
+            GenerateRunCommand([card_mu_plus, card_mu_minus, card_zmumu, card_e_plus, card_e_minus, card_zee], ["muplus", "muminus", "mumu", "eplus", "eminus", "ee"], runCombinedFits=True, runMuonFits=True, runElectronFits=True)
 
 
     if do5TeV:

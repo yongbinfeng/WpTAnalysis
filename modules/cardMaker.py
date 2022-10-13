@@ -165,7 +165,7 @@ def MakeWJetsCards(fname_mc, fname_qcd, channel, wptbin, etabin, doWpT = False, 
     if applyLFU:
         # if applying LFU, signal strength should be the same between electron and muon channel
         # so same signal name
-        sigprefix = sigprefix.replace("mu", "lep").replace("e", "lep")
+        sigprefix = sigprefix.replace("e", "lep").replace("mu", "lep")
     sigs = []
     if not doWpT:
         sig = Process(name = sigprefix+"_sig", fname = fname_mc, 
@@ -282,9 +282,11 @@ def MakeWJetsCards(fname_mc, fname_qcd, channel, wptbin, etabin, doWpT = False, 
     nuis_SysWeight2 = Nuisance(name = lepname + "_SysWeight2", type = "shape")
     nuis_SysWeight3 = Nuisance(name = lepname + "_SysWeight3", type = "shape")
     nuis_SysWeight4 = Nuisance(name = lepname + "_SysWeight4", type = "shape")
+    nuis_Sysweight5 = Nuisance(name = channel + "_SysWeight5", type = "shape")
     nuis_SysWeight8 = Nuisance(name = "SysWeight8", type = "shape")
     nuis_SysWeight10 = Nuisance(name = "SysWeight10", type = "shape")
     nuisgroups["sfsys"] = [nuis_SysWeight1, nuis_SysWeight2, nuis_SysWeight3, nuis_SysWeight4, nuis_SysWeight8, nuis_SysWeight10]
+    nuisgroups["sfsys"].append(nuis_Sysweight5)
     for proc in processes:
         if not proc.isQCD:
             # all the samples except the QCD apply the corrections
@@ -413,7 +415,7 @@ def MakeZJetsCards(fname, channel, rebinned = False, is5TeV = False, outdir = "c
     if applyLFU:
         # if applying LFU, signal strength should be the same between electron and muon channel
         # so same signal name
-        sigprefix = sigprefix.replace("mu", "lep").replace("e", "lep")
+        sigprefix = sigprefix.replace("e", "lep").replace("mu", "lep")
     sigs = []
     sig = Process(name = sigprefix+"_sig", fname = fname, 
                  hname = prefix + f"histo_zjets_zmass_{channel}_weight_0_grouped_DY0",
@@ -553,7 +555,7 @@ def combineCards(labels, cards, oname):
     print(("combine cards with {}".format(cmd)))
     os.system(cmd)
 
-def GenerateRunCommand(cards: list, channels: list, prefix: str = "./"):
+def GenerateRunCommand(cards: list, channels: list, prefix: str = "./", runCombinedFits: bool = True, runMuonFits: bool = False, runElectronFits: bool = False):
     """
     generate the script with commands to run combine.
     inputs can probably be improved here
@@ -571,14 +573,43 @@ def GenerateRunCommand(cards: list, channels: list, prefix: str = "./"):
     cmd = ""
     cmd += "#!/bin/bash\n\n"
     cmd += f"cd {workdir}\n"
-    cmd += f"combineCards.py"
-    for channel, card in zip(channels, cards):
-        if card == None:
-            continue
-        cmd += f" {channel}={card}"
-    cmd += f"> {output}.txt\n"
-    cmd += f"text2hdf5.py {output}.txt\n"
-    cmd += f"combinetf.py {output}.hdf5 --binByBinStat --computeHistErrors --saveHists --doImpacts --output {output}.root\n"
+
+    if runCombinedFits:
+        cmd += "\n\n"
+        cmd += f"combineCards.py"
+        for channel, card in zip(channels, cards):
+            if card == None:
+                continue
+            cmd += f" {channel}={card}"
+        cmd += f"> {output}.txt\n"
+        cmd += f"text2hdf5.py {output}.txt\n"
+        cmd += f"combinetf.py {output}.hdf5 --binByBinStat --computeHistErrors --saveHists --doImpacts --output {output}.root\n"
+
+    if runElectronFits:
+        # include the command to run the separate fits in electron and muon channels
+        cmd += "\n\n"
+        cmd += f"combineCards.py"
+        for channel, card in zip(channels, cards):
+            if card == None:
+                continue
+            if any(s in channel for s in ["eplus", "eminus", "ee"]):
+                cmd += f" {channel}={card}"
+        cmd += f"> {output}_e.txt\n"
+        cmd += f"text2hdf5.py {output}_e.txt\n"
+        cmd += f"combinetf.py {output}_e.hdf5 --binByBinStat --computeHistErrors --saveHists --doImpacts --output {output}_e.root\n"
+    
+    if runMuonFits:
+        # include the command to run the separate fits in electron and muon channels
+        cmd += "\n\n"
+        cmd += f"combineCards.py"
+        for channel, card in zip(channels, cards):
+            if card == None:
+                continue
+            if any(s in channel for s in ["muplus", "muminus", "mumu"]):
+                cmd += f" {channel}={card}"
+        cmd += f"> {output}_mu.txt\n"
+        cmd += f"text2hdf5.py {output}_mu.txt\n"
+        cmd += f"combinetf.py {output}_mu.hdf5 --binByBinStat --computeHistErrors --saveHists --doImpacts --output {output}_mu.root\n"
 
     # write outputs to scripts
     with open(f"{workdir}/{output}.sh", "w") as f:
