@@ -133,7 +133,7 @@ def WriteCard(data, processes, nuisgroups, cardname):
     ofile.close()
     
 
-def MakeWJetsCards(fname_mc, fname_qcd, channel, wptbin, etabin, doWpT = False, rebinned = False, is5TeV = False, nMTBins = 9, outdir = "cards"):
+def MakeWJetsCards(fname_mc, fname_qcd, channel, wptbin, etabin, doWpT = False, rebinned = False, is5TeV = False, nMTBins = 9, outdir = "cards", applyLFU = False):
     # prefix of all histo names
     prefix = ""
     if rebinned:
@@ -161,9 +161,14 @@ def MakeWJetsCards(fname_mc, fname_qcd, channel, wptbin, etabin, doWpT = False, 
                    isObs = True,
                    )
     # sig processes
+    sigprefix = "w_" + channel
+    if applyLFU:
+        # if applying LFU, signal strength should be the same between electron and muon channel
+        # so same signal name
+        sigprefix = sigprefix.replace("mu", "lep").replace("e", "lep")
     sigs = []
     if not doWpT:
-        sig = Process(name = "w_"+channel+"_sig", fname = fname_mc, 
+        sig = Process(name = sigprefix+"_sig", fname = fname_mc, 
                      hname = prefix + "histo_wjets_{}_mT_1_{}_{}_grouped_wsig".format( channel, wptbin, etabin),
                      hsys  = prefix + "histo_wjets_{}_mT_1_{}_{}_grouped_wsig_".format(channel, wptbin, etabin),
                      isSignal = True,
@@ -175,7 +180,7 @@ def MakeWJetsCards(fname_mc, fname_qcd, channel, wptbin, etabin, doWpT = False, 
     else:
         wpttruthbins  = ["WpT_truth_bin1", "WpT_truth_bin2", "WpT_truth_bin3", "WpT_truth_bin4", "WpT_truth_bin5", "WpT_truth_bin6", "WpT_truth_bin7", "WpT_truth_bin8", "WpT_truth_bin9"]
         for wpttruthbin in wpttruthbins:
-            sig = Process(name = "w_"+channel+"_"+wpttruthbin+"_sig", fname = fname_mc,
+            sig = Process(name = sigprefix+"_"+wpttruthbin+"_sig", fname = fname_mc,
                      hname = prefix + "histo_wjets_{}_mT_1_{}_{}_{}_signalMC".format( wpttruthbin, channel, wptbin, etabin, wpttruthbin),
                      hsys  = prefix + "histo_wjets_{}_mT_1_{}_{}_{}_signalMC_".format(wpttruthbin, channel, wptbin, etabin, wpttruthbin),
                      isSignal = True,
@@ -373,7 +378,7 @@ def MakeWJetsCards(fname_mc, fname_qcd, channel, wptbin, etabin, doWpT = False, 
     return cardname
 
 
-def MakeZJetsCards(fname, channel, rebinned = False, is5TeV = False, outdir = "cards"):
+def MakeZJetsCards(fname, channel, rebinned = False, is5TeV = False, outdir = "cards", applyLFU = False):
     """
     Generate the combine datacard for Z+jets signal region
     """
@@ -404,8 +409,13 @@ def MakeZJetsCards(fname, channel, rebinned = False, is5TeV = False, outdir = "c
                    isObs = True,
                    )
     # sig processes
+    sigprefix = "z_" + channel
+    if applyLFU:
+        # if applying LFU, signal strength should be the same between electron and muon channel
+        # so same signal name
+        sigprefix = sigprefix.replace("mu", "lep").replace("e", "lep")
     sigs = []
-    sig = Process(name = "z_"+channel+"_sig", fname = fname, 
+    sig = Process(name = sigprefix+"_sig", fname = fname, 
                  hname = prefix + f"histo_zjets_zmass_{channel}_weight_0_grouped_DY0",
                  hsys = prefix + f"histo_zjets_zmass_{channel}_weight_0_grouped_DY0_",
                  isSignal = True,

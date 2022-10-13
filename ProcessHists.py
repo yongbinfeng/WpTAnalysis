@@ -11,7 +11,7 @@ from collections import OrderedDict
 ROOT.gROOT.SetBatch(True)
 
 
-def RunPreparations(fwsig_input, fwsig_rebin, fwsig_mergeTau, fqcd_input, fqcd_rebin, fqcd_input_scaled, fqcd_rebin_scaled, fqcd_output, lepname = "mu", is5TeV = False, mass_bins = mass_bins, outdir_card = "cards", fzsig_input = None):
+def RunPreparations(fwsig_input, fwsig_rebin, fwsig_mergeTau, fqcd_input, fqcd_rebin, fqcd_input_scaled, fqcd_rebin_scaled, fqcd_output, lepname = "mu", is5TeV = False, mass_bins = mass_bins, outdir_card = "cards", fzsig_input = None, applyLFU = False):
     """
     rebin the mT hists for sig and qcd bkg,
     merge tau (wx) process to sig (wlnu),
@@ -33,19 +33,20 @@ def RunPreparations(fwsig_input, fwsig_rebin, fwsig_mergeTau, fqcd_input, fqcd_r
     ExtrapolateQCD(fqcd_rebin, fqcd_output, [lepname+"plus", lepname+"minus"], "WpT_bin0", ["lepEta_bin0"], fname_scaled=fqcd_rebin_scaled, rebinned = True, is5TeV = is5TeV)
 
     # generate card based on the signal and qcd templates
-    card_plus = MakeWJetsCards(fwsig_mergeTau, fqcd_output, lepname+"plus", "WpT_bin0", "lepEta_bin0", rebinned = True, nMTBins = len(mass_bins)-1, is5TeV = is5TeV, outdir = outdir_card)
-    card_minus = MakeWJetsCards(fwsig_mergeTau, fqcd_output, lepname+"minus", "WpT_bin0", "lepEta_bin0", rebinned = True, nMTBins = len(mass_bins)-1, is5TeV = is5TeV, outdir = outdir_card)
+    card_plus = MakeWJetsCards(fwsig_mergeTau, fqcd_output, lepname+"plus", "WpT_bin0", "lepEta_bin0", rebinned = True, nMTBins = len(mass_bins)-1, is5TeV = is5TeV, outdir = outdir_card, applyLFU=applyLFU)
+    card_minus = MakeWJetsCards(fwsig_mergeTau, fqcd_output, lepname+"minus", "WpT_bin0", "lepEta_bin0", rebinned = True, nMTBins = len(mass_bins)-1, is5TeV = is5TeV, outdir = outdir_card, applyLFU=applyLFU)
 
     card_z = None
     if fzsig_input:
         # generate z card
-        card_z = MakeZJetsCards(fzsig_input, lepname+lepname, rebinned = False, is5TeV = is5TeV, outdir = outdir_card)
+        card_z = MakeZJetsCards(fzsig_input, lepname+lepname, rebinned = False, is5TeV = is5TeV, outdir = outdir_card, applyLFU=applyLFU)
 
     return card_plus, card_minus, card_z
 
 if __name__  == "__main__":
     do13TeV = True
     do5TeV = False
+    applyLFU = True
 
     # scan fit range
     mass_bins_test = OrderedDict()
@@ -85,7 +86,7 @@ if __name__  == "__main__":
             fqcd_rebin_scaled = f"root/test{key}/output_qcdshape_munu_Rebin_applyScaling.root"
             fqcd_output = f"root/test{key}/qcdshape_extrapolated_munu.root"
 
-            card_mu_plus, card_mu_minus, card_zmumu = RunPreparations(fwsig_input, fwsig_rebin, fwsig_mergeTau, fqcd_input, fqcd_rebin, fqcd_input_scaled, fqcd_rebin_scaled, fqcd_output, "mu", outdir_card = f"cards/test{key}", mass_bins = val, fzsig_input=fzsig_mumu_input)
+            card_mu_plus, card_mu_minus, card_zmumu = RunPreparations(fwsig_input, fwsig_rebin, fwsig_mergeTau, fqcd_input, fqcd_rebin, fqcd_input_scaled, fqcd_rebin_scaled, fqcd_output, "mu", outdir_card = f"cards/test{key}", mass_bins = val, fzsig_input=fzsig_mumu_input, applyLFU=applyLFU)
 
             # electron channel
             fwsig_input = "root/output_shapes_enu.root"
@@ -98,7 +99,7 @@ if __name__  == "__main__":
             fqcd_rebin_scaled = f"root/test{key}/output_qcdshape_enu_Rebin_applyScaling.root"
             fqcd_output = f"root/test{key}/qcdshape_extrapolated_enu.root"
 
-            card_e_plus, card_e_minus, card_zee = RunPreparations(fwsig_input, fwsig_rebin, fwsig_mergeTau, fqcd_input, fqcd_rebin, fqcd_input_scaled, fqcd_rebin_scaled, fqcd_output, "e", outdir_card = f"cards/test{key}", mass_bins = val, fzsig_input=fzsig_ee_input)
+            card_e_plus, card_e_minus, card_zee = RunPreparations(fwsig_input, fwsig_rebin, fwsig_mergeTau, fqcd_input, fqcd_rebin, fqcd_input_scaled, fqcd_rebin_scaled, fqcd_output, "e", outdir_card = f"cards/test{key}", mass_bins = val, fzsig_input=fzsig_ee_input, applyLFU=applyLFU)
 
             # combine all datacard into a big fit
             GenerateRunCommand([card_mu_plus, card_mu_minus, card_zmumu, card_e_plus, card_e_minus, card_zee], ["muplus", "muminus", "zmumu", "eplus", "eminus", "zee"])
