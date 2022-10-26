@@ -3,6 +3,7 @@ code to generate the W(lnv) cards for tfCombine.
 """
 
 from collections import OrderedDict
+import ROOT
 import os
 
 class Process(object):
@@ -80,7 +81,9 @@ def WriteCard(data, processes, nuisgroups, cardname):
     ofile.write("kmax * number of nuisance parameters\n\n")
     # observation
     ofile.write("Observation -1\n\n")
-    ofile.write("shapes {pname:<30} * {fname:<40} {hname:<50}\n".format(pname = "data_obs", fname = data.fname, hname = data.hname))
+    if data:
+        # for signal mc xsec cards, no data entry
+        ofile.write("shapes {pname:<30} * {fname:<40} {hname:<50}\n".format(pname = "data_obs", fname = data.fname, hname = data.hname))
 
     for proc in processes:
         ofile.write("shapes {pname:<30} * {fname:<40} {hname:<50} {hsys}$SYSTEMATIC\n".format(pname = proc.name, fname = proc.fname, hname = proc.hname, hsys = proc.hsys))
@@ -161,7 +164,8 @@ def MakeWJetsCards(fname_mc, fname_qcd, channel, wptbin, etabin, doWpT = False, 
                    isObs = True,
                    )
     # sig processes
-    sigprefix = "w_" + channel
+    #sigprefix = "w_" + channel
+    sigprefix = channel
     if applyLFU:
         # if applying LFU, signal strength should be the same between electron and muon channel
         # so same signal name
@@ -411,7 +415,8 @@ def MakeZJetsCards(fname, channel, rebinned = False, is5TeV = False, outdir = "c
                    isObs = True,
                    )
     # sig processes
-    sigprefix = "z_" + channel
+    #sigprefix = "z_" + channel
+    sigprefix = channel
     if applyLFU:
         # if applying LFU, signal strength should be the same between electron and muon channel
         # so same signal name
@@ -544,6 +549,7 @@ def MakeZJetsCards(fname, channel, rebinned = False, is5TeV = False, outdir = "c
 
     return cardname
 
+
 def combineCards(labels, cards, oname):
     """
     genrate and run the command to combine cards in different bins
@@ -555,63 +561,122 @@ def combineCards(labels, cards, oname):
     print(("combine cards with {}".format(cmd)))
     os.system(cmd)
 
-def GenerateRunCommand(cards: list, channels: list, prefix: str = "./", runCombinedFits: bool = True, runMuonFits: bool = False, runElectronFits: bool = False):
+
+def GenerateRunCommand(output: str, cards: list, channels: list, cards_xsec: list = [], prefix: str = "./", runCombinedFits: bool = True, runMuonFits: bool = False, runElectronFits: bool = False):
     """
     generate the script with commands to run combine.
     inputs can probably be improved here
     """
     assert len(cards) == len(channels), "cards and channels should have the same length"
+    if len(cards_xsec) > 0:
+        # if provided xsec cards, then it should have the same length as the hist cards and channels        
+        assert len(cards_xsec) == len(channels), "xsec cards and channels should have the same length"
 
     # these partitions can be changed depending on the directories and organizations
     card0 = cards[0]
     workdir = prefix + card0.rpartition('/')[0]
-    output = "card_combined"
 
     for idx, card in enumerate(cards):
         cards[idx] = card.split('/')[-1]
+    
+    for idx, card_xsec in enumerate(cards_xsec):
+        cards_xsec[idx] = card_xsec.split('/')[-1]
 
     cmd = ""
     cmd += "#!/bin/bash\n\n"
-    cmd += f"cd {workdir}\n"
+    cmd += f"cd {workdir}\n\n\n"
 
-    if runCombinedFits:
-        cmd += "\n\n"
-        cmd += f"combineCards.py"
-        for channel, card in zip(channels, cards):
-            if card == None:
+    cmd += f"combineCards.py"
+    for channel, card in zip(channels, cards):
+        if card == None:
+            continue
+        cmd += f" {channel}={card}"
+    if len(cards_xsec) > 0:
+        for channel, card_xsec in zip(channels, cards_xsec):
+            if card_xsec == None:
                 continue
-            cmd += f" {channel}={card}"
-        cmd += f"> {output}.txt\n"
-        cmd += f"text2hdf5.py {output}.txt\n"
-        cmd += f"combinetf.py {output}.hdf5 --binByBinStat --computeHistErrors --saveHists --doImpacts --output {output}.root\n"
-
-    if runElectronFits:
-        # include the command to run the separate fits in electron and muon channels
-        cmd += "\n\n"
-        cmd += f"combineCards.py"
-        for channel, card in zip(channels, cards):
-            if card == None:
-                continue
-            if any(s in channel for s in ["eplus", "eminus", "ee"]):
-                cmd += f" {channel}={card}"
-        cmd += f"> {output}_e.txt\n"
-        cmd += f"text2hdf5.py {output}_e.txt\n"
-        cmd += f"combinetf.py {output}_e.hdf5 --binByBinStat --computeHistErrors --saveHists --doImpacts --output {output}_e.root\n"
-    
-    if runMuonFits:
-        # include the command to run the separate fits in electron and muon channels
-        cmd += "\n\n"
-        cmd += f"combineCards.py"
-        for channel, card in zip(channels, cards):
-            if card == None:
-                continue
-            if any(s in channel for s in ["muplus", "muminus", "mumu"]):
-                cmd += f" {channel}={card}"
-        cmd += f"> {output}_mu.txt\n"
-        cmd += f"text2hdf5.py {output}_mu.txt\n"
-        cmd += f"combinetf.py {output}_mu.hdf5 --binByBinStat --computeHistErrors --saveHists --doImpacts --output {output}_mu.root\n"
+            cmd += f" {channel}_xsec={card_xsec}"
+    cmd += f" > {output}.txt\n"
+    cmd += f"text2hdf5.py {output}.txt"
+    if len(cards_xsec) > 0:
+        for channel in channels:
+            cmd += f" --maskedChan {channel}_xsec"
+        cmd += " --X-allow-no-background"
+    cmd += "\n"
+    cmd += f"combinetf.py {output}.hdf5 --binByBinStat --computeHistErrors --saveHists --doImpacts --output {output}.root\n"
 
     # write outputs to scripts
     with open(f"{workdir}/{output}.sh", "w") as f:
         f.write(cmd)
     os.system(f"chmod +x {workdir}/{output}.sh")
+
+
+def GetXSec(channel: str, is5TeV: bool = False):
+    """
+    return the MC Xsec given a channel and sqrtS.
+    for longer term can read this from some root/txt files
+    """
+    xsecs = {}
+    xsecs["5TeV"] = {}
+    xsecs["13TeV"] = {}
+    xsecs["13TeV"]["eplus"] = 1e6
+    xsecs["13TeV"]["eminus"] = 1e6
+    xsecs["13TeV"]["muplus"] = 1e6
+    xsecs["13TeV"]["muminus"] = 1e6
+    xsecs["13TeV"]["ee"] = 1e6
+    xsecs["13TeV"]["mumu"] = 1e6
+
+    xsecs["5TeV"]["eplus"] = 5e5
+    xsecs["5TeV"]["eminus"] = 5e5
+    xsecs["5TeV"]["muplus"] = 5e5
+    xsecs["5TeV"]["muminus"] = 5e5
+    xsecs["5TeV"]["ee"] = 5e5
+    xsecs["5TeV"]["mumu"] = 5e5
+
+    return xsecs["5TeV" if is5TeV else "13TeV"][channel]
+
+
+def MakeXSecCard(channel: str, is5TeV: bool = False, outdir: str = "cards", applyLFU: bool = False):
+    """
+    Generate the root file with xsec result, and also the datacard
+    """
+    # get the xsec result
+    xsec = GetXSec(channel, is5TeV)
+
+    # write the xsec result to a root file
+    fname = f"{outdir}/xsec_{channel}.root"
+    f = ROOT.TFile(fname, "RECREATE")
+    hname = f"xsec_{channel}_inAcc"
+    h = ROOT.TH1D(hname, hname, 1, 0, 1)
+    h.SetBinContent(1, xsec)
+    h.SetBinError(1, 0)
+    h.Write()
+    f.Close()
+
+    # sig mc xsec
+    sigprefix = channel
+    if applyLFU:
+        # if applying LFU, signal strength should be the same between electron and muon channel
+        # so same signal name
+        sigprefix = sigprefix.replace("e", "lep").replace("mu", "lep")
+    sig = Process(name = sigprefix+"_sig", fname = fname, 
+                 hname = hname,
+                 hsys = hname+"_",
+                 isSignal = True,
+                 isMC = True,
+                 isV = True,
+                 isQCD = False
+                 ) 
+
+    # get the datacard
+    cardname = f"{outdir}/datacard_{channel}_xsec_InAcc.txt"
+    if is5TeV:
+        cardname = f"{outdir}/datacard_{channel}_xsec_InAcc_5TeV.txt"
+
+    nuisgroups = OrderedDict()
+    processes = [sig]
+    WriteCard(None, processes, nuisgroups, cardname)
+
+    return cardname
+
+
