@@ -28,10 +28,10 @@ def MakePostPlot(ifilename: str, channel: str, bins: np.array, suffix: str, show
     hnames_qcd = []
     for hkey in hkeys:
         # w signal
-        if bool(re.match(r"expproc_w_\w*sig_postfit$", hkey)):
+        if bool(re.match(r"expproc_\w*sig_postfit$", hkey)):
             hnames_sig.append( hkey )
         # z signal
-        elif bool(re.match(r"expproc_z_\w*sig_postfit$", hkey)):
+        elif bool(re.match(r"expproc_\w*sig_postfit$", hkey)):
             hnames_sig.append( hkey )
         # qcd
         elif bool(re.match(r"expproc_QCD_\w*postfit$", hkey)):
@@ -216,7 +216,7 @@ def ComparePOIs(vals_x: np.array, vals: list, errs: list, labels: list, colors: 
     DrawHistos(graphs, labels, -5, 60, "m_{T} [GeV]", 1.01, 1.10, "POI", output, dology=False, showratio=False, donormalize=False, drawoptions='EP', legendPos = [0.2, 0.8, 0.8, 0.9], noCMS = True, nMaxDigits = 3, legendNCols = 2)
 
 
-def result2json(ifilename, poiname, ofilename):
+def result2json(ifilename: str, poiname: str, ofilename: str, hname: str = "nuisance_impact_mu"):
     """
     script to convert the postfit POI and impacts of nuisance parameters 
     to json file, which will be used to make impact plots later
@@ -255,8 +255,7 @@ def result2json(ifilename, poiname, ofilename):
         return result.replace("lepEta_bin0_WpT_bin0_", "")
 
     ifile = ROOT.TFile(ifilename)
-    himpact = ifile.Get("nuisance_impact_mu")
-    himpact_grouped = ifile.Get("nuisance_group_impact_mu")
+    himpact = ifile.Get(hname)
     tree = ifile.Get("fitresults")
     tree.GetEntry(0)
 
@@ -287,29 +286,14 @@ def result2json(ifilename, poiname, ofilename):
         nuis = himpact.GetYaxis().GetBinLabel(ibinY)
         impacts[nuis] = himpact.GetBinContent(ibinX, ibinY)
 
-    # add the grouped QCD and Recoil systematic
-    groupnames = []
-    #for ibinY in range(1, himpact_grouped.GetNbinsY()+1):
-    #    tmpY = himpact_grouped.GetYaxis().GetBinLabel(ibinY)
-    #    if tmpY == 'stat':
-    #        continue
-    #    impacts[tmpY] = himpact_grouped.GetBinContent(ibinX, ibinY)
-    #    groupnames.append(tmpY)
-
     # sort impacts, descending
     impacts = OrderedDict(sorted(list(impacts.items()), key=lambda x: abs(x[1]), reverse=True))
 
     pulls = OrderedDict()
     for nuis in list(impacts.keys()):
-        if nuis not in groupnames:
-            val = getattr(tree, nuis)
-            err = getattr(tree, nuis+"_err")
-            err = abs(err)
-        else:
-            # manually set the postfit of the grouped sys to [-1,1], and pulled at 0,
-            # since only the impacts are useful to us
-            val = 0.
-            err = 1.
+        val = getattr(tree, nuis)
+        err = getattr(tree, nuis+"_err")
+        err = abs(err)
         pulls[nuis] = [val - err, val, val + err]
 
     # save to results
@@ -329,12 +313,12 @@ def result2json(ifilename, poiname, ofilename):
     with open(ofilename, 'w') as fp:
         json.dump(results, fp, indent=2)
     
-def DumpGroupImpacts(ifilename, poiname):
+def DumpGroupImpacts(ifilename: str, poiname: str, hname = "nuisance_group_impact_mu"):
     """
     print out the grouped impacts
     """
     ifile = ROOT.TFile(ifilename)
-    himpact_grouped = ifile.Get("nuisance_group_impact_mu")
+    himpact_grouped = ifile.Get(hname)
 
     # find the POI bin for poiname
     ibinX = -1
