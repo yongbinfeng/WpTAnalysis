@@ -3,6 +3,7 @@ code to generate the W(lnv) cards for tfCombine.
 """
 
 from collections import OrderedDict
+from re import A
 import ROOT
 import os
 
@@ -164,15 +165,9 @@ def MakeWJetsCards(fname_mc, fname_qcd, channel, wptbin, etabin, doWpT = False, 
                    isObs = True,
                    )
     # sig processes
-    #sigprefix = "w_" + channel
-    sigprefix = channel
-    if applyLFU:
-        # if applying LFU, signal strength should be the same between electron and muon channel
-        # so same signal name
-        sigprefix = sigprefix.replace("e", "lep").replace("mu", "lep")
     sigs = []
     if not doWpT:
-        sig = Process(name = sigprefix+"_sig", fname = fname_mc, 
+        sig = Process(name = GetSigName(channel, applyLFU), fname = fname_mc, 
                      hname = prefix + "histo_wjets_{}_mT_1_{}_{}_grouped_wsig".format( channel, wptbin, etabin),
                      hsys  = prefix + "histo_wjets_{}_mT_1_{}_{}_grouped_wsig_".format(channel, wptbin, etabin),
                      isSignal = True,
@@ -184,7 +179,7 @@ def MakeWJetsCards(fname_mc, fname_qcd, channel, wptbin, etabin, doWpT = False, 
     else:
         wpttruthbins  = ["WpT_truth_bin1", "WpT_truth_bin2", "WpT_truth_bin3", "WpT_truth_bin4", "WpT_truth_bin5", "WpT_truth_bin6", "WpT_truth_bin7", "WpT_truth_bin8", "WpT_truth_bin9"]
         for wpttruthbin in wpttruthbins:
-            sig = Process(name = sigprefix+"_"+wpttruthbin+"_sig", fname = fname_mc,
+            sig = Process(name = channel+"_"+wpttruthbin+"_sig", fname = fname_mc,
                      hname = prefix + "histo_wjets_{}_mT_1_{}_{}_{}_signalMC".format( wpttruthbin, channel, wptbin, etabin, wpttruthbin),
                      hsys  = prefix + "histo_wjets_{}_mT_1_{}_{}_{}_signalMC_".format(wpttruthbin, channel, wptbin, etabin, wpttruthbin),
                      isSignal = True,
@@ -415,14 +410,8 @@ def MakeZJetsCards(fname, channel, rebinned = False, is5TeV = False, outdir = "c
                    isObs = True,
                    )
     # sig processes
-    #sigprefix = "z_" + channel
-    sigprefix = channel
-    if applyLFU:
-        # if applying LFU, signal strength should be the same between electron and muon channel
-        # so same signal name
-        sigprefix = sigprefix.replace("e", "lep").replace("mu", "lep")
     sigs = []
-    sig = Process(name = sigprefix+"_sig", fname = fname, 
+    sig = Process(name = GetSigName(channel ,applyLFU), fname = fname, 
                  hname = prefix + f"histo_zjets_zmass_{channel}_weight_0_grouped_DY0",
                  hsys = prefix + f"histo_zjets_zmass_{channel}_weight_0_grouped_DY0_",
                  isSignal = True,
@@ -562,7 +551,7 @@ def combineCards(labels, cards, oname):
     os.system(cmd)
 
 
-def GenerateRunCommand(output: str, cards: list, channels: list, cards_xsec: list = [], prefix: str = "./", runCombinedFits: bool = True, runMuonFits: bool = False, runElectronFits: bool = False):
+def GenerateRunCommand(output: str, cards: list, channels: list, cards_xsec: list = [], prefix: str = "./", applyLFU: bool = False):
     """
     generate the script with commands to run combine.
     inputs can probably be improved here
@@ -597,6 +586,35 @@ def GenerateRunCommand(output: str, cards: list, channels: list, cards_xsec: lis
                 continue
             cmd += f" {channel}_xsec={card_xsec}"
     cmd += f" > {output}.txt\n"
+
+    if len(cards_xsec) > 0:
+        wplus = set()
+        wminus = set()
+        zinc = set()
+        # add the syntax to do the absolute xsec, charge asymmetry, and ratio measurements
+        for channel in channels:
+            signame = GetSigName(channel, applyLFU)
+            if "plus" in channel:
+                wplus.add(signame)
+            elif "minus" in channel:
+                wminus.add(signame)
+            else:
+                # others are z's
+                zinc.add(signame)
+        winc = wplus.union(wminus)
+
+        cmd += '\n\n'
+        cmd += '# syntax for absolute xsec, charge asymmetry, and xsec ratios\n'
+        cmd += 'echo "\n\n\n"'
+        cmd += f'echo \"Wplus_sig sumGroup = {" ".join(sig for sig in wplus)}\" >> {output}.txt\n'
+        cmd += f'echo \"Wminus_sig sumGroup = {" ".join(sig for sig in wminus)}\" >> {output}.txt\n'
+        cmd += f'echo \"Winc_sig sumGroup = {" ".join(sig for sig in winc)}\" >> {output}.txt\n'
+        cmd += f'echo \"Zinc_sig sumGroup = {" ".join(sig for sig in zinc)}\" >> {output}.txt\n'
+        cmd += f'echo \"WchgAsym chargeMetaGroup = Wplus_sig Wminus_sig\" >> {output}.txt\n'
+        cmd += f'echo \"WchgRatio ratioMetaGroup = Wplus_sig Wminus_sig\" >> {output}.txt\n'
+        cmd += f'echo \"WZRatio ratioMetaGroup = Winc_sig Zinc_sig\" >> {output}.txt\n'
+        cmd += '\n\n'
+
     cmd += f"text2hdf5.py {output}.txt"
     if len(cards_xsec) > 0:
         for channel in channels:
@@ -654,12 +672,7 @@ def MakeXSecCard(channel: str, is5TeV: bool = False, outdir: str = "cards", appl
     f.Close()
 
     # sig mc xsec
-    sigprefix = channel
-    if applyLFU:
-        # if applying LFU, signal strength should be the same between electron and muon channel
-        # so same signal name
-        sigprefix = sigprefix.replace("e", "lep").replace("mu", "lep")
-    sig = Process(name = sigprefix+"_sig", fname = fname, 
+    sig = Process(name = GetSigName(channel, applyLFU), fname = fname, 
                  hname = hname,
                  hsys = hname+"_",
                  isSignal = True,
@@ -678,5 +691,15 @@ def MakeXSecCard(channel: str, is5TeV: bool = False, outdir: str = "cards", appl
     WriteCard(None, processes, nuisgroups, cardname)
 
     return cardname
+
+
+def GetSigName(channel: str, applyLFU: bool = False):
+    """
+    return the signal process name
+    """
+    signame = channel
+    if applyLFU:
+        signame = signame.replace("e", "lep").replace("mu", "lep")
+    return signame + "_sig"
 
 
