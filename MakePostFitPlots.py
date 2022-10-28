@@ -4,6 +4,7 @@ script to make postfit comparisons
 from modules.postFitScripts import MakePostPlot, result2json, MakeWpTPostFitPlots, GetPOIValue, ComparePOIs, DumpGroupImpacts
 from modules.CombineHarvester.plotImpacts import plotImpacts
 from modules.mass_bins import mass_bins
+from modules.Utils import FormatTable
 import ROOT
 import numpy as np
 from collections import OrderedDict
@@ -77,12 +78,14 @@ if doInclusive:
         #vals_mu_pos[idx], errs_mu_pos[idx] = GetPOIValue(filename_mu, "w_lepplus_sig_mu")
         #vals_mu_neg[idx], errs_mu_neg[idx] = GetPOIValue(filename_mu, "w_lepminus_sig_mu")
 
-        MakePostPlot(filename, "muplus",  mass_bins, f"_mT{idx}", showPULL)
-        MakePostPlot(filename, "muminus", mass_bins, f"_mT{idx}", showPULL, startbin = len(mass_bins))
-        MakePostPlot(filename, "mumu", z_mass_bins,  f"_mT{idx}", showPULL, startbin = len(mass_bins)*2 - 1)
-        MakePostPlot(filename, "eplus",  mass_bins,  f"_mT{idx}", showPULL, startbin = len(mass_bins)*2 + len(z_mass_bins) - 2)
-        MakePostPlot(filename, "eminus", mass_bins,  f"_mT{idx}", showPULL, startbin = len(mass_bins)*3 + len(z_mass_bins) - 3)
-        MakePostPlot(filename, "ee",   z_mass_bins,  f"_mT{idx}", showPULL, startbin = len(mass_bins)*4 + len(z_mass_bins) - 4)
+        nevts = OrderedDict()
+
+        nevts['muplus']  = MakePostPlot(filename, "muplus",  mass_bins, f"_mT{idx}", showPULL)
+        nevts['muminus'] = MakePostPlot(filename, "muminus", mass_bins, f"_mT{idx}", showPULL, startbin = len(mass_bins))
+        nevts['mumu']    = MakePostPlot(filename, "mumu", z_mass_bins,  f"_mT{idx}", showPULL, startbin = len(mass_bins)*2 - 1)
+        nevts['eplus']   = MakePostPlot(filename, "eplus",  mass_bins,  f"_mT{idx}", showPULL, startbin = len(mass_bins)*2 + len(z_mass_bins) - 2)
+        nevts['eminus']  = MakePostPlot(filename, "eminus", mass_bins,  f"_mT{idx}", showPULL, startbin = len(mass_bins)*3 + len(z_mass_bins) - 3)
+        nevts['ee']      = MakePostPlot(filename, "ee",   z_mass_bins,  f"_mT{idx}", showPULL, startbin = len(mass_bins)*4 + len(z_mass_bins) - 4)
 
         result2json(filename, "lepplus_sig_mu", f"cards/test{idx}/impacts_lepplus.json")
         result2json(filename, "lepminus_sig_mu",  f"cards/test{idx}/impacts_lepminus.json")
@@ -149,6 +152,10 @@ if doInclusive:
 
     #plotImpacts("cards/impacts_muplus_lepEta_bin0_WpT_bin0_qcd.json", "impacts_muplus_lepEta_bin0_qcd")
     #plotImpacts("cards/impacts_eplus_qcd.json",       "impacts_eplus_lepEta_qcd")
+
+    ## print out the nevts information
+    #print(FormatTable(nevts, ['muplus', 'muminus', 'mumu']))
+    print(FormatTable(nevts, caption="Event yield at 13 TeV", label = "tab:nevts_13tev"))
 
 if doWpT:
     MakePostPlot("cards/datacard_muplus_lepEta_bin0_WpT.root", "muplus", "WpT", showPULL)
