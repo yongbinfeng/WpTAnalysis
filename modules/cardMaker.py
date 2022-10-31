@@ -402,7 +402,7 @@ def MakeZJetsCards(fname, channel, rebinned = False, is5TeV = False, outdir = "c
     unc_effstat['effstat_muplus_5TeV'] = 1.0019
     unc_effstat['effstat_muminus_5TeV'] = 1.0019
     unc_effstat['effstat_eplus_5TeV'] = 1.0061
-    unc_effstat['effstat_eminus_13TeV'] = 1.0061
+    unc_effstat['effstat_eminus_5TeV'] = 1.0061
 
     # data
     data = Process(name = "data_obs", fname = fname,
@@ -605,7 +605,7 @@ def GenerateRunCommand(output: str, cards: list, channels: list, cards_xsec: lis
 
         cmd += '\n\n'
         cmd += '# syntax for absolute xsec, charge asymmetry, and xsec ratios\n'
-        cmd += 'echo "\n\n\n"'
+        cmd += '\n\n\n'
         cmd += f'echo \"Wplus_sig sumGroup = {" ".join(sig for sig in wplus)}\" >> {output}.txt\n'
         cmd += f'echo \"Wminus_sig sumGroup = {" ".join(sig for sig in wminus)}\" >> {output}.txt\n'
         cmd += f'echo \"Winc_sig sumGroup = {" ".join(sig for sig in winc)}\" >> {output}.txt\n'
