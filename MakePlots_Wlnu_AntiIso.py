@@ -116,22 +116,22 @@ def main():
 
     if not do5TeV:
         # W -> lnu
-        Wl0AisoSamp   = Sample(input_antiiso_wl0, isMC=True, name = "wl0_aiso", isWSR=True, additionalnorm= qcdnorm * mcscale)
-        Wl1AisoSamp   = Sample(input_antiiso_wl1, isMC=True, name = "wl1_aiso", isWSR=True, additionalnorm= qcdnorm * mcscale)
-        Wl2AisoSamp   = Sample(input_antiiso_wl2, isMC=True, name = "wl2_aiso", isWSR=True, additionalnorm= qcdnorm * mcscale)
+        Wl0AisoSamp   = Sample(input_antiiso_wl0, isMC=True, name = "wl0_aiso", isWSR=True, additionalnorm= qcdnorm * mcscale, doTheoryVariation=False)
+        Wl1AisoSamp   = Sample(input_antiiso_wl1, isMC=True, name = "wl1_aiso", isWSR=True, additionalnorm= qcdnorm * mcscale, doTheoryVariation=False)
+        Wl2AisoSamp   = Sample(input_antiiso_wl2, isMC=True, name = "wl2_aiso", isWSR=True, additionalnorm= qcdnorm * mcscale, doTheoryVariation=False)
         # ttbar
-        TTbarAisoSamp  = Sample(input_antiiso_ttbar, isMC=True, name = "ttbar_dilepton_aiso",     isWSR=True, additionalnorm= qcdnorm * mcscale)
-        TT1LepAisoSamp = Sample(input_antiiso_ttbar_1lep, isMC=True, name = "ttbar_1lepton_aiso", isWSR=True, additionalnorm= qcdnorm * mcscale)
-        TT0LepAisoSamp = Sample(input_antiiso_ttbar_0lep, isMC=True, name = "ttbar_0lepton_aiso", isWSR=True, additionalnorm= qcdnorm * mcscale)
+        TTbarAisoSamp  = Sample(input_antiiso_ttbar, isMC=True, name = "ttbar_dilepton_aiso",     isWSR=True, additionalnorm= qcdnorm * mcscale, doTheoryVariation=False)
+        TT1LepAisoSamp = Sample(input_antiiso_ttbar_1lep, isMC=True, name = "ttbar_1lepton_aiso", isWSR=True, additionalnorm= qcdnorm * mcscale, doTheoryVariation=False)
+        TT0LepAisoSamp = Sample(input_antiiso_ttbar_0lep, isMC=True, name = "ttbar_0lepton_aiso", isWSR=True, additionalnorm= qcdnorm * mcscale, doTheoryVariation=False)
         ## dibosons
-        WWAisoSamp = Sample(input_antiiso_ww, isMC=True, name = "WW_aiso", isWSR=True, additionalnorm= qcdnorm * mcscale)
-        WZAisoSamp = Sample(input_antiiso_wz, isMC=True, name = "WZ_aiso", isWSR=True, additionalnorm= qcdnorm * mcscale)
-        ZZAisoSamp = Sample(input_antiiso_zz, isMC=True, name = "ZZ_aiso", isWSR=True, additionalnorm= qcdnorm * mcscale)
+        WWAisoSamp = Sample(input_antiiso_ww, isMC=True, name = "WW_aiso", isWSR=True, additionalnorm= qcdnorm * mcscale, doTheoryVariation=False)
+        WZAisoSamp = Sample(input_antiiso_wz, isMC=True, name = "WZ_aiso", isWSR=True, additionalnorm= qcdnorm * mcscale, doTheoryVariation=False)
+        ZZAisoSamp = Sample(input_antiiso_zz, isMC=True, name = "ZZ_aiso", isWSR=True, additionalnorm= qcdnorm * mcscale, doTheoryVariation=False)
         # tau
-        ZXXAisoSamp = Sample(input_antiiso_zxx, isMC=True, name = "ZXX_aiso", isWSR=True, additionalnorm= qcdnorm * mcscale)
-        Wx0AisoSamp = Sample(input_antiiso_wx0, isMC=True, name = "wx0_aiso", isWSR=True, additionalnorm= qcdnorm * mcscale)
-        Wx1AisoSamp = Sample(input_antiiso_wx1, isMC=True, name = "wx1_aiso", isWSR=True, additionalnorm= qcdnorm * mcscale)
-        Wx2AisoSamp = Sample(input_antiiso_wx2, isMC=True, name = "wx2_aiso", isWSR=True, additionalnorm= qcdnorm * mcscale)
+        ZXXAisoSamp = Sample(input_antiiso_zxx, isMC=True, name = "ZXX_aiso", isWSR=True, additionalnorm= qcdnorm * mcscale, doTheoryVariation=False)
+        Wx0AisoSamp = Sample(input_antiiso_wx0, isMC=True, name = "wx0_aiso", isWSR=True, additionalnorm= qcdnorm * mcscale, doTheoryVariation=False)
+        Wx1AisoSamp = Sample(input_antiiso_wx1, isMC=True, name = "wx1_aiso", isWSR=True, additionalnorm= qcdnorm * mcscale, doTheoryVariation=False)
+        Wx2AisoSamp = Sample(input_antiiso_wx2, isMC=True, name = "wx2_aiso", isWSR=True, additionalnorm= qcdnorm * mcscale, doTheoryVariation=False)
 
         sampMan = SampleManager(DataAisoSamp, [Wl0AisoSamp, Wl1AisoSamp, Wl2AisoSamp, TTbarAisoSamp, TT1LepAisoSamp, TT0LepAisoSamp, WWAisoSamp, WZAisoSamp, ZZAisoSamp, ZXXAisoSamp, Wx0AisoSamp, Wx1AisoSamp, Wx2AisoSamp])
 
@@ -143,17 +143,17 @@ def main():
     else:
         # W -> lnu
         label = "W#rightarrow#mu#nu" if doMuon else "W#rightarrow e#nu"
-        WlAisoSamp   = Sample(input_antiiso_wl, isMC=True, name = "wlnu", isWSR=True, additionalnorm= qcdnorm * mcscale, is5TeV = True, color=92, legend=label)
+        WlAisoSamp   = Sample(input_antiiso_wl, isMC=True, name = "wlnu", isWSR=True, additionalnorm= qcdnorm * mcscale, is5TeV = True, color=92, legend=label, doTheoryVariation=False)
         # ttbar
-        TTbarAisoSamp  = Sample(input_antiiso_ttbar, isMC=True, name = "ttbar",     isWSR=True, additionalnorm= qcdnorm * mcscale, is5TeV = True, color=96, legend="t#bar{t}")
+        TTbarAisoSamp  = Sample(input_antiiso_ttbar, isMC=True, name = "ttbar",     isWSR=True, additionalnorm= qcdnorm * mcscale, is5TeV = True, color=96, legend="t#bar{t}", doTheoryVariation=False)
         ## dibosons
-        WWAisoSamp = Sample(input_antiiso_ww, isMC=True, name = "WW_aiso", isWSR=True, additionalnorm= qcdnorm * mcscale, is5TeV = True)
-        WZAisoSamp = Sample(input_antiiso_wz, isMC=True, name = "WZ_aiso", isWSR=True, additionalnorm= qcdnorm * mcscale, is5TeV = True)
-        ZZ2LAisoSamp = Sample(input_antiiso_zz2l, isMC=True, name = "ZZ2L_aiso", isWSR=True, additionalnorm= qcdnorm * mcscale, is5TeV = True)
-        ZZ4LAisoSamp = Sample(input_antiiso_zz4l, isMC=True, name = "ZZ4L_aiso", isWSR=True, additionalnorm= qcdnorm * mcscale, is5TeV = True)
+        WWAisoSamp = Sample(input_antiiso_ww, isMC=True, name = "WW_aiso", isWSR=True, additionalnorm= qcdnorm * mcscale, is5TeV = True, doTheoryVariation=False)
+        WZAisoSamp = Sample(input_antiiso_wz, isMC=True, name = "WZ_aiso", isWSR=True, additionalnorm= qcdnorm * mcscale, is5TeV = True, doTheoryVariation=False)
+        ZZ2LAisoSamp = Sample(input_antiiso_zz2l, isMC=True, name = "ZZ2L_aiso", isWSR=True, additionalnorm= qcdnorm * mcscale, is5TeV = True, doTheoryVariation=False)
+        ZZ4LAisoSamp = Sample(input_antiiso_zz4l, isMC=True, name = "ZZ4L_aiso", isWSR=True, additionalnorm= qcdnorm * mcscale, is5TeV = True, doTheoryVariation=False)
         # tau
-        ZXXAisoSamp = Sample(input_antiiso_zxx, isMC=True, name = "ZXX_aiso", isWSR=True, additionalnorm= qcdnorm * mcscale, is5TeV = True)
-        WxAisoSamp  = Sample(input_antiiso_wx,  isMC=True, name = "wx_aiso",  isWSR=True, additionalnorm= qcdnorm * mcscale, is5TeV = True)
+        ZXXAisoSamp = Sample(input_antiiso_zxx, isMC=True, name = "ZXX_aiso", isWSR=True, additionalnorm= qcdnorm * mcscale, is5TeV = True, doTheoryVariation=False)
+        WxAisoSamp  = Sample(input_antiiso_wx,  isMC=True, name = "wx_aiso",  isWSR=True, additionalnorm= qcdnorm * mcscale, is5TeV = True, doTheoryVariation=False)
 
         sampMan = SampleManager(DataAisoSamp, [WlAisoSamp, TTbarAisoSamp, WWAisoSamp, WZAisoSamp, ZZ2LAisoSamp, ZZ4LAisoSamp, ZXXAisoSamp, WxAisoSamp], is5TeV = True)
 
