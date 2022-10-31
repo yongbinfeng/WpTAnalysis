@@ -18,17 +18,6 @@ doRebin = False
 # distribution should be included in the plots
 showPULL = True
 if doInclusive:
-    #MakePostPlot("cards/test_mu_withXsecSys.root", "muplus", mass_bins, "_withXsecSys", showPULL)
-    #MakePostPlot("cards/test_mu_withXsecSys.root", "muminus", mass_bins, "_withXsecSys", showPULL, startbin = len(mass_bins)-1)
-
-    #result2json("cards/test_mu_withXsecSys.root", "w_muminus_sig_mu", "cards/impacts_muminus_lepEta_bin0_WpT_bin0_withXsecSys.json")
-    #result2json("cards/test_mu_withXsecSys.root", "w_muplus_sig_mu", "cards/impacts_muplus_lepEta_bin0_WpT_bin0_withXsecSys.json")
-
-    #plotImpacts("cards/impacts_muplus_lepEta_bin0_WpT_bin0_withXsecSys.json", "impacts_muplus_lepEta_bin0_withXsecSys")
-    #plotImpacts("cards/impacts_muminus_lepEta_bin0_WpT_bin0_withXsecSys.json", "impacts_muminus_lepEta_bin0_withXsecSys")
-
-    #DumpGroupImpacts("cards/test_mu_withXsecSys.root", "w_muminus_sig_mu")
-
     mass_bins_test = OrderedDict()
     mass_bins_test[0] = np.array([0., 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 120])
     mass_bins_test[1] = np.array([5., 15, 25, 35, 45, 55, 65, 75, 85, 95, 105, 120])
@@ -62,16 +51,18 @@ if doInclusive:
 
     lumi_unc = 0.017
 
-    for idx in range(ntests):
-        if idx != 0:
-            continue
-    #for idx in range(4,5):
+    #for idx in range(ntests):
+    #    if idx != 0:
+    #        continue
+    for idx in range(4,5):
+        sqrtS = "5TeV"
+        do5TeV = (sqrtS == "5TeV")
         mass_bins = mass_bins_test[idx]
 
         #filename = f"cards/test{idx}/datacard_mucombined_lepEta_bin0_WpT_bin0.root"
-        filename = f"cards/test{idx}/card_combined.root"
-        filename_e = f"cards/test{idx}/card_combined_e.root"
-        filename_mu = f"cards/test{idx}/card_combined_mu.root"
+        filename = f"cards/{sqrtS}/test{idx}/card_combined.root"
+        filename_e = f"cards/{sqrtS}/test{idx}/card_combined_e.root"
+        filename_mu = f"cards/{sqrtS}/test{idx}/card_combined_mu.root"
 
         vals_lep_pos[idx], errs_lep_pos[idx] = GetPOIValue(filename, "lepplus_sig_mu")
         vals_lep_neg[idx], errs_lep_neg[idx] = GetPOIValue(filename, "lepminus_sig_mu")
@@ -80,28 +71,28 @@ if doInclusive:
 
         nevts = OrderedDict()
 
-        nevts['muplus']  = MakePostPlot(filename, "muplus",  mass_bins, f"_mT{idx}", showPULL)
-        nevts['muminus'] = MakePostPlot(filename, "muminus", mass_bins, f"_mT{idx}", showPULL, startbin = len(mass_bins))
-        nevts['mumu']    = MakePostPlot(filename, "mumu", z_mass_bins,  f"_mT{idx}", showPULL, startbin = len(mass_bins)*2 - 1)
-        nevts['eplus']   = MakePostPlot(filename, "eplus",  mass_bins,  f"_mT{idx}", showPULL, startbin = len(mass_bins)*2 + len(z_mass_bins) - 2)
-        nevts['eminus']  = MakePostPlot(filename, "eminus", mass_bins,  f"_mT{idx}", showPULL, startbin = len(mass_bins)*3 + len(z_mass_bins) - 3)
-        nevts['ee']      = MakePostPlot(filename, "ee",   z_mass_bins,  f"_mT{idx}", showPULL, startbin = len(mass_bins)*4 + len(z_mass_bins) - 4)
+        nevts['muplus']  = MakePostPlot(filename, "muplus",  mass_bins, f"_mT{idx}_{sqrtS}", showPULL, is5TeV=do5TeV)
+        nevts['muminus'] = MakePostPlot(filename, "muminus", mass_bins, f"_mT{idx}_{sqrtS}", showPULL, startbin = len(mass_bins), is5TeV=do5TeV)
+        nevts['mumu']    = MakePostPlot(filename, "mumu", z_mass_bins,  f"_mT{idx}_{sqrtS}", showPULL, startbin = len(mass_bins)*2 - 1, is5TeV=do5TeV)
+        nevts['eplus']   = MakePostPlot(filename, "eplus",  mass_bins,  f"_mT{idx}_{sqrtS}", showPULL, startbin = len(mass_bins)*2 + len(z_mass_bins) - 2, is5TeV=do5TeV)
+        nevts['eminus']  = MakePostPlot(filename, "eminus", mass_bins,  f"_mT{idx}_{sqrtS}", showPULL, startbin = len(mass_bins)*3 + len(z_mass_bins) - 3, is5TeV=do5TeV)
+        nevts['ee']      = MakePostPlot(filename, "ee",   z_mass_bins,  f"_mT{idx}_{sqrtS}", showPULL, startbin = len(mass_bins)*4 + len(z_mass_bins) - 4, is5TeV=do5TeV)
 
-        result2json(filename, "lepplus_sig_mu", f"cards/test{idx}/impacts_lepplus.json")
-        result2json(filename, "lepminus_sig_mu",  f"cards/test{idx}/impacts_lepminus.json")
-        result2json(filename, "leplep_sig_mu",  f"cards/test{idx}/impacts_leplep.json")
+        result2json(filename, "lepplus_sig_mu",  f"cards/{sqrtS}/test{idx}/impacts_lepplus.json")
+        result2json(filename, "lepminus_sig_mu", f"cards/{sqrtS}/test{idx}/impacts_lepminus.json")
+        result2json(filename, "leplep_sig_mu",   f"cards/{sqrtS}/test{idx}/impacts_leplep.json")
 
-        result2json(filename, "WZRatio_ratiometaratio", f"cards/test{idx}/impacts_WZRatio.json", "nuisance_impact_ratiometapois")
-        result2json(filename, "WchgRatio_ratiometaratio", f"cards/test{idx}/impacts_WchgRatio.json", "nuisance_impact_ratiometapois")
-        result2json(filename, "WchgAsym_chargemetaasym", f"cards/test{idx}/impacts_WchgAsym.json", "nuisance_impact_chargemetapois")
+        result2json(filename, "WZRatio_ratiometaratio",   f"cards/{sqrtS}/test{idx}/impacts_WZRatio.json",   "nuisance_impact_ratiometapois")
+        result2json(filename, "WchgRatio_ratiometaratio", f"cards/{sqrtS}/test{idx}/impacts_WchgRatio.json", "nuisance_impact_ratiometapois")
+        result2json(filename, "WchgAsym_chargemetaasym",  f"cards/{sqrtS}/test{idx}/impacts_WchgAsym.json",  "nuisance_impact_chargemetapois")
 
-        plotImpacts(f"cards/test{idx}/impacts_lepplus.json",  f"impacts_lepplus_mT{idx}")
-        plotImpacts(f"cards/test{idx}/impacts_lepminus.json", f"impacts_lepminus_mT{idx}")
-        plotImpacts(f"cards/test{idx}/impacts_leplep.json", f"impacts_leplep_mll_mT{idx}")
+        plotImpacts(f"cards/{sqrtS}/test{idx}/impacts_lepplus.json",  f"impacts_lepplus_mT{idx}_{sqrtS}")
+        plotImpacts(f"cards/{sqrtS}/test{idx}/impacts_lepminus.json", f"impacts_lepminus_mT{idx}_{sqrtS}")
+        plotImpacts(f"cards/{sqrtS}/test{idx}/impacts_leplep.json",   f"impacts_leplep_mll_mT{idx}_{sqrtS}")
 
-        plotImpacts(f"cards/test{idx}/impacts_WZRatio.json", f"impacts_WZRatio_mT{idx}")
-        plotImpacts(f"cards/test{idx}/impacts_WchgRatio.json", f"impacts_WchgRatio_mT{idx}")
-        plotImpacts(f"cards/test{idx}/impacts_WchgAsym.json", f"impacts_WchgAsym_mT{idx}")
+        plotImpacts(f"cards/{sqrtS}/test{idx}/impacts_WZRatio.json",   f"impacts_WZRatio_mT{idx}_{sqrtS}")
+        plotImpacts(f"cards/{sqrtS}/test{idx}/impacts_WchgRatio.json", f"impacts_WchgRatio_mT{idx}_{sqrtS}")
+        plotImpacts(f"cards/{sqrtS}/test{idx}/impacts_WchgAsym.json",  f"impacts_WchgAsym_mT{idx}_{sqrtS}")
 
         #vals_e_pos[idx], errs_e_pos[idx] = GetPOIValue(filename, "w_eplus_sig_mu")
         #vals_e_neg[idx], errs_e_neg[idx] = GetPOIValue(filename, "w_eminus_sig_mu")
@@ -155,7 +146,7 @@ if doInclusive:
 
     ## print out the nevts information
     #print(FormatTable(nevts, ['muplus', 'muminus', 'mumu']))
-    print(FormatTable(nevts, caption="Event yield at 13 TeV", label = "tab:nevts_13tev"))
+    print(FormatTable(nevts, caption="Event yield at 13 TeV", label = f"tab:nevts_{sqrtS}"))
 
 if doWpT:
     MakePostPlot("cards/datacard_muplus_lepEta_bin0_WpT.root", "muplus", "WpT", showPULL)

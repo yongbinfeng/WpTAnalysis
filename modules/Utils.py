@@ -15,6 +15,7 @@ def FormatOutputForWZ(istring: str):
 
     procmaps = {}
     procmaps['data'] = 'Data'
+    procmaps['sig'] = "Signal"
     procmaps['ewk'] = "EWK"
     procmaps['qcd'] = "QCD"
     procmaps['ttbar'] = "$t\\bar{t}$"
