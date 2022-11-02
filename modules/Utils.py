@@ -12,6 +12,10 @@ def FormatOutputForWZ(istring: str):
     labelmaps['ee'] = '$\\mathrm{Z}\\rightarrow e^{+}e^{-}$'
     labelmaps['eplus'] = '$\\mathrm{W}^{+}\\rightarrow e^{+}\\nu$'
     labelmaps['eminus'] = '$\\mathrm{W}^{-}\\rightarrow e^{-}\\bar{\\nu}$'
+    labelmaps['lepplus'] = '$\\mathrm{W}^{+}\\rightarrow \\ell^{+}\\nu$'
+    labelmaps['lepminus'] = '$\\mathrm{W}^{-}\\rightarrow \\ell^{-}\\bar{\\nu}$'
+    labelmaps['leplep'] = '$\\mathrm{Z}\\rightarrow \\ell^{+}\\ell^{-}$'
+    labelmaps['WOverZ'] = '$\\mathrm{W}^{\pm}/\\mathrm{Z}$'
 
     procmaps = {}
     procmaps['data'] = 'Data'
@@ -29,12 +33,14 @@ def FormatOutputForWZ(istring: str):
     return istring
 
 
-def FormatTable(pdict: str, columns: list = None, caption: str = None, label: str = None):
+def FormatTable(pdict: str, columns: list = None, caption: str = None, label: str = None, precision: int=1):
     """
     given a dictionary, print the latex version of the table
     """
     df = pd.DataFrame(pdict, columns=columns)
-    output = df.to_latex(float_format="{:.1f}".format, caption = caption, label = label)
+    df = df.round(precision)
+    #output = df.to_latex(float_format="{:.1f}".format, caption = caption, label = label)
+    output = df.to_latex(caption = caption, label = label)
     output = output.replace('\\toprule', '\\hline').replace('\\midrule', '\\hline').replace('\\bottomrule','\\hline')
 
     output = FormatOutputForWZ(output)

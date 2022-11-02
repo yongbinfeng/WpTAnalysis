@@ -106,13 +106,15 @@ if doInclusive:
         #plotImpacts(f"cards/test{idx}/impacts_eplus.json",  f"impacts_eplus_mT{idx}")
         #plotImpacts(f"cards/test{idx}/impacts_eminus.json", f"impacts_eminus_mT{idx}")
 
-        DumpGroupImpacts(filename, "lepplus_sig_mu")
-        DumpGroupImpacts(filename, "lepminus_sig_mu")
-        DumpGroupImpacts(filename, "leplep_sig_mu")
 
-        DumpGroupImpacts(filename, "WZRatio_ratiometaratio",   "nuisance_group_impact_ratiometapois")
-        DumpGroupImpacts(filename, "WchgRatio_ratiometaratio", "nuisance_group_impact_ratiometapois")
-        DumpGroupImpacts(filename, "WchgAsym_chargemetaasym",  "nuisance_group_impact_chargemetapois")
+        impacts = OrderedDict()
+
+        impacts['lepplus']  = DumpGroupImpacts(filename, "lepplus_sig_mu")
+        impacts['lepminus'] = DumpGroupImpacts(filename, "lepminus_sig_mu")
+        impacts['leplep']   = DumpGroupImpacts(filename, "leplep_sig_mu")
+
+        impacts['WOverZ']   = DumpGroupImpacts(filename, "WZRatio_ratiometaratio",   "nuisance_group_impact_ratiometapois")
+        impacts['WAsym']    = DumpGroupImpacts(filename, "WchgAsym_chargemetaasym",  "nuisance_group_impact_chargemetapois")
 
 
     #errs_mu_pos = np.sqrt(errs_mu_pos**2 - lumi_unc**2)
@@ -147,6 +149,8 @@ if doInclusive:
     ## print out the nevts information
     #print(FormatTable(nevts, ['muplus', 'muminus', 'mumu']))
     print(FormatTable(nevts, caption="Event yield at 13 TeV", label = f"tab:nevts_{sqrtS}"))
+    print("\n\n\n\n")
+    print(FormatTable(impacts, caption=f"Systematic uncertainties in percentage at {sqrtS}", label = f"tab:impacts_{sqrtS}", precision=2))
 
 if doWpT:
     MakePostPlot("cards/datacard_muplus_lepEta_bin0_WpT.root", "muplus", "WpT", showPULL)

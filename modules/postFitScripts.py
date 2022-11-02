@@ -332,15 +332,17 @@ def DumpGroupImpacts(ifilename: str, poiname: str, hname = "nuisance_group_impac
     impacts = OrderedDict()
     for ibinY in range(1, himpact_grouped.GetNbinsY()+1):
         nuis = himpact_grouped.GetYaxis().GetBinLabel(ibinY)
-        impacts[nuis] = himpact_grouped.GetBinContent(ibinX, ibinY)
+        impacts[nuis] = himpact_grouped.GetBinContent(ibinX, ibinY) * 100.0
 
     # sort impacts, descending
     impacts = OrderedDict(sorted(list(impacts.items()), key=lambda x: abs(x[1]), reverse=True))
 
     print(f"\nPrint grouped nuisance impacts for {poiname} in {ifilename}")
     for nuis in list(impacts.keys()):
-        print(f"{nuis:20}: {impacts[nuis]*100.0:.3f}")
+        print(f"{nuis:20}: {impacts[nuis]:.3f}")
     print()
+
+    return impacts
 
 
 def MakeWpTPostFitPlots(jsonNames, suffix=""):
