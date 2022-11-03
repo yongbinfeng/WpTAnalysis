@@ -281,11 +281,11 @@ def MakeWJetsCards(fname_mc, fname_qcd, channel, wptbin, etabin, doWpT = False, 
     nuis_SysWeight2 = Nuisance(name = lepname + "_SysWeight2", type = "shape")
     nuis_SysWeight3 = Nuisance(name = lepname + "_SysWeight3", type = "shape")
     nuis_SysWeight4 = Nuisance(name = lepname + "_SysWeight4", type = "shape")
-    nuis_Sysweight5 = Nuisance(name = channel + "_SysWeight5", type = "shape")
+    #nuis_Sysweight5 = Nuisance(name = channel + "_SysWeight5", type = "shape")
     nuis_SysWeight8 = Nuisance(name = "SysWeight8", type = "shape")
     nuis_SysWeight10 = Nuisance(name = "SysWeight10", type = "shape")
     nuisgroups["sfsys"] = [nuis_SysWeight1, nuis_SysWeight2, nuis_SysWeight3, nuis_SysWeight4, nuis_SysWeight8, nuis_SysWeight10]
-    nuisgroups["sfsys"].append(nuis_Sysweight5)
+    #nuisgroups["sfsys"].append(nuis_Sysweight5)
     for proc in processes:
         if not proc.isQCD:
             # all the samples except the QCD apply the corrections
@@ -362,11 +362,11 @@ def MakeWJetsCards(fname_mc, fname_qcd, channel, wptbin, etabin, doWpT = False, 
     nuisgroups["alphaS"].append(nuis_alphaS)
 
     # tau fraction variation in the signal process
-    nuis_TauFrac = Nuisance(name = "SysTauFrac", type = "shape")
-    for proc in processes:
-        if proc.isSignal:
-            nuis_TauFrac[proc.name] = 1.0
-    nuisgroups["othersys"] = [nuis_TauFrac]
+    #nuis_TauFrac = Nuisance(name = "SysTauFrac", type = "shape")
+    #for proc in processes:
+    #    if proc.isSignal:
+    #        nuis_TauFrac[proc.name] = 1.0
+    #nuisgroups["othersys"] = [nuis_TauFrac]
 
     #
     # writing datacards

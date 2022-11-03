@@ -37,11 +37,11 @@ def ProcessHists(ifile, ofile, mass_bins, includeUnderflow = False, includeOverf
 
     for hname in hnames:
         h = finput.Get(hname)
+        h = DoRebin(h, mass_bins)
         if includeOverflow:
             AddOverflowsTH1(h)
         if includeUnderflow:
             AddOverflowsTH1(h, False)
-        h = DoRebin(h, mass_bins)
         SaveHistToFile(h, foutput)
 
     foutput.Close()
