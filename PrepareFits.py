@@ -5,7 +5,7 @@ from CMSPLOTS.myFunction import AddOverflowsTH1, RebinHisto
 from modules.qcdExtrapolater import ExtrapolateQCD
 from modules.cardMaker import MakeWJetsCards, MakeZJetsCards, GenerateRunCommand, MakeXSecCard
 from modules.histProcessor import ProcessHists, CopyandMergeTau
-from modules.mass_bins import mass_bins_w, mass_bins_z
+from modules.mass_bins import mass_bins_w, mass_bins_z, mass_bins_test
 from collections import OrderedDict
 
 ROOT.gROOT.SetBatch(True)
@@ -57,22 +57,6 @@ def RunPreparations(fwsig_input, fwsig_rebin, fwsig_mergeTau, fqcd_input, fqcd_r
 if __name__  == "__main__":
     applyLFU = True
 
-    # scan fit range
-    mass_bins_test = OrderedDict()
-    mass_bins_test[0] = np.array([0., 20, 30, 40, 50, 60, 70, 80, 90, 120])
-    mass_bins_test[1] = np.array([5., 25, 35, 45, 55, 65, 75, 85, 95, 120])
-    mass_bins_test[2] = np.array([10., 20, 30, 40, 50, 60, 70, 80, 90, 120])
-    mass_bins_test[3] = np.array([15., 25, 35, 45, 55, 65, 75, 85, 95, 120])
-    mass_bins_test[4] = np.array([20., 30, 40, 50, 60, 70, 80, 90, 120])
-    mass_bins_test[5] = np.array([25., 35, 45, 55, 65, 75, 85, 95, 120])
-    mass_bins_test[6] = np.array([30., 40, 50, 60, 70, 80, 90, 100, 120])
-    mass_bins_test[7] = np.array([35., 45, 55, 65, 75, 85, 95, 120])
-    mass_bins_test[8] = np.array([40., 50, 60, 70, 80, 90, 120])
-    mass_bins_test[9] = np.array([45., 55, 65, 75, 85, 95, 120])
-    mass_bins_test[10] = np.array([50., 60, 70, 80, 90, 120])
-
-    mass_bin_z = np.array([60, 70, 80, 84, 88, 92, 96, 100, 104, 112, 120])
-
     for sqrtS in ["13TeV", "5TeV"]:
         card_muplus = None
         card_muminus = None
@@ -87,8 +71,9 @@ if __name__  == "__main__":
         fzsig_mumu_input = "root/output_shapes_mumu" + suffix
         fzsig_ee_input = "root/output_shapes_ee" + suffix
 
+        # scan fit range
         for key, val in mass_bins_test.items():
-            #if key != 4:
+            #if key != 0:
             #    continue
             # muon channel
             fwsig_input = "root/output_shapes_munu" + suffix

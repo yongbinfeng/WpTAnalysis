@@ -3,7 +3,7 @@ script to make postfit comparisons
 """
 from modules.postFitScripts import MakePostPlot, result2json, MakeWpTPostFitPlots, GetPOIValue, ComparePOIs, DumpGroupImpacts
 from modules.CombineHarvester.plotImpacts import plotImpacts
-from modules.mass_bins import mass_bins_w, mass_bins_z
+from modules.mass_bins import mass_bins_w, mass_bins_z, mass_bins_test
 from modules.Utils import FormatTable
 import ROOT
 import numpy as np
@@ -18,19 +18,6 @@ doRebin = False
 # distribution should be included in the plots
 showPULL = True
 if doInclusive:
-    mass_bins_test = OrderedDict()
-    mass_bins_test[0] = np.array([0., 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 120])
-    mass_bins_test[1] = np.array([5., 15, 25, 35, 45, 55, 65, 75, 85, 95, 105, 120])
-    mass_bins_test[2] = np.array([10., 20, 30, 40, 50, 60, 70, 80, 90, 100, 120])
-    mass_bins_test[3] = np.array([15., 25, 35, 45, 55, 65, 75, 85, 95, 105, 120])
-    mass_bins_test[4] = np.array([20., 30, 40, 50, 60, 70, 80, 90, 120])
-    mass_bins_test[5] = np.array([25., 35, 45, 55, 65, 75, 85, 95, 105, 120])
-    mass_bins_test[6] = np.array([30., 40, 50, 60, 70, 80, 90, 100, 120])
-    mass_bins_test[7] = np.array([35., 45, 55, 65, 75, 85, 95, 105, 120])
-    mass_bins_test[8] = np.array([40., 50, 60, 70, 80, 90, 100, 120])
-    mass_bins_test[9] = np.array([45., 55, 65, 75, 85, 95, 105, 120])
-    mass_bins_test[10] = np.array([50., 60, 70, 80, 90, 100, 120])
-
     vals_x = np.array([0, 5, 10, 15, 20, 25, 30, 35, 40, 45.0, 50.0], dtype='d')
     ntests = len(vals_x)
     vals_lep_pos = np.zeros(ntests)
@@ -50,10 +37,9 @@ if doInclusive:
 
     lumi_unc = 0.017
 
-    #for idx in range(ntests):
-    #    if idx != 0:
-    #        continue
-    for idx in range(4,5):
+    for idx in range(ntests):
+        if idx != 0:
+            continue
         for sqrtS in ["5TeV", "13TeV"]:
             #if sqrtS != "5TeV":
             #    continue
