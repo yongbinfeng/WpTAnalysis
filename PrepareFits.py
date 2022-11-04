@@ -5,7 +5,7 @@ from CMSPLOTS.myFunction import AddOverflowsTH1, RebinHisto
 from modules.qcdExtrapolater import ExtrapolateQCD
 from modules.cardMaker import MakeWJetsCards, MakeZJetsCards, GenerateRunCommand, MakeXSecCard
 from modules.histProcessor import ProcessHists, CopyandMergeTau
-from modules.mass_bins import mass_bins_w, mass_bins_z, mass_bins_test
+from modules.Binnings import mass_bins_w, mass_bins_z, mass_bins_test
 from collections import OrderedDict
 
 ROOT.gROOT.SetBatch(True)

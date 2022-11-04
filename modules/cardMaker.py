@@ -3,6 +3,7 @@ code to generate the W(lnv) cards for tfCombine.
 """
 
 from collections import OrderedDict
+from modules.Binnings import Vptbins
 from re import A
 import ROOT
 import os
@@ -336,12 +337,13 @@ def MakeWJetsCards(fname_mc, fname_qcd, channel, wptbin, etabin, doWpT = False, 
     # theory systematics
     # qcd scale
     nuisgroups["qcdscalesys"] = []
-    for par in ["MuF", "MuR", "MuFMuR"]:
-        nuis_QCDScale = Nuisance(name = par, type = "shape")
-        for proc in processes:
-            if proc.isSignal:
-                nuis_QCDScale[proc.name] = 1.0
-        nuisgroups["qcdscalesys"].append(nuis_QCDScale)
+    for wpt in range(len(Vptbins)-1):
+        for par in ["MuF", "MuR", "MuFMuR"]:
+            nuis_QCDScale = Nuisance(name = par+str(wpt), type = "shape")
+            for proc in processes:
+                if proc.isSignal:
+                    nuis_QCDScale[proc.name] = 1.0
+            nuisgroups["qcdscalesys"].append(nuis_QCDScale)
 
     # pdf variations
     nuisgroups["pdfsys"] = []
