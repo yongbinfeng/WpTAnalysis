@@ -3,6 +3,7 @@ import ROOT
 import numpy as np
 from collections import OrderedDict
 from modules.SampleManager import DrawConfig, Sample, SampleManager
+from modules.Binnings import Vptbins
 from CMSPLOTS.myFunction import DrawHistos
 import argparse
 
@@ -17,14 +18,13 @@ def main():
     parser.add_argument("--doWpT", action="store_true", dest="doWpT", help="Bin in different W pt bins; false runs inclusively")
     parser.add_argument("--do5TeV", action="store_true", dest="do5TeV", help="Analyze the 5TeV data; false runs on 13TeV data")
     parser.add_argument("--doElectron", action="store_true", dest="doElectron", help="Analyze the electron channel; false runs the muon channel")
-    parser.add_argument("--doTheoryNorm", action="store_true", dest="doTheoryNorm", help="Normalize theory uncertainty variations to original. (So only shape variations are considered.")
     args = parser.parse_args()
 
     doMuon = not args.doElectron
     doTest = args.doTest
     doWpT  = args.doWpT
     do5TeV = args.do5TeV
-    doTheoryNorm = args.doTheoryNorm
+    doTheoryNorm = True
 
     print("doMuon: ", doMuon)
     print("doTest:", doTest)
@@ -89,6 +89,7 @@ def main():
             input_wx    = "inputs_5TeV/wenu/input_wx.txt"
 
     DataSamp  = Sample(input_data, isMC=False, legend="Data", name="Data", isWSR=True, doTheoryVariation=False)
+    signame = "wlnu"
     if not do5TeV:
         # W -> munu
         #wjetsnorm = 1.06
@@ -120,7 +121,6 @@ def main():
         sampMan.groupMCs(['ZXX'], 'zxx', 216, 'zxx')
         sampMan.groupMCs(["ttbar_dilepton", "ttbar_1lepton", "ttbar_0lepton"], "ttbar", 96, "t#bar{t}")
         label = "W#rightarrow#mu#nu" if doMuon else "W#rightarrow e#nu"
-        signame = "wlnu"
         sampMan.groupMCs(['wl0', 'wl1', 'wl2'], signame, 92,"W#rightarrow#mu#nu")
 
         # for the signal samples
@@ -134,7 +134,7 @@ def main():
         # for the 5TeV files
         # W -> munu
         wjetsnorm = 1.0
-        WlSamp     = Sample(input_wl, isMC=True, name = "wlnu", color = 92, legend = "W#rightarrow#mu#nu", isWSR=True, additionalnorm = wjetsnorm, is5TeV = True)
+        WlSamp     = Sample(input_wl, isMC=True, name = signame, color = 92, legend = "W#rightarrow#mu#nu", isWSR=True, additionalnorm = wjetsnorm, is5TeV = True)
         # ttbar
         TTbarSamp  = Sample(input_ttbar, isMC=True, name = "ttbar", color = 86, legend = "t#bar{t}", isWSR=True, is5TeV = True)
         ## dibosons
@@ -252,16 +252,41 @@ def main():
                     for wpttruth in wpttruthbins:
                         for samp in signalSamps:
                             samp.Define("weight_{}_{}_{}_{}_{}".format(chg, str(i), wpt, lepeta, wpttruth), "weight_{}_{}_{}_{} * {}".format(chg, str(i),  wpt, lepeta, wpttruth))
-                
-    # weights with theory variations
-    for i in range(111):
-        for wpt in wptbins:
-            for lepeta in etabins:
-                sampMan.DefineMC(f"weight_theory_{i}_{wpt}_{lepeta}", f"(TMath::IsNaN(evtWeight[0])) ? 0. : evtWeight[0] * self.fnorms_varied[{i}] * {wpt} * {lepeta} * lheweight[{i}]")
-                DataSamp.Define(f"weight_theory_{i}_{wpt}_{lepeta}",  f"1.0 * {wpt} * {lepeta}")
 
-                for chg in chgbins:
-                    sampMan.DefineAll(f"weight_{chg}_theory_{i}_{wpt}_{lepeta}", f"weight_theory_{i}_{wpt}_{lepeta} * {chg}")
+    # scale the theory variations back
+    # some theory variations are far from 1.0
+    # use this to scale them back
+    # this should be equavalent as using fnorm_varied
+    for i in range(111):
+        sampMan.DefineMC(f"lheweightS_{i}", f"lheweight[{i}] * self.nmcevt / self.nmcevts_varied[{i}]")
+
+    vsamples = ["wl0", "wl1", "wl2", "wx0", "wx1", "wx2"]
+    sampMan.DefineSpecificMCs("VpT", "genV.Pt()", sampnames=vsamples)
+    qcdscalemaps = {"1": "MuRVPTUp", "2": "MuRVPTDown", "3": "MuFVPTUp", "5": "MuFVPTDown", "4": "MuFMuRVPTUp", "8": "MuFMuRVPTDown"}
+
+    theoryVariations = OrderedDict()
+    for wpt in range(len(Vptbins)-1):
+        ptmin = Vptbins[wpt]
+        ptmax = Vptbins[wpt+1]
+        for idx, var in qcdscalemaps.items():
+            sampMan.DefineSpecificMCs(f"{var}".replace("VPT", str(wpt)), f"(VpT >= {ptmin} && VpT < {ptmax}) ? lheweightS_{idx}: 1.0", sampnames=vsamples)
+            sampMan.DefineAll(f"{var}".replace("VPT", str(wpt)), "1.0", excludes=vsamples)
+
+            theoryVariations[f"{var}".replace("VPT", str(wpt))] = f"{var}".replace("VPT", str(wpt))
+
+    # pdf
+    for i in range(10, 110):
+        theoryVariations[f"PDF{i-9}Up"] = f"lheweightS_{i}"
+    # alphaS
+    theoryVariations["alphaSUp"] = "lheweightS_110"
+
+    # weights with theory variations
+    for wpt in wptbins:
+        for lepeta in etabins:
+            for chg in chgbins:
+                for var in theoryVariations.values():
+                    sampMan.DefineMC(f"weight_{chg}_{var}_{wpt}_{lepeta}", f"(TMath::IsNaN(evtWeight[0])) ? 0. : evtWeight[0] * self.fnorm * {wpt} * {lepeta} * {var} * {chg}")
+                    DataSamp.Define( f"weight_{chg}_{var}_{wpt}_{lepeta}", f"1.0 * {wpt} * {lepeta} * {chg}")
 
     #
     # Some histograms for simple data-MC comparison
@@ -343,10 +368,10 @@ def main():
                         h_sigs[hname] = h_list
         
         # variations on the theory uncertainties
-        for i in range(111):
-            for wpt in wptbins:
-                for lepeta in etabins:
-                    sampMan.cacheDraw("mT_1", f"histo_wjets_{chg}_mtcorr_weight_theory_{i}_{wpt}_{lepeta}", mass_bins, DrawConfig(xmin=xmin, xmax=xmax, xlabel="m_{T} [GeV]", dology=False, ymax=ymaxs[chg], donormalizebin=False, addOverflow=False, addUnderflow=False), weightname = f"weight_{chg}_theory_{i}_{wpt}_{lepeta}")
+        for wpt in wptbins:
+            for lepeta in etabins:
+                for var in theoryVariations.values():
+                    sampMan.cacheDraw("mT_1", f"histo_wjets_{chg}_mtcorr_weight_{var}_{wpt}_{lepeta}", mass_bins, DrawConfig(xmin=xmin, xmax=xmax, xlabel="m_{T} [GeV]", dology=False, ymax=ymaxs[chg], donormalizebin=False, addOverflow=False, addUnderflow=False), weightname = f"weight_{chg}_{var}_{wpt}_{lepeta}")
 
     # Draw all these histograms
     sampMan.launchDraw()
@@ -442,37 +467,6 @@ def main():
                         hcen.SetDirectory(outfile)
                         hcen.Write()
 
-                    # vary the relative xsec between the sub samples
-                    # only for 13TeV
-                    if not do5TeV:
-                        # vary the xsec by 10%
-                        xsecUnc = 0.10 
-                        hmcs = sampMan.hmcs["histo_wjets_{}_mT_1_{}_{}".format(chg, wpt, lepeta)]
-                        # hard coding
-                        print("keys for mcs: ", hmcs.keys())
-                        if all(x in hmcs.keys() for x in ["wl0", "wl1", "wl2"]):
-                            hmc_sig_up =  hmcs['wl0'].Clone("histo_wjets_{}_mT_1_{}_{}_grouped_{}0_SysXsecUp".format(chg, wpt, lepeta, signame))
-                            hmc_sig_up.Add(hmcs['wl1'], 1.0 + xsecUnc)
-                            hmc_sig_up.Add(hmcs['wl2'], 1.0 + xsecUnc)
-                            hmc_sig_up.SetDirectory(outfile)
-                            hmc_sig_up.Write()
-                            hmc_sig_dn =  hmcs['wl0'].Clone("histo_wjets_{}_mT_1_{}_{}_grouped_{}0_SysXsecDown".format(chg, wpt, lepeta, signame)) 
-                            hmc_sig_dn.Add(hmcs['wl1'], 1.0 - xsecUnc)
-                            hmc_sig_dn.Add(hmcs['wl2'], 1.0 - xsecUnc)
-                            hmc_sig_dn.SetDirectory(outfile)
-                            hmc_sig_dn.Write()
-                        if all(x in hmcs.keys() for x in ['wx0', 'wx1', 'wx2']):
-                            hmc_wx_up = hmcs['wx0'].Clone("histo_wjets_{}_mT_1_{}_{}_grouped_{}10_SysXsecUp".format(chg, wpt, lepeta, wxname))
-                            hmc_wx_up.Add(hmcs['wx1'], 1.0 + xsecUnc)
-                            hmc_wx_up.Add(hmcs['wx2'], 1.0 + xsecUnc)
-                            hmc_wx_up.SetDirectory(outfile)
-                            hmc_wx_up.Write()
-                            hmc_wx_dn = hmcs['wx0'].Clone("histo_wjets_{}_mT_1_{}_{}_grouped_{}10_SysXsecDown".format(chg, wpt, lepeta, wxname))
-                            hmc_wx_dn.Add(hmcs['wx1'], 1.0 - xsecUnc)
-                            hmc_wx_dn.Add(hmcs['wx2'], 1.0 - xsecUnc)
-                            hmc_wx_dn.SetDirectory(outfile)
-                            hmc_wx_dn.Write()
-
                     # recoil systematics
                     for i in [2, 3, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16]:
                         if wpttruth == "MCTemplates":
@@ -552,50 +546,33 @@ def main():
                                 hdn.SetDirectory(outfile)
                                 hdn.Write()
 
-                    # theory uncertainties
-                    for i in range(111):
+                    # pdf, alphaS, and QCD scale uncertainties
+                    for sysname, var in theoryVariations.items():
                         if wpttruth == "MCTemplates":
-                            hsmcs_up = sampMan.hsmcs[f"histo_wjets_{chg}_mtcorr_weight_theory_{i}_{wpt}_{lepeta}"]
+                            hsmcs_up = sampMan.hsmcs[f"histo_wjets_{chg}_mtcorr_weight_{var}_{wpt}_{lepeta}"]
                             hlists_up = list(hsmcs_up.GetHists())
                         else:
-                            # signal MC
-                            hname = "histo_wjets_{}_mtcorr_weight_{}_{}_{}_{}_signalMC".format(chg, str(i), wpt, lepeta, wpttruth)
-                            hlists_up = [h_sigsMerged[hname]]
+                            continue
                         for ih in range(len(hlists_up)):
                             # loop over different processes
                             hcen = hlists_central[ih]
                             hup  = hlists_up[ih]
                             
-                            if i == 1:
-                                suffix = "MuRUp"
-                            elif i == 2:
-                                suffix = "MuRDown"
-                            elif i == 3:
-                                suffix = "MuFUp"
-                            elif i == 5:
-                                suffix = "MuFDown"
-                            elif i == 4:
-                                suffix = "MuFMuRUp"
-                            elif i == 8:
-                                suffix = "MuFMuRDown"
-                            elif i >= 10 and i < 110:
-                                suffix = f"PDF{i-9}Up"
-                            elif i == 110:
-                                suffix = "alphaSUp"
+                            suffix = sysname
                             hup.SetName("{}_{}".format(hcen.GetName(), suffix))
 
                             if doTheoryNorm:
                                 # normalize the number of events to the central values
                                 # if the theoretical variations are normalized
-                                hup.Scale( hcen.Integral() / hup.Integral() )
+                                # ONLY for the signals
+                                if signame in hcen.GetName():
+                                    hup.Scale( hcen.Integral(0, 1000000) / hup.Integral(0, 1000000) )
 
-                            if i >= 10:
-                                if i >= 10 and i < 110: 
-                                    suffix = f"PDF{i-9}Down"
-                                if i == 110:
-                                    # alphaS down variation is not saved in W + jets samples
-                                    # use the symmetrized up variation instead
-                                    suffix = "alphaSDown"
+                            if "PDF" or "alphaS" in sysname:
+                                # prepare the down variation
+                                # alphaS down variation is not saved in W + jets samples
+                                # use the symmetrized up variation instead
+                                suffix = sysname.replace("Up", "Down")
                                 hdn  = hcen.Clone("{}_{}".format(hcen.GetName(), suffix))
                                 for ibin in range(1, hup.GetNbinsX()+1):
                                     hdn.SetBinContent(ibin, 2*hcen.GetBinContent(ibin) - hup.GetBinContent(ibin))

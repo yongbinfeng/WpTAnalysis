@@ -7,6 +7,7 @@ from CMSPLOTS.myFunction import DrawHistos
 import CMSPLOTS.CMS_lumi
 import pickle
 from modules.SampleManager import DrawConfig, Sample, SampleManager
+from modules.Binnings import Vptbins
 import argparse
 
 ROOT.gROOT.SetBatch(True)
@@ -19,18 +20,16 @@ def main():
     parser.add_argument("--doTest", action="store_true", dest="doTest", help="Run on a subset of samples for debugging; false runs on all dataset.")
     parser.add_argument("--do5TeV", action="store_true", dest="do5TeV", help="Analyze the 5TeV data; false runs on 13TeV data")
     parser.add_argument("--doElectron", action="store_true", dest="doElectron", help="Analyze the electron channel; false runs the muon channel")
-    parser.add_argument("--doTheoryNorm", action="store_true", dest="doTheoryNorm", help="Normalize the theory curves to the data")
     args = parser.parse_args()
 
     doTest = args.doTest
     do5TeV = args.do5TeV
     doMuon = not args.doElectron
-    doTheoryNorm = args.doTheoryNorm
+    doTheoryNorm = True
 
     print("doMuon: ", doMuon)
     print("doTest:", doTest)
     print("do5TeV:", do5TeV)
-    print("doTheoryNorm:", doTheoryNorm)
 
     if not do5TeV:
         if doMuon:
@@ -150,10 +149,37 @@ def main():
         sampMan.DefineMC("weight_{}".format(str(i)), "TMath::IsNaN(weight_{}_tmp) ? 0.: weight_{}_tmp".format(str(i), str(i)))
         DataSamp.Define("weight_{}".format(str(i)),  "1.0")
 
-    # theory uncertainties
+    # scale the theory variations back
+    # some theory variations are far from 1.0
+    # use this to scale them back
+    # this should be equavalent as using fnorm_varied
     for i in range(111):
-        sampMan.DefineMC(f"weight_theory_{i}", f"evtWeight[0] * lheweight[{i}] * self.fnorms_varied[{i}]")
-        DataSamp.Define(f"weight_theory_{i}",  "1.0")
+        sampMan.DefineMC(f"lheweightS_{i}", f"lheweight[{i}] * self.nmcevt / self.nmcevts_varied[{i}]")
+
+
+    vsamples = ["DY"]
+    sampMan.DefineSpecificMCs("VpT", "genV.Pt()", sampnames=vsamples)
+    qcdscalemaps = {"2": "MuRVPTUp", "5": "MuRVPTDown", "0": "MuFVPTUp", "1": "MuFVPTDown", "3": "MuFMuRVPTUp", "7": "MuFMuRVPTDown"}
+
+    theoryVariations = OrderedDict()
+    for vpt in range(len(Vptbins)-1):
+        ptmin = Vptbins[vpt]
+        ptmax = Vptbins[vpt+1]
+        for idx, var in qcdscalemaps.items():
+            sampMan.DefineSpecificMCs(f"{var}".replace("VPT", str(vpt)), f"(VpT >= {ptmin} && VpT < {ptmax}) ? lheweightS_{idx}: 1.0", sampnames=vsamples)
+            sampMan.DefineAll(f"{var}".replace("VPT", str(vpt)), "1.0", excludes=vsamples)
+
+            theoryVariations[f"{var}".replace("VPT", str(vpt))] = f"{var}".replace("VPT", str(vpt))
+    # pdf
+    for i in range(9, 109):
+        theoryVariations[f"PDF{i-9}Up"] = f"lheweightS_{i}"
+    # alphaS
+    theoryVariations["alphaSUp"] = "lheweightS_109"
+    theoryVariations["alphaSDown"] = "lheweightS_110"
+
+    for var in theoryVariations.values():
+        sampMan.DefineMC(f"weight_{var}", f"(TMath::IsNaN(evtWeight[0])) ? 0. : evtWeight[0] * self.fnorm * {var}")
+        DataSamp.Define( f"weight_{var}",  "1.0")
 
     sampMan.DefineAll("weight_noEcal", "prefireEcal == 0 ? 1 : (weight_0 / prefireEcal)")
     sampMan.DefineAll("weight_noMuon", "prefireMuon == 0 ? 1 : (weight_0 / prefireMuon)")
@@ -233,8 +259,8 @@ def main():
     sampMan.cacheDraw("zmass", "histo_zjets_zmass_" + lepname, mass_bins, DrawConfig(xmin=60, xmax=120, xlabel='m_{{{leplabel}{leplabel}}} [GeV]'.format(leplabel=leplabel)))
     for i in [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]:
         sampMan.cacheDraw("zmass", "histo_zjets_zmass_{}_weight_{}".format(lepname, str(i)),  15, 60, 120, DrawConfig(xmin=60, xmax=120, xlabel="m_{{{leplabel}{leplabel}}} [GeV]".format(leplabel=leplabel), dology=True, donormalizebin=False, addOverflow=False, addUnderflow=False), weightname = "weight_{}".format(str(i)))
-    for i in range(111):
-        sampMan.cacheDraw("zmass", f"histo_zjets_zmass_{lepname}_theoryUnc_{i}", 15, 60, 120, DrawConfig(xmin=60, xmax=120, xlabel=f"m_{{{leplabel}{leplabel}}} [GeV]", dology=True, donormalizebin=False, addOverflow=False, addUnderflow=False), weightname = f"weight_theory_{i}")
+    for var in theoryVariations.values():
+        sampMan.cacheDraw("zmass", f"histo_zjets_zmass_{lepname}_{var}", 15, 60, 120, DrawConfig(xmin=60, xmax=120, xlabel=f"m_{{{leplabel}{leplabel}}} [GeV]", dology=True, donormalizebin=False, addOverflow=False, addUnderflow=False), weightname = f"weight_{var}")
 
     sampMan.launchDraw()
 
@@ -331,33 +357,15 @@ def main():
                 hdn.Write()
     
     # theory uncertainties
-    for i in range(111):
-        hsmcs_up = sampMan.hsmcs[f"histo_zjets_zmass_{lepname}_theoryUnc_{i}"]
+    for sysname, var in theoryVariations.items():
+        hsmcs_up = sampMan.hsmcs[f"histo_zjets_zmass_{lepname}_{var}"]
         hlists_up = list(hsmcs_up.GetHists())
         for ih in range(len(hlists_up)):
             # loop over different processes/samps
             hcen = hlists_central[ih]
             hup  = hlists_up[ih]
 
-            if i == 0:
-                suffix = "MuFUp"
-            elif i == 1:
-                suffix = "MuFDown"
-            elif i == 2:
-                suffix = "MuRUp"
-            elif i == 5:
-                suffix = "MuRDown"
-            elif i == 3:
-                suffix = "MuFMuRUp"
-            elif i == 7:
-                suffix = "MuFMuRDown"
-            elif i >= 9 and i < 109:
-                suffix = f"PDF{i-8}Up"
-            elif i == 109:
-                suffix = "alphaSUp"
-            elif i == 110:
-                suffix = "alphaSDown"
-
+            suffix = sysname 
             hup.SetName("{}_{}".format(hcen.GetName(), suffix))
             for ibin in range(1, hup.GetNbinsX()+1):
                 hup.SetBinError(ibin, 0.)
@@ -365,10 +373,12 @@ def main():
             if doTheoryNorm:
                 # normalize the number of events to the central values
                 # if the theory variations are normalized
-                hup.Scale(hcen.Integral()/hup.Integral())
+                # only apply to signal process
+                if "DY" in hcen.GetName():
+                    hup.Scale(hcen.Integral()/hup.Integral())
 
-            if i >= 9 and i < 109: 
-                suffix = f"PDF{i-8}Down"
+            if "PDF" in sysname:
+                suffix = sysname.replace("Up", "Down")
                 hdn.SetName("{}_{}".format(hcen.GetName(), suffix))
                 for ibin in range(1, hup.GetNbinsX()+1):
                     hdn.SetBinContent(ibin, 2*hcen.GetBinContent(ibin) - hup.GetBinContent(ibin))
