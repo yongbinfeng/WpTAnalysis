@@ -3,7 +3,7 @@ script to make postfit comparisons
 """
 from modules.postFitScripts import MakePostPlot, result2json, MakeWpTPostFitPlots, GetPOIValue, ComparePOIs, DumpGroupImpacts
 from modules.CombineHarvester.plotImpacts import plotImpacts
-from modules.mass_bins import mass_bins_w, mass_bins_z, mass_bins_test
+from modules.Binnings import mass_bins_w, mass_bins_z, mass_bins_test
 from modules.Utils import FormatTable
 import ROOT
 import numpy as np
