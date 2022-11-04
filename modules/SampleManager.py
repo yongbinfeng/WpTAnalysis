@@ -224,15 +224,17 @@ class Sample(object):
         """
         if "self." in formula:
             pieces = formula.split()
-            for piece in pieces:
+            for i, piece in enumerate(pieces):
                 if "self." not in piece:
                     continue
                 try:
                     val = eval(piece)
-                    formula = formula.replace(piece, str(val))
+                    pieces[i] = str(val)
+                    #formula = formula.replace(piece + " ", str(val) + " ")
                 except:
                     print(f"Sample {self.name} does not have attribute {piece} in the string {formula}")
                     sys.exit(1)
+            formula = " ".join(pieces)
         self.rdf = self.rdf.Define(varname, formula)
 
     def calculateNorm(self, total = -1) -> float:
