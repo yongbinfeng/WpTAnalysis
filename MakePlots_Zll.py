@@ -172,7 +172,7 @@ def main():
             theoryVariations[f"{var}".replace("VPT", str(vpt))] = f"{var}".replace("VPT", str(vpt))
     # pdf
     for i in range(9, 109):
-        theoryVariations[f"PDF{i-9}Up"] = f"lheweightS_{i}"
+        theoryVariations[f"PDF{i-8}Up"] = f"lheweightS_{i}"
     # alphaS
     theoryVariations["alphaSUp"] = "lheweightS_109"
     theoryVariations["alphaSDown"] = "lheweightS_110"
