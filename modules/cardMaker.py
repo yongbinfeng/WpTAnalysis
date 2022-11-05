@@ -345,23 +345,22 @@ def MakeWJetsCards(fname_mc, fname_qcd, channel, wptbin, etabin, doWpT = False, 
                     nuis_QCDScale[proc.name] = 1.0
             nuisgroups["qcdscalesys"].append(nuis_QCDScale)
 
-    # pdf variations
-    nuisgroups["pdfsys"] = []
+    # pdf + alphaS variations
+    nuisgroups["pdfalphaSsys"] = []
     pdf_indices = list(range(1, 101))
     for ipdf in pdf_indices:
         nuis_PDF = Nuisance(name = f"PDF{ipdf}", type = "shape")
         for proc in processes:
             if proc.isSignal:
                 nuis_PDF[proc.name] = 1.0
-        nuisgroups["pdfsys"].append(nuis_PDF)
+        nuisgroups["pdfalphaSsys"].append(nuis_PDF)
     
     # alphaS variations
-    nuisgroups["alphaS"] = []
     nuis_alphaS = Nuisance(name = "alphaS", type = "shape")
     for proc in processes:
         if proc.isSignal:
             nuis_alphaS[proc.name] = 1.0
-    nuisgroups["alphaS"].append(nuis_alphaS)
+    nuisgroups["pdfalphaSsys"].append(nuis_alphaS)
 
     # tau fraction variation in the signal process
     #nuis_TauFrac = Nuisance(name = "SysTauFrac", type = "shape")
@@ -505,30 +504,30 @@ def MakeZJetsCards(fname, channel, rebinned = False, is5TeV = False, outdir = "c
     # theory systematics
     # qcd scale
     nuisgroups["qcdscalesys"] = []
-    for par in ["MuF", "MuR", "MuFMuR"]:
-        nuis_QCDScale = Nuisance(name = par, type = "shape")
-        for proc in processes:
-            if proc.isSignal:
-                nuis_QCDScale[proc.name] = 1.0
-        nuisgroups["qcdscalesys"].append(nuis_QCDScale)
+    for wpt in range(len(Vptbins)-1):
+        for par in ["MuF", "MuR", "MuFMuR"]:
+            nuis_QCDScale = Nuisance(name = par+str(wpt), type = "shape")
+            for proc in processes:
+                if proc.isSignal:
+                    nuis_QCDScale[proc.name] = 1.0
+            nuisgroups["qcdscalesys"].append(nuis_QCDScale)
 
-    # pdf variations
-    nuisgroups["pdfsys"] = []
+    # pdf + alphaS variations
+    nuisgroups["pdfalphaSsys"] = []
     pdf_indices = list(range(1, 101))
     for ipdf in pdf_indices:
         nuis_PDF = Nuisance(name = f"PDF{ipdf}", type = "shape")
         for proc in processes:
             if proc.isSignal:
                 nuis_PDF[proc.name] = 1.0
-        nuisgroups["pdfsys"].append(nuis_PDF)
+        nuisgroups["pdfalphaSsys"].append(nuis_PDF)
     
     # alphaS variations
-    nuisgroups["alphaS"] = []
     nuis_alphaS = Nuisance(name = "alphaS", type = "shape")
     for proc in processes:
         if proc.isSignal:
             nuis_alphaS[proc.name] = 1.0
-    nuisgroups["alphaS"].append(nuis_alphaS)
+    nuisgroups["pdfalphaSsys"].append(nuis_alphaS)
 
     #
     # writing datacards
