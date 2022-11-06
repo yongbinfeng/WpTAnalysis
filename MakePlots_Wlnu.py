@@ -4,6 +4,7 @@ import numpy as np
 from collections import OrderedDict
 from modules.SampleManager import DrawConfig, Sample, SampleManager
 from modules.Binnings import Vptbins
+from modules.theoryUncIndices import theoryUnc_13TeV_wjets, theoryUnc_5TeV_wjets
 from CMSPLOTS.myFunction import DrawHistos
 import argparse
 
@@ -262,23 +263,27 @@ def main():
 
     vsamples = ["wl0", "wl1", "wl2", "wx0", "wx1", "wx2"]
     sampMan.DefineSpecificMCs("VpT", "genV.Pt()", sampnames=vsamples)
-    qcdscalemaps = {"1": "MuRVPTUp", "2": "MuRVPTDown", "3": "MuFVPTUp", "5": "MuFVPTDown", "4": "MuFMuRVPTUp", "8": "MuFMuRVPTDown"}
 
+    theoryMaps = theoryUnc_13TeV_wjets if not do5TeV else theoryUnc_5TeV_wjets
     theoryVariations = OrderedDict()
+
     for wpt in range(len(Vptbins)-1):
         ptmin = Vptbins[wpt]
         ptmax = Vptbins[wpt+1]
-        for idx, var in qcdscalemaps.items():
+        for var in ["MuRVPTUp", "MuRVPTDown", "MuFVPTUp", "MuFVPTDown", "MuFMuRVPTUp", "MuFMuRVPTDown"]:
+            idx = theoryMaps.getIndex(var.replace("VPT", ""))
             sampMan.DefineSpecificMCs(f"{var}".replace("VPT", str(wpt)), f"(VpT >= {ptmin} && VpT < {ptmax}) ? lheweightS_{idx}: 1.0", sampnames=vsamples)
             sampMan.DefineAll(f"{var}".replace("VPT", str(wpt)), "1.0", excludes=vsamples)
 
             theoryVariations[f"{var}".replace("VPT", str(wpt))] = f"{var}".replace("VPT", str(wpt))
 
     # pdf
-    for i in range(10, 110):
-        theoryVariations[f"PDF{i-9}Up"] = f"lheweightS_{i}"
+    pdfStart = theoryMaps.getIndex("PDFStart")
+    for i in range(1, 101):
+        theoryVariations[f"PDF{i}Up"] = f"lheweightS_{i + pdfStart - 1}"
     # alphaS
-    theoryVariations["alphaSUp"] = "lheweightS_110"
+    alphaSUp = theoryMaps.getIndex("alphaSUp")
+    theoryVariations["alphaSUp"] = f"lheweightS_{alphaSUp}"
 
     # weights with theory variations
     for wpt in wptbins:

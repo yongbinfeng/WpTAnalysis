@@ -8,6 +8,7 @@ import CMSPLOTS.CMS_lumi
 import pickle
 from modules.SampleManager import DrawConfig, Sample, SampleManager
 from modules.Binnings import Vptbins
+from modules.theoryUncIndices import theoryUnc_13TeV_zjets, theoryUnc_5TeV_zjets
 import argparse
 
 ROOT.gROOT.SetBatch(True)
@@ -159,23 +160,27 @@ def main():
 
     vsamples = ["DY"]
     sampMan.DefineSpecificMCs("VpT", "genV.Pt()", sampnames=vsamples)
-    qcdscalemaps = {"2": "MuRVPTUp", "5": "MuRVPTDown", "0": "MuFVPTUp", "1": "MuFVPTDown", "3": "MuFMuRVPTUp", "7": "MuFMuRVPTDown"}
+    theoryMaps = theoryUnc_13TeV_zjets if not do5TeV else theoryUnc_5TeV_zjets
 
     theoryVariations = OrderedDict()
     for vpt in range(len(Vptbins)-1):
         ptmin = Vptbins[vpt]
         ptmax = Vptbins[vpt+1]
-        for idx, var in qcdscalemaps.items():
+        for var in ["MuRVPTUp", "MuRVPTDown", "MuFVPTUp", "MuFVPTDown", "MuFMuRVPTUp", "MuFMuRVPTDown"]:
+            idx = theoryMaps.getIndex(var.replace("VPT", ""))
             sampMan.DefineSpecificMCs(f"{var}".replace("VPT", str(vpt)), f"(VpT >= {ptmin} && VpT < {ptmax}) ? lheweightS_{idx}: 1.0", sampnames=vsamples)
             sampMan.DefineAll(f"{var}".replace("VPT", str(vpt)), "1.0", excludes=vsamples)
 
             theoryVariations[f"{var}".replace("VPT", str(vpt))] = f"{var}".replace("VPT", str(vpt))
     # pdf
-    for i in range(9, 109):
-        theoryVariations[f"PDF{i-8}Up"] = f"lheweightS_{i}"
+    pdfStart = theoryMaps.getIndex("PDFStart")
+    for i in range(1, 101):
+        theoryVariations[f"PDF{i}Up"] = f"lheweightS_{i + pdfStart - 1}"
     # alphaS
-    theoryVariations["alphaSUp"] = "lheweightS_109"
-    theoryVariations["alphaSDown"] = "lheweightS_110"
+    alphaSUp = theoryMaps.getIndex("alphaSUp")
+    alphaSDown = theoryMaps.getIndex("alphaSDown")
+    theoryVariations["alphaSUp"] = f"lheweightS_{alphaSUp}"
+    theoryVariations["alphaSDown"] = f"lheweightS_{alphaSDown}"
 
     for var in theoryVariations.values():
         sampMan.DefineMC(f"weight_{var}", f"(TMath::IsNaN(evtWeight[0])) ? 0. : evtWeight[0] * self.fnorm * {var}")
