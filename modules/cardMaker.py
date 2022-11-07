@@ -260,14 +260,14 @@ def MakeWJetsCards(fname_mc, fname_qcd, channel, wptbin, etabin, doWpT = False, 
     for proc in processes:
         if proc.isMC:
             nuis_lumi[proc.name] = unc_lumi[nuis_lumi.name]
-    nuisgroups["lumisys"] = [nuis_lumi]
+    nuisgroups["lumi"] = [nuis_lumi]
 
-    nuisgroups["mcsecsys"] = []
+    nuisgroups["mcsec"] = []
     for proc in processes:
         if not proc.isSignal and proc.isMC:
             nuis_norm = Nuisance(name = "norm_" + proc.name, type = "lnN")
             nuis_norm[proc.name] = proc.xsecUnc
-            nuisgroups["mcsecsys"].append(nuis_norm)
+            nuisgroups["mcsec"].append(nuis_norm)
 
     # correction systematics
     # in Aram's ntuples, defined here: https://github.com/MiT-HEP/MitEwk13TeV/blob/CMSSW_94X/NtupleMod/eleNtupleMod.C#L71
@@ -285,13 +285,14 @@ def MakeWJetsCards(fname_mc, fname_qcd, channel, wptbin, etabin, doWpT = False, 
     #nuis_Sysweight5 = Nuisance(name = channel + "_SysWeight5", type = "shape")
     nuis_SysWeight8 = Nuisance(name = "SysWeight8", type = "shape")
     nuis_SysWeight10 = Nuisance(name = "SysWeight10", type = "shape")
-    nuisgroups["sfsys"] = [nuis_SysWeight1, nuis_SysWeight2, nuis_SysWeight3, nuis_SysWeight4, nuis_SysWeight8, nuis_SysWeight10]
+    nuisgroups["effsys"] = [nuis_SysWeight1, nuis_SysWeight2, nuis_SysWeight3, nuis_SysWeight4]
+    nuisgroups["prefire"] = [nuis_SysWeight8, nuis_SysWeight10]
     #nuisgroups["sfsys"].append(nuis_Sysweight5)
     for proc in processes:
         if not proc.isQCD:
             # all the samples except the QCD apply the corrections
             # so they should be affected by sf systematics
-            for sysweight in nuisgroups["sfsys"]:
+            for sysweight in nuisgroups["effsys"] + nuisgroups["prefire"]:
                 sysweight[proc.name] = 1.0
 
     nuis_effstat = Nuisance(name = "effstat_" + channel + "_" + era, type = "lnN")
@@ -299,13 +300,13 @@ def MakeWJetsCards(fname_mc, fname_qcd, channel, wptbin, etabin, doWpT = False, 
         if proc.isSignal:
             # only apply eff/sf stat uncertainty to signals for now
             nuis_effstat[proc.name] = unc_effstat[nuis_effstat.name]
-    nuisgroups["sfstatsys"] = [nuis_effstat]
+    nuisgroups["effstat"] = [nuis_effstat]
 
     # recoil correction systematics
     # in Aram's ntuples, defined here: https://github.com/MiT-HEP/MitEwk13TeV/blob/CMSSW_94X/NtupleMod/eleNtupleMod.C#L65
     # 1 is central correction, 2 is correction with different eta bins, 3 is correction using Gaussian kernels, 
     # 6-15 are corrections with different statistical uncertainties
-    nuisgroups["recoilsys"] = []
+    nuisgroups["recoil"] = []
     recoil_indices = ["2", "3", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"]
     for iuvar in recoil_indices:
         nuis_SysRecoil = Nuisance(name = lepname + "_SysRecoil" + iuvar, type = "shape")
@@ -313,11 +314,11 @@ def MakeWJetsCards(fname_mc, fname_qcd, channel, wptbin, etabin, doWpT = False, 
             if proc.isV:
                 # all the V processes (including W and Z) apply the recoil corrections
                 nuis_SysRecoil[proc.name] = 1.0
-        nuisgroups["recoilsys"].append(nuis_SysRecoil)
+        nuisgroups["recoil"].append(nuis_SysRecoil)
 
     # qcd stat
     # this is hard coded for now. Will be improved later
-    nuisgroups["qcdstats"] = []
+    nuisgroups["qcdbkg"] = []
     prefix = channel + "_" + etabin + "_" + wptbin
     nbins = nMTBins
     for ibin in range(1, nbins+1):
@@ -325,42 +326,42 @@ def MakeWJetsCards(fname_mc, fname_qcd, channel, wptbin, etabin, doWpT = False, 
         for proc in processes:
             if proc.isQCD:
                 nuis_QCDStat[proc.name] = 1.0
-        nuisgroups["qcdstats"].append(nuis_QCDStat)
+        nuisgroups["qcdbkg"].append(nuis_QCDStat)
 
     if True:
         nuis_QCDMCCont = Nuisance(name = prefix + "_ScaledMCshape", type = "shape")
         for proc in processes:
             if proc.isQCD:
                 nuis_QCDMCCont[proc.name] = 1.0
-        nuisgroups["qcdstats"].append(nuis_QCDMCCont)
+        nuisgroups["qcdbkg"].append(nuis_QCDMCCont)
 
     # theory systematics
     # qcd scale
-    nuisgroups["qcdscalesys"] = []
+    nuisgroups["qcdscale"] = []
     for wpt in range(len(Vptbins)-1):
         for par in ["MuF", "MuR", "MuFMuR"]:
             nuis_QCDScale = Nuisance(name = par+str(wpt), type = "shape")
             for proc in processes:
                 if proc.isSignal:
                     nuis_QCDScale[proc.name] = 1.0
-            nuisgroups["qcdscalesys"].append(nuis_QCDScale)
+            nuisgroups["qcdscale"].append(nuis_QCDScale)
 
     # pdf + alphaS variations
-    nuisgroups["pdfalphaSsys"] = []
+    nuisgroups["pdfalphaS"] = []
     pdf_indices = list(range(1, 101))
     for ipdf in pdf_indices:
         nuis_PDF = Nuisance(name = f"PDF{ipdf}", type = "shape")
         for proc in processes:
             if proc.isSignal:
                 nuis_PDF[proc.name] = 1.0
-        nuisgroups["pdfalphaSsys"].append(nuis_PDF)
+        nuisgroups["pdfalphaS"].append(nuis_PDF)
     
     # alphaS variations
     nuis_alphaS = Nuisance(name = "alphaS", type = "shape")
     for proc in processes:
         if proc.isSignal:
             nuis_alphaS[proc.name] = 1.0
-    nuisgroups["pdfalphaSsys"].append(nuis_alphaS)
+    nuisgroups["pdfalphaS"].append(nuis_alphaS)
 
     # tau fraction variation in the signal process
     #nuis_TauFrac = Nuisance(name = "SysTauFrac", type = "shape")
@@ -460,14 +461,14 @@ def MakeZJetsCards(fname, channel, rebinned = False, is5TeV = False, outdir = "c
     for proc in processes:
         if proc.isMC:
             nuis_lumi[proc.name] = unc_lumi[nuis_lumi.name]
-    nuisgroups["lumisys"] = [nuis_lumi]
+    nuisgroups["lumi"] = [nuis_lumi]
 
-    nuisgroups["mcsecsys"] = []
+    nuisgroups["mcsec"] = []
     for proc in processes:
         if not proc.isSignal and proc.isMC:
             nuis_norm = Nuisance(name = "norm_" + proc.name, type = "lnN")
             nuis_norm[proc.name] = proc.xsecUnc
-            nuisgroups["mcsecsys"].append(nuis_norm)
+            nuisgroups["mcsec"].append(nuis_norm)
 
     # correction systematics
     # in Aram's ntuples, defined here: https://github.com/MiT-HEP/MitEwk13TeV/blob/CMSSW_94X/NtupleMod/eleNtupleMod.C#L71
@@ -484,12 +485,13 @@ def MakeZJetsCards(fname, channel, rebinned = False, is5TeV = False, outdir = "c
     nuis_SysWeight4 = Nuisance(name = lepname + "_SysWeight4", type = "shape")
     nuis_SysWeight8 = Nuisance(name = "SysWeight8", type = "shape")
     nuis_SysWeight10 = Nuisance(name = "SysWeight10", type = "shape")
-    nuisgroups["sfsys"] = [nuis_SysWeight1, nuis_SysWeight2, nuis_SysWeight3, nuis_SysWeight4, nuis_SysWeight8, nuis_SysWeight10]
+    nuisgroups["effsys"] = [nuis_SysWeight1, nuis_SysWeight2, nuis_SysWeight3, nuis_SysWeight4]
+    nuisgroups["prefire"] = [nuis_SysWeight8, nuis_SysWeight10]
     for proc in processes:
         if not proc.isQCD:
             # all the samples except the QCD apply the corrections
             # so they should be affected by sf systematics
-            for sysweight in nuisgroups["sfsys"]:
+            for sysweight in nuisgroups["effsys"] + nuisgroups["prefire"]:
                 sysweight[proc.name] = 1.0
 
     nuis_effstat_plus = Nuisance(name = "effstat_" + lepname + "plus_" + era, type = "lnN")
@@ -499,35 +501,35 @@ def MakeZJetsCards(fname, channel, rebinned = False, is5TeV = False, outdir = "c
             # only apply eff/sf stat uncertainty to signals for now
             nuis_effstat_plus[proc.name] = unc_effstat[nuis_effstat_plus.name]
             nuis_effstat_minus[proc.name] = unc_effstat[nuis_effstat_minus.name]
-    nuisgroups["sfstatsys"] = [nuis_effstat_plus, nuis_effstat_minus]
+    nuisgroups["effstat"] = [nuis_effstat_plus, nuis_effstat_minus]
 
     # theory systematics
     # qcd scale
-    nuisgroups["qcdscalesys"] = []
+    nuisgroups["qcdscale"] = []
     for wpt in range(len(Vptbins)-1):
         for par in ["MuF", "MuR", "MuFMuR"]:
             nuis_QCDScale = Nuisance(name = par+str(wpt), type = "shape")
             for proc in processes:
                 if proc.isSignal:
                     nuis_QCDScale[proc.name] = 1.0
-            nuisgroups["qcdscalesys"].append(nuis_QCDScale)
+            nuisgroups["qcdscale"].append(nuis_QCDScale)
 
     # pdf + alphaS variations
-    nuisgroups["pdfalphaSsys"] = []
+    nuisgroups["pdfalphaS"] = []
     pdf_indices = list(range(1, 101))
     for ipdf in pdf_indices:
         nuis_PDF = Nuisance(name = f"PDF{ipdf}", type = "shape")
         for proc in processes:
             if proc.isSignal:
                 nuis_PDF[proc.name] = 1.0
-        nuisgroups["pdfalphaSsys"].append(nuis_PDF)
+        nuisgroups["pdfalphaS"].append(nuis_PDF)
     
     # alphaS variations
     nuis_alphaS = Nuisance(name = "alphaS", type = "shape")
     for proc in processes:
         if proc.isSignal:
             nuis_alphaS[proc.name] = 1.0
-    nuisgroups["pdfalphaSsys"].append(nuis_alphaS)
+    nuisgroups["pdfalphaS"].append(nuis_alphaS)
 
     #
     # writing datacards
