@@ -15,7 +15,9 @@ def FormatOutputForWZ(istring: str):
     labelmaps['lepplus'] = '$\\mathrm{W}^{+}\\rightarrow \\ell^{+}\\nu$'
     labelmaps['lepminus'] = '$\\mathrm{W}^{-}\\rightarrow \\ell^{-}\\bar{\\nu}$'
     labelmaps['leplep'] = '$\\mathrm{Z}\\rightarrow \\ell^{+}\\ell^{-}$'
+    labelmaps['Winc'] = '$\\mathrm{W}^{\\pm}\\rightarrow \\ell^{\\pm}\\nu$'
     labelmaps['WOverZ'] = '$\\mathrm{W}^{\pm}/\\mathrm{Z}$'
+    labelmaps['WpOverWm'] = '$\\mathrm{W}^{+}/\\mathrm{W}^{-}$'
 
     procmaps = {}
     procmaps['data'] = 'Data'
@@ -24,11 +26,26 @@ def FormatOutputForWZ(istring: str):
     procmaps['qcd'] = "QCD"
     procmaps['ttbar'] = "$t\\bar{t}$"
 
+    sysmaps = {}
+    sysmaps['lumi'] = 'Lumi'
+    sysmaps['recoil'] = 'Recoil'
+    sysmaps['QCDbkg'] = 'Bkg QCD'
+    sysmaps['effstat'] = 'Efficiency Stat.'
+    sysmaps['prefire'] = 'Prefire'
+    sysmaps['QCDscale'] = 'QCD Scale'
+
+    sysmaps['effsys'] = 'Efficiency Syst.'
+    sysmaps['pdfalphaS'] = 'PDF + $\\alpha_\\mathrm{S}$'
+    sysmaps['mcsec'] = 'MC Norm'
+
     for key in labelmaps.keys():
         istring = istring.replace(key, labelmaps[key])
     
     for key in procmaps.keys():
         istring = istring.replace(key, procmaps[key])
+
+    for key in sysmaps.keys():
+        istring = istring.replace(key, sysmaps[key])
 
     return istring
 

@@ -197,7 +197,7 @@ def GetPOIValue(ifilename, poiname = ""):
     err = abs(getattr(tree, poiname+"_err"))
     return val, err
 
-def ComparePOIs(vals_x: np.array, vals: list, errs: list, labels: list, colors: list, markers: list, output: str):
+def ComparePOIs(vals_x: np.array, vals: list, errs: list, labels: list, colors: list, markers: list, output: str, is5TeV: bool):
     """
     compare the POI values with different selections
     """
@@ -208,12 +208,14 @@ def ComparePOIs(vals_x: np.array, vals: list, errs: list, labels: list, colors: 
         err = errs[idx]
         color = colors[idx]
         marker = markers[idx]
-        g = ROOT.TGraphErrors(len(vals_x), vals_x+0.5*idx, val, np.zeros(len(vals_x)), err)
+        g = ROOT.TGraphErrors(len(vals_x), vals_x+1.0*idx, val, np.zeros(len(vals_x)), err)
         g.SetLineColor(color)
         g.SetMarkerColor(color)
         g.SetMarkerStyle(markers[idx])
         graphs.append(g)
-    DrawHistos(graphs, labels, -5, 60, "m_{T} [GeV]", 1.01, 1.10, "POI", output, dology=False, showratio=False, donormalize=False, drawoptions='EP', legendPos = [0.2, 0.8, 0.8, 0.9], noCMS = True, nMaxDigits = 3, legendNCols = 2)
+    ymin = 0.97
+    ymax = 1.03
+    DrawHistos(graphs, labels, 15.0, 60, "m_{T} [GeV]", ymin, ymax, "POI", output, dology=False, showratio=False, donormalize=False, drawoptions='EP', legendPos = [0.2, 0.8, 0.8, 0.9], noCMS = True, nMaxDigits = 3, legendNCols = 2, is5TeV = is5TeV, legendoptions=["LEP", "LEP", "LEP"])
 
 
 def result2json(ifilename: str, poiname: str, ofilename: str, hname: str = "nuisance_impact_mu"):
@@ -248,10 +250,11 @@ def result2json(ifilename: str, poiname: str, ofilename: str, hname: str = "nuis
         result = nuis
         for key, val in nameMap.items():
             if nuis.endswith(key):
-                result = val
+                #result = val
+                result = nuis.replace(key, val)
                 break
         if bool(re.match(r"\w*bin\d+shape", nuis)):
-            result = "QCD_" + nuis
+            result = ("QCD_" + nuis).replace("shape", "")
         return result.replace("lepEta_bin0_WpT_bin0_", "")
 
     ifile = ROOT.TFile(ifilename)
@@ -317,6 +320,8 @@ def DumpGroupImpacts(ifilename: str, poiname: str, hname = "nuisance_group_impac
     """
     print out the grouped impacts
     """
+    val_poi = GetPOIValue(ifilename, poiname)[0]
+    print("val_poi ", val_poi)
     ifile = ROOT.TFile(ifilename)
     himpact_grouped = ifile.Get(hname)
 
@@ -332,7 +337,8 @@ def DumpGroupImpacts(ifilename: str, poiname: str, hname = "nuisance_group_impac
     impacts = OrderedDict()
     for ibinY in range(1, himpact_grouped.GetNbinsY()+1):
         nuis = himpact_grouped.GetYaxis().GetBinLabel(ibinY)
-        impacts[nuis] = himpact_grouped.GetBinContent(ibinX, ibinY) * 100.0
+        impacts[nuis] = himpact_grouped.GetBinContent(ibinX, ibinY) * 100.0 / val_poi
+
 
     # sort impacts, descending
     impacts = OrderedDict(sorted(list(impacts.items()), key=lambda x: abs(x[1]), reverse=True))
