@@ -19,20 +19,20 @@ def main():
 
     parser = argparse.ArgumentParser(description="Make plots for Wlnu analysis")
     parser.add_argument("--doTest", action="store_true", dest="doTest", help="Run on a subset of samples for debugging; false runs on all dataset.")
-    parser.add_argument("--do5TeV", action="store_true", dest="do5TeV", help="Analyze the 5TeV data; false runs on 13TeV data")
+    parser.add_argument("--is5TeV", action="store_true", dest="is5TeV", help="Analyze the 5TeV data; false runs on 13TeV data")
     parser.add_argument("--doElectron", action="store_true", dest="doElectron", help="Analyze the electron channel; false runs the muon channel")
     args = parser.parse_args()
 
     doTest = args.doTest
-    do5TeV = args.do5TeV
+    is5TeV = args.is5TeV
     doMuon = not args.doElectron
     doTheoryNorm = True
 
     print("doMuon: ", doMuon)
     print("doTest:", doTest)
-    print("do5TeV:", do5TeV)
+    print("is5TeV:", is5TeV)
 
-    if not do5TeV:
+    if not is5TeV:
         if doMuon:
             if doTest:
                 input_data    = "inputs/zmumu/input_data.txt"
@@ -80,7 +80,7 @@ def main():
 
     DataSamp  = Sample(input_data, isMC=False, legend="Data", name="Data", doTheoryVariation=False)
     lepchannel = "Z#rightarrow#mu^{+}#mu^{-}" if doMuon else "Z#rightarrow e^{+}e^{-}"
-    if not do5TeV:
+    if not is5TeV:
         TTbarSamp = Sample(input_ttbar, color=46,  legend="t#bar{t}", name="ttbar2lep")
         if not doTest:
             DYSamp    = Sample(input_dy,    color=92,  legend=lepchannel, name="DY")
@@ -160,7 +160,7 @@ def main():
 
     vsamples = ["DY"]
     sampMan.DefineSpecificMCs("VpT", "genV.Pt()", sampnames=vsamples)
-    theoryMaps = theoryUnc_13TeV_zjets if not do5TeV else theoryUnc_5TeV_zjets
+    theoryMaps = theoryUnc_13TeV_zjets if not is5TeV else theoryUnc_5TeV_zjets
 
     theoryVariations = OrderedDict()
     for vpt in range(len(Vptbins)-1):
@@ -282,7 +282,7 @@ def main():
         hratiopanel.SetBinContent(ibin, 1.0)
         hratiopanel.SetBinError(ibin, 0.5*abs(hratiopanelUp.GetBinContent(ibin) - hratiopanelDown.GetBinContent(ibin)))
     drawconfigs = DrawConfig(xmin=-2.5, xmax=2.5, xlabel='y_{{{leplabel}{leplabel}}}'.format(leplabel=leplabel), ymax=1e7, ylabel='Events / 1', yrmin=0.81, yrmax=1.19, outputname = hname + "_withUnc")
-    DrawHistos([sampMan.hdatas[hname], sampMan.hsmcs[hname]], ["Data", lepchannel, "t#bar{t}", "EWK"], drawconfigs.xmin, drawconfigs.xmax, drawconfigs.xlabel, drawconfigs.ymin, drawconfigs.ymax, drawconfigs.ylabel, drawconfigs.outputname, is5TeV=do5TeV, hratiopanel = hratiopanel, dology=drawconfigs.dology, dologx=drawconfigs.dologx, showratio=drawconfigs.showratio, yrmax = drawconfigs.yrmax, yrmin = drawconfigs.yrmin, yrlabel = drawconfigs.yrlabel, donormalize=drawconfigs.donormalize, ratiobase=drawconfigs.ratiobase, legendPos = drawconfigs.legendPos, redrawihist = drawconfigs.redrawihist, extraText = drawconfigs.extraText, noCMS = drawconfigs.noCMS, addOverflow = drawconfigs.addOverflow, addUnderflow = drawconfigs.addUnderflow, nMaxDigits = drawconfigs.nMaxDigits)
+    DrawHistos([sampMan.hdatas[hname], sampMan.hsmcs[hname]], ["Data", lepchannel, "t#bar{t}", "EWK"], drawconfigs.xmin, drawconfigs.xmax, drawconfigs.xlabel, drawconfigs.ymin, drawconfigs.ymax, drawconfigs.ylabel, drawconfigs.outputname, is5TeV=is5TeV, hratiopanel = hratiopanel, dology=drawconfigs.dology, dologx=drawconfigs.dologx, showratio=drawconfigs.showratio, yrmax = drawconfigs.yrmax, yrmin = drawconfigs.yrmin, yrlabel = drawconfigs.yrlabel, donormalize=drawconfigs.donormalize, ratiobase=drawconfigs.ratiobase, legendPos = drawconfigs.legendPos, redrawihist = drawconfigs.redrawihist, extraText = drawconfigs.extraText, noCMS = drawconfigs.noCMS, addOverflow = drawconfigs.addOverflow, addUnderflow = drawconfigs.addUnderflow, nMaxDigits = drawconfigs.nMaxDigits)
 
     #htests = sampMan.hsmcs["histo_zjets_zmass_{}_weight_8".format(lepname)]
     #htest = list(htests.GetHists())
@@ -290,12 +290,9 @@ def main():
     #    print("integral: ", h.Integral())
     #    print("bin contents: ", h.Print("all"))
 
-    sqrtS = "5TeV" if do5TeV else "13TeV"
+    sqrtS = "5TeV" if is5TeV else "13TeV"
 
-    output_suffix = lepname
-    if do5TeV:
-        output_suffix += "_5TeV"
-    output_suffix += ".root"
+    output_suffix = f"{lepname}_{sqrtS}.root"
     outfile = ROOT.TFile.Open("root/output_shapes_"+output_suffix, "recreate")
 
     # Data

@@ -19,7 +19,7 @@ def main():
     parser = argparse.ArgumentParser(description="Make plots for Wlnu analysis in the lepton anti-isolated region")
     parser.add_argument("--doTest", action="store_true", dest="doTest", help="Run on a subset of samples for debugging; false runs on all dataset.")
     parser.add_argument("--doWpT", action="store_true", dest="doWpT", help="Bin in different W pt bins; false runs inclusively")
-    parser.add_argument("--do5TeV", action="store_true", dest="do5TeV", help="Analyze the 5TeV data; false runs on 13TeV data")
+    parser.add_argument("--is5TeV", action="store_true", dest="is5TeV", help="Analyze the 5TeV data; false runs on 13TeV data")
     parser.add_argument("--doElectron", action="store_true", dest="doElectron", help="Analyze the electron channel; false runs the muon channel")
     parser.add_argument("--applyScaling", action="store_true", dest="applyScaling", help="Scale the MC cross section by 30 percents and subtract")
     args = parser.parse_args()
@@ -28,15 +28,15 @@ def main():
     applyScaling = args.applyScaling
     doTest = args.doTest
     doWpT  = args.doWpT
-    do5TeV = args.do5TeV
+    is5TeV = args.is5TeV
 
     print("doMuon: ", doMuon)
     print("applyScaling: ", applyScaling)
     print("doTest:", doTest)
     print("doWpT:", doWpT)
-    print("do5TeV:", do5TeV)
+    print("is5TeV:", is5TeV)
 
-    if not do5TeV:
+    if not is5TeV:
         if doTest:
             input_antiiso_data    = "inputs/awmunu_test/input_data.txt"
             input_antiiso_wl0     = "inputs/awmunu_test/input_wm0.txt"
@@ -114,7 +114,7 @@ def main():
         mcscale = 1.3
     DataAisoSamp  = Sample(input_antiiso_data, isMC=False, name="Data_aiso", isWSR=True, additionalnorm = qcdnorm, legend = 'QCD', color='226')
 
-    if not do5TeV:
+    if not is5TeV:
         # W -> lnu
         Wl0AisoSamp   = Sample(input_antiiso_wl0, isMC=True, name = "wl0_aiso", isWSR=True, additionalnorm= qcdnorm * mcscale, doTheoryVariation=False)
         Wl1AisoSamp   = Sample(input_antiiso_wl1, isMC=True, name = "wl1_aiso", isWSR=True, additionalnorm= qcdnorm * mcscale, doTheoryVariation=False)
@@ -312,9 +312,8 @@ def main():
     postfix = lepname + "nu"
     if applyScaling:
         postfix += "_applyScaling"
-    if do5TeV:
-        postfix += "_5TeV"
-    postfix += ".root"
+    sqrtS = "5TeV" if is5TeV else "13TeV"
+    postfix += f"_{sqrtS}.root"
     outfile = ROOT.TFile.Open("root/output_qcdshape_"+postfix, "recreate")
 
     for wpt in wptbins:

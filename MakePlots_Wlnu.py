@@ -17,26 +17,26 @@ def main():
     parser = argparse.ArgumentParser(description="Make plots for Wlnu analysis")
     parser.add_argument("--doTest", action="store_true", dest="doTest", help="Run on a subset of samples for debugging; false runs on all dataset.")
     parser.add_argument("--doWpT", action="store_true", dest="doWpT", help="Bin in different W pt bins; false runs inclusively")
-    parser.add_argument("--do5TeV", action="store_true", dest="do5TeV", help="Analyze the 5TeV data; false runs on 13TeV data")
+    parser.add_argument("--is5TeV", action="store_true", dest="is5TeV", help="Analyze the 5TeV data; false runs on 13TeV data")
     parser.add_argument("--doElectron", action="store_true", dest="doElectron", help="Analyze the electron channel; false runs the muon channel")
     args = parser.parse_args()
 
     doMuon = not args.doElectron
     doTest = args.doTest
     doWpT  = args.doWpT
-    do5TeV = args.do5TeV
+    is5TeV = args.is5TeV
     doTheoryNorm = True
 
     print("doMuon: ", doMuon)
     print("doTest:", doTest)
     print("doWpT:", doWpT)
-    print("do5TeV:", do5TeV)
+    print("is5TeV:", is5TeV)
     print("doTheoryNorm", doTheoryNorm)
 
     #ROOT.gROOT.ProcessLine('TFile* f_zpt = TFile::Open("results/zpt_weight.root")')
     #ROOT.gROOT.ProcessLine('TH1D* h_zpt_ratio  = (TH1D*)f_zpt->Get("h_zpt_ratio")')
 
-    if not do5TeV:
+    if not is5TeV:
         if doMuon:
             input_data    =    "inputs/wmunu/input_data.txt"
             input_wl0     =    "inputs/wmunu/input_wm0.txt"
@@ -91,7 +91,7 @@ def main():
 
     DataSamp  = Sample(input_data, isMC=False, legend="Data", name="Data", isWSR=True, doTheoryVariation=False)
     signame = "wlnu"
-    if not do5TeV:
+    if not is5TeV:
         # W -> munu
         #wjetsnorm = 1.06
         wjetsnorm = 1.0
@@ -264,7 +264,7 @@ def main():
     vsamples = ["wl0", "wl1", "wl2", "wx0", "wx1", "wx2"]
     sampMan.DefineSpecificMCs("VpT", "genV.Pt()", sampnames=vsamples)
 
-    theoryMaps = theoryUnc_13TeV_wjets if not do5TeV else theoryUnc_5TeV_wjets
+    theoryMaps = theoryUnc_13TeV_wjets if not is5TeV else theoryUnc_5TeV_wjets
     theoryVariations = OrderedDict()
 
     for wpt in range(len(Vptbins)-1):
@@ -402,7 +402,7 @@ def main():
                     val.SetLineColor(icolor)
                     val.SetMarkerColor(icolor)
                     icolor += 1
-                DrawHistos(hists, labels, xmin, xmax, "m_{T} [GeV]", 0., 0.24, "A.U.", "Comparison_mTShape_wjets_{}_mT_1_{}_{}".format(chg, wpt, lepeta), dology=False, addOverflow=True, addUnderflow=True, donormalize = True, is5TeV = do5TeV, legendPos=[0.30, 0.92, 0.90, 0.72], legendNCols=4, legendoptions="LE", drawoptions="LE") 
+                DrawHistos(hists, labels, xmin, xmax, "m_{T} [GeV]", 0., 0.24, "A.U.", "Comparison_mTShape_wjets_{}_mT_1_{}_{}".format(chg, wpt, lepeta), dology=False, addOverflow=True, addUnderflow=True, donormalize = True, is5TeV = is5TeV, legendPos=[0.30, 0.92, 0.90, 0.72], legendNCols=4, legendoptions="LE", drawoptions="LE") 
 
     # 
     # merge the signal MC histograms in different samples
@@ -424,14 +424,11 @@ def main():
     #
     # preparing the outputs
     #
+    sqrtS = "5TeV" if is5TeV else "13TeV"
     output_suffix = lepname + "nu"
     if doWpT:
         output_suffix += "_WpT"
-    if do5TeV:
-        output_suffix += "_5TeV"
-    output_suffix += ".root"
-
-    sqrtS = "5TeV" if do5TeV else "13TeV"
+    output_suffix += f"_{sqrtS}.root"
 
     #
     # write out mT histograms for combine

@@ -22,8 +22,8 @@ if doInclusive:
         ntests = len(mass_bins_test)
         #if sqrtS != "5TeV":
         #    continue
-        do5TeV = (sqrtS == "5TeV")
-        lumi_unc = 0.017 if not do5TeV else 0.019
+        is5TeV = (sqrtS == "5TeV")
+        lumi_unc = 0.017 if not is5TeV else 0.019
 
         starts_mT = []
         vals_lep_pos = []
@@ -55,12 +55,12 @@ if doInclusive:
             errs_leplep .append( err_leplep  )
 
             nevts = OrderedDict()
-            nevts['muplus']  = MakePostPlot(filename, "muplus",  mass_bins, f"_mT{idx}_{sqrtS}", showPULL, is5TeV=do5TeV)
-            nevts['muminus'] = MakePostPlot(filename, "muminus", mass_bins, f"_mT{idx}_{sqrtS}", showPULL, startbin = len(mass_bins), is5TeV=do5TeV)
-            nevts['mumu']    = MakePostPlot(filename, "mumu", mass_bins_z,  f"_mT{idx}_{sqrtS}", showPULL, startbin = len(mass_bins)*2 - 1, is5TeV=do5TeV)
-            nevts['eplus']   = MakePostPlot(filename, "eplus",  mass_bins,  f"_mT{idx}_{sqrtS}", showPULL, startbin = len(mass_bins)*2 + len(mass_bins_z) - 2, is5TeV=do5TeV)
-            nevts['eminus']  = MakePostPlot(filename, "eminus", mass_bins,  f"_mT{idx}_{sqrtS}", showPULL, startbin = len(mass_bins)*3 + len(mass_bins_z) - 3, is5TeV=do5TeV)
-            nevts['ee']      = MakePostPlot(filename, "ee",   mass_bins_z,  f"_mT{idx}_{sqrtS}", showPULL, startbin = len(mass_bins)*4 + len(mass_bins_z) - 4, is5TeV=do5TeV)
+            nevts['muplus']  = MakePostPlot(filename, "muplus",  mass_bins, f"_mT{idx}_{sqrtS}", showPULL, is5TeV=is5TeV)
+            nevts['muminus'] = MakePostPlot(filename, "muminus", mass_bins, f"_mT{idx}_{sqrtS}", showPULL, startbin = len(mass_bins), is5TeV=is5TeV)
+            nevts['mumu']    = MakePostPlot(filename, "mumu", mass_bins_z,  f"_mT{idx}_{sqrtS}", showPULL, startbin = len(mass_bins)*2 - 1, is5TeV=is5TeV)
+            nevts['eplus']   = MakePostPlot(filename, "eplus",  mass_bins,  f"_mT{idx}_{sqrtS}", showPULL, startbin = len(mass_bins)*2 + len(mass_bins_z) - 2, is5TeV=is5TeV)
+            nevts['eminus']  = MakePostPlot(filename, "eminus", mass_bins,  f"_mT{idx}_{sqrtS}", showPULL, startbin = len(mass_bins)*3 + len(mass_bins_z) - 3, is5TeV=is5TeV)
+            nevts['ee']      = MakePostPlot(filename, "ee",   mass_bins_z,  f"_mT{idx}_{sqrtS}", showPULL, startbin = len(mass_bins)*4 + len(mass_bins_z) - 4, is5TeV=is5TeV)
 
             result2json(filename, "lepplus_sig_mu",  f"{workdir}/impacts_lepplus.json")
             result2json(filename, "lepminus_sig_mu", f"{workdir}/impacts_lepminus.json")
@@ -123,7 +123,7 @@ if doInclusive:
         #ComparePOIs(vals_mT, [vals_mu_pos, vals_mu_neg], [errs_mu_pos, errs_mu_neg], labels[:2], colors[:2], markers[:2], "test_mu")
         #ComparePOIs(vals_mT, [vals_e_pos, vals_e_neg], [errs_e_pos, errs_e_neg], labels[2:], colors[2:], markers[2:], "test_e")
         #ComparePOIs(vals_mT, [vals_mu_pos, vals_mu_neg, vals_e_pos, vals_e_neg], [errs_mu_pos, errs_mu_neg, errs_e_pos, errs_e_neg], labels, colors, markers, "test")
-        ComparePOIs(vals_mT, [vals_lep_pos, vals_lep_neg, vals_leplep], [errs_lep_pos, errs_lep_neg, errs_leplep], labels[4:], colors, markers, f"poi_vs_mT_{sqrtS}", is5TeV = do5TeV)
+        ComparePOIs(vals_mT, [vals_lep_pos, vals_lep_neg, vals_leplep], [errs_lep_pos, errs_lep_neg, errs_leplep], labels[4:], colors, markers, f"poi_vs_mT_{sqrtS}", is5TeV = is5TeV)
 
         # plot the impacts on QCD
         #result2json("cards/datacard_muplus_lepEta_bin0_WpT_bin0", "QCD_muplus_lepEta_bin0_WpT_bin0_mu", "cards/impacts_muplus_lepEta_bin0_WpT_bin0_qcd.json")

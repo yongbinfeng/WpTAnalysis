@@ -386,9 +386,7 @@ def MakeWJetsCards(fname_mc, fname_qcd, channel, wptbin, etabin, doWpT = False, 
     #
     # writing datacards
     #
-    cardname = f"{outdir}/datacard_{channel}_{etabin}_{wptbin}.txt"
-    if is5TeV:
-        cardname = f"{outdir}/datacard_{channel}_{etabin}_{wptbin}_5TeV.txt"
+    cardname = f"{outdir}/datacard_{channel}_{etabin}_{wptbin}_{sqrtS}.txt"
     WriteCard(data, processes, nuisgroups, cardname)
 
     return cardname
@@ -552,9 +550,7 @@ def MakeZJetsCards(fname, channel, rebinned = False, is5TeV = False, outdir = "c
     #
     # writing datacards
     #
-    cardname = f"{outdir}/datacard_{channel}.txt"
-    if is5TeV:
-        cardname = f"{outdir}/datacard_{channel}_5TeV.txt"
+    cardname = f"{outdir}/datacard_{channel}_{sqrtS}.txt"
     WriteCard(data, processes, nuisgroups, cardname)
 
     return cardname
@@ -572,7 +568,7 @@ def combineCards(labels, cards, oname):
     os.system(cmd)
 
 
-def GenerateRunCommand(output: str, cards: list, channels: list, cards_xsec: list = [], prefix: str = "./", applyLFU: bool = False, do5TeV: bool = False):
+def GenerateRunCommand(output: str, cards: list, channels: list, cards_xsec: list = [], prefix: str = "./", applyLFU: bool = False, is5TeV: bool = False):
     """
     generate the script with commands to run combine.
     inputs can probably be improved here
@@ -614,7 +610,7 @@ def GenerateRunCommand(output: str, cards: list, channels: list, cards_xsec: lis
         zinc = set()
         # add the syntax to do the absolute xsec, charge asymmetry, and ratio measurements
         for channel in channels:
-            signame = GetSigName(channel, applyLFU, do5TeV)
+            signame = GetSigName(channel, applyLFU, is5TeV)
             if "plus" in channel:
                 wplus.add(signame)
             elif "minus" in channel:
@@ -624,16 +620,18 @@ def GenerateRunCommand(output: str, cards: list, channels: list, cards_xsec: lis
                 zinc.add(signame)
         winc = wplus.union(wminus)
 
+        sqrtS = "5TeV" if is5TeV else "13TeV"
+
         cmd += '\n\n'
         cmd += '# syntax for absolute xsec, charge asymmetry, and xsec ratios\n'
-        cmd += '\n\n\n'
-        cmd += f'echo \"Wplus_sig sumGroup = {" ".join(sig for sig in wplus)}\" >> {output}.txt\n'
-        cmd += f'echo \"Wminus_sig sumGroup = {" ".join(sig for sig in wminus)}\" >> {output}.txt\n'
-        cmd += f'echo \"Winc_sig sumGroup = {" ".join(sig for sig in winc)}\" >> {output}.txt\n'
-        cmd += f'echo \"Zinc_sig sumGroup = {" ".join(sig for sig in zinc)}\" >> {output}.txt\n'
-        cmd += f'echo \"WchgAsym chargeMetaGroup = Wplus_sig Wminus_sig\" >> {output}.txt\n'
-        cmd += f'echo \"WchgRatio ratioMetaGroup = Wplus_sig Wminus_sig\" >> {output}.txt\n'
-        cmd += f'echo \"WZRatio ratioMetaGroup = Winc_sig Zinc_sig\" >> {output}.txt\n'
+        cmd += '\n'
+        cmd += f'echo \"Wplus_{sqrtS}_sig sumGroup = {" ".join(sig for sig in wplus)}\" >> {output}.txt\n'
+        cmd += f'echo \"Wminus_{sqrtS}_sig sumGroup = {" ".join(sig for sig in wminus)}\" >> {output}.txt\n'
+        cmd += f'echo \"Winc_{sqrtS}_sig sumGroup = {" ".join(sig for sig in winc)}\" >> {output}.txt\n'
+        cmd += f'echo \"Zinc_{sqrtS}_sig sumGroup = {" ".join(sig for sig in zinc)}\" >> {output}.txt\n'
+        cmd += f'echo \"WchgAsym_{sqrtS} chargeMetaGroup = Wplus_{sqrtS}_sig Wminus_{sqrtS}_sig\" >> {output}.txt\n'
+        cmd += f'echo \"WchgRatio_{sqrtS} ratioMetaGroup = Wplus_{sqrtS}_sig Wminus_{sqrtS}_sig\" >> {output}.txt\n'
+        cmd += f'echo \"WZRatio_{sqrtS} ratioMetaGroup = Winc_{sqrtS}_sig Zinc_{sqrtS}_sig\" >> {output}.txt\n'
         cmd += '\n\n'
 
     cmd += f"text2hdf5.py {output}.txt"
@@ -681,9 +679,10 @@ def MakeXSecCard(channel: str, is5TeV: bool = False, outdir: str = "cards", appl
     """
     # get the xsec result
     xsec = GetXSec(channel, is5TeV)
+    suffix = "5TeV" if is5TeV else "13TeV"
 
     # write the xsec result to a root file
-    fname = f"{outdir}/xsec_{channel}.root"
+    fname = f"{outdir}/xsec_{channel}_{suffix}.root"
     f = ROOT.TFile(fname, "RECREATE")
     hname = f"xsec_{channel}_inAcc"
     h = ROOT.TH1D(hname, hname, 1, 0, 1)
@@ -714,14 +713,17 @@ def MakeXSecCard(channel: str, is5TeV: bool = False, outdir: str = "cards", appl
     return cardname
 
 
-def GetSigName(channel: str, applyLFU: bool = False, do5TeV: bool = False):
+def GetSigName(channel: str, applyLFU: bool = False, is5TeV: bool = False):
     """
     return the signal process name
     """
     signame = channel
     if applyLFU:
-        signame = signame.replace("e", "lep").replace("mu", "lep")
-    suffix = "5TeV" if do5TeV else "13TeV"
-    return signame + f"_{suffix}_sig"
+        signame = signame.replace("eplus", "lepplus").replace("eminus", "lepminus").replace("ee", "leplep").replace("enu", "lepnu").replace("mu", "lep")
+    suffix = "5TeV" if is5TeV else "13TeV"
+    if "TeV" not in signame:
+        signame += f"_{suffix}"
+    signame += "_sig"
+    return signame
 
 

@@ -67,8 +67,8 @@ if __name__  == "__main__":
         card_eminus = None
         card_zee = None
 
-        suffix = ".root" if sqrtS == "13TeV" else "_5TeV.root"
-        do5TeV = (sqrtS == "5TeV")
+        suffix = f"_{sqrtS}.root"
+        is5TeV = (sqrtS == "5TeV")
 
         fzsig_mumu_input = "root/output_shapes_mumu" + suffix
         fzsig_ee_input = "root/output_shapes_ee" + suffix
@@ -90,7 +90,7 @@ if __name__  == "__main__":
 
             fzsig_output = f"cards/test/{sqrtS}/test{key}/output_shapes_mumu_Rebin" + suffix
 
-            card_muplus, card_muminus, card_zmumu, card_xsec_muplus, card_xsec_muminus, card_xsec_mumu = RunPreparations(fwsig_input, fwsig_rebin, fwsig_mergeTau, fqcd_input, fqcd_rebin, fqcd_input_scaled, fqcd_rebin_scaled, fqcd_output, "mu", outdir_card = f"cards/test/{sqrtS}/test{key}", mass_bins_w = val, fzsig_input=fzsig_mumu_input, fzsig_output = fzsig_output, applyLFU=applyLFU, is5TeV=do5TeV)
+            card_muplus, card_muminus, card_zmumu, card_xsec_muplus, card_xsec_muminus, card_xsec_mumu = RunPreparations(fwsig_input, fwsig_rebin, fwsig_mergeTau, fqcd_input, fqcd_rebin, fqcd_input_scaled, fqcd_rebin_scaled, fqcd_output, "mu", outdir_card = f"cards/test/{sqrtS}/test{key}", mass_bins_w = val, fzsig_input=fzsig_mumu_input, fzsig_output = fzsig_output, applyLFU=applyLFU, is5TeV=is5TeV)
 
             # electron channel
             fwsig_input = "root/output_shapes_enu" + suffix
@@ -105,14 +105,14 @@ if __name__  == "__main__":
 
             fzsig_output = f"cards/test/{sqrtS}/test{key}/output_shapes_ee_Rebin" + suffix
 
-            card_eplus, card_eminus, card_zee, card_xsec_eplus, card_xsec_eminus, card_xsec_ee = RunPreparations(fwsig_input, fwsig_rebin, fwsig_mergeTau, fqcd_input, fqcd_rebin, fqcd_input_scaled, fqcd_rebin_scaled, fqcd_output, "e", outdir_card = f"cards/test/{sqrtS}/test{key}", mass_bins_w = val, fzsig_input=fzsig_ee_input, fzsig_output=fzsig_output, applyLFU=applyLFU, is5TeV=do5TeV)
+            card_eplus, card_eminus, card_zee, card_xsec_eplus, card_xsec_eminus, card_xsec_ee = RunPreparations(fwsig_input, fwsig_rebin, fwsig_mergeTau, fqcd_input, fqcd_rebin, fqcd_input_scaled, fqcd_rebin_scaled, fqcd_output, "e", outdir_card = f"cards/test/{sqrtS}/test{key}", mass_bins_w = val, fzsig_input=fzsig_ee_input, fzsig_output=fzsig_output, applyLFU=applyLFU, is5TeV=is5TeV)
 
             # combined fit
-            GenerateRunCommand("card_combined", [card_muplus, card_muminus, card_zmumu, card_eplus, card_eminus, card_zee], ["muplus", "muminus", "mumu", "eplus", "eminus", "ee"], [card_xsec_muplus, card_xsec_muminus, card_xsec_mumu, card_xsec_eplus, card_xsec_eminus, card_xsec_ee], applyLFU=applyLFU, do5TeV=do5TeV)
+            GenerateRunCommand(f"card_combined_{sqrtS}", [card_muplus, card_muminus, card_zmumu, card_eplus, card_eminus, card_zee], [f"muplus_{sqrtS}", f"muminus_{sqrtS}", f"mumu_{sqrtS}", f"eplus_{sqrtS}", f"eminus_{sqrtS}", f"ee_{sqrtS}"], [card_xsec_muplus, card_xsec_muminus, card_xsec_mumu, card_xsec_eplus, card_xsec_eminus, card_xsec_ee], applyLFU=applyLFU, is5TeV=is5TeV)
 
             # mu channel fit
-            GenerateRunCommand("card_mu", [card_muplus, card_muminus, card_zmumu], ["muplus", "muminus", "mumu"], [card_xsec_muplus, card_xsec_muminus, card_xsec_mumu], applyLFU=applyLFU, do5TeV=do5TeV)
+            GenerateRunCommand(f"card_mu_{sqrtS}", [card_muplus, card_muminus, card_zmumu], [f"muplus_{sqrtS}", f"muminus_{sqrtS}", f"mumu_{sqrtS}"], [card_xsec_muplus, card_xsec_muminus, card_xsec_mumu], applyLFU=applyLFU, is5TeV=is5TeV)
 
             # e channel fit
-            GenerateRunCommand("card_e", [card_eplus, card_eminus, card_zee], ["eplus", "eminus", "ee"], [card_xsec_eplus, card_xsec_eminus, card_xsec_ee], applyLFU=applyLFU, do5TeV=do5TeV)
+            GenerateRunCommand(f"card_e_{sqrtS}", [card_eplus, card_eminus, card_zee], [f"eplus_{sqrtS}", f"eminus_{sqrtS}", f"ee_{sqrtS}"], [card_xsec_eplus, card_xsec_eminus, card_xsec_ee], applyLFU=applyLFU, is5TeV=is5TeV)
 
