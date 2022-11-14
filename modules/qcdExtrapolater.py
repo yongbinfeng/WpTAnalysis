@@ -116,6 +116,8 @@ def ExtrapolateQCD(fname, oname, channels, wptbin, etabins, fname_scaled=None, i
         # qcd templates with scaled MC subtraction
         fqcd_scaled = ROOT.TFile.Open(fname_scaled)
 
+    sqrtS = "5TeV" if is5TeV else "13TeV"
+
     outdir = oname.rpartition('/')[0]
     if not os.path.exists(outdir):
         os.makedirs(outdir)
@@ -191,7 +193,7 @@ def ExtrapolateQCD(fname, oname, channels, wptbin, etabins, fname_scaled=None, i
             # save the extrapolated shape for HComb
             hnew = href.Clone("h_QCD_Extrapolated_" + channel + "_" + etabin + "_" + wptbin)
             #hnew_pol2 = href.Clone("h_QCD_Extrapolated_" + channel + "_" + etabin + "_" + wptbin + "_Pol2shapeUp")
-            hnew_scaled = href.Clone("h_QCD_Extrapolated_" + channel + "_" + etabin + "_" + wptbin + "_ScaledMCshapeUp")
+            hnew_scaled = href.Clone("h_QCD_Extrapolated_" + channel + "_" + etabin + "_" + wptbin + "_ScaledMCshape_" + sqrtS + "Up")
 
             vals_pol1_par1 = []
             #
@@ -247,8 +249,8 @@ def ExtrapolateQCD(fname, oname, channels, wptbin, etabins, fname_scaled=None, i
             for ibin in range(1, histos_norm[isomin].GetNbinsX()+1):
                 val = max(vals_pol1_par1[ibin-1][0], 0.)
                 err = vals_pol1_par1[ibin-1][1]
-                hnew_up   = hnew.Clone("h_QCD_Extrapolated_"+channel+"_"+etabin+"_"+wptbin+"_bin{}shapeUp".format(str(ibin)))
-                hnew_down = hnew.Clone("h_QCD_Extrapolated_"+channel+"_"+etabin+"_"+wptbin+"_bin{}shapeDown".format(str(ibin)))
+                hnew_up   = hnew.Clone("h_QCD_Extrapolated_"+channel+"_"+etabin+"_"+wptbin+"_bin{}shape_{}Up".format(str(ibin), sqrtS))
+                hnew_down = hnew.Clone("h_QCD_Extrapolated_"+channel+"_"+etabin+"_"+wptbin+"_bin{}shape_{}Down".format(str(ibin), sqrtS))
                 hnew_up.SetBinContent(ibin, val+err)
                 hnew_up.SetBinError(ibin, 0.)
                 hnew_down.SetBinContent(ibin, max(val-err, 0.))
@@ -268,7 +270,7 @@ def ExtrapolateQCD(fname, oname, channels, wptbin, etabins, fname_scaled=None, i
             # scaled MC as another systematic
             if fname_scaled:
                 hnew_scaled.Scale(hnew.Integral() / (hnew_scaled.Integral() + 1e-6))
-                hnew_scaledDn = hnew_scaled.Clone("h_QCD_Extrapolated_" + channel + "_" + etabin + "_" + wptbin + "_ScaledMCshapeDown")
+                hnew_scaledDn = hnew_scaled.Clone("h_QCD_Extrapolated_" + channel + "_" + etabin + "_" + wptbin + "_ScaledMCshape_" + sqrtS + "Down")
                 for ibin in range(1, hnew.GetNbinsX()+1):
                     hnew_scaledDn.SetBinContent(ibin, 2*hnew.GetBinContent(ibin) - hnew_scaled.GetBinContent(ibin))
                 hnew_ups.append(hnew_scaled)

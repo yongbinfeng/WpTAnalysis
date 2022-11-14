@@ -24,10 +24,9 @@ class Process(object):
         self.isQCD = kwargs.get('isQCD', False) # fake QCD
         self.xsecUnc = kwargs.get('xsecUnc', "0.10") # uncertainty on the cross section
 
-        # a bit hacky, to point to the correct file location
-        # - by default the fits run on lpc
-        prefix_LPC = "/uscms/home/yfeng/nobackup/WpT/Cards/TestCode/WpTAnalysis/"
-        self.fname = prefix_LPC + kwargs.get('fname', 'test.root')
+        #prefix_LPC = "/uscms/home/yfeng/nobackup/WpT/Cards/TestCode/WpTAnalysis/"
+        #self.fname = prefix_LPC + kwargs.get('fname', 'test.root')
+        self.fname = kwargs.get('fname', "test.root").split('/')[-1]
 
         #  regulation
         if self.isObs:
@@ -250,13 +249,13 @@ def MakeWJetsCards(fname_mc, fname_qcd, channel, wptbin, etabin, doWpT = False, 
     processes = sigs + [ttbar, zxx, vv, qcd]
     
     lepname = "mu" if "mu" in channel else "e"
-    era = "13TeV" if not is5TeV else "5TeV"
+    sqrtS = "13TeV" if not is5TeV else "5TeV"
 
     # define different nuisance parameters, their groups,
     # and the impacts on each process
     nuisgroups = OrderedDict()
 
-    nuis_lumi = Nuisance(name = "lumi_" + era, type = "lnN")
+    nuis_lumi = Nuisance(name = "lumi_" + sqrtS, type = "lnN")
     for proc in processes:
         if proc.isMC:
             nuis_lumi[proc.name] = unc_lumi[nuis_lumi.name]
@@ -265,7 +264,7 @@ def MakeWJetsCards(fname_mc, fname_qcd, channel, wptbin, etabin, doWpT = False, 
     nuisgroups["mcsec"] = []
     for proc in processes:
         if not proc.isSignal and proc.isMC:
-            nuis_norm = Nuisance(name = "norm_" + proc.name, type = "lnN")
+            nuis_norm = Nuisance(name = "norm_" + proc.name + "_" + sqrtS, type = "lnN")
             nuis_norm[proc.name] = proc.xsecUnc
             nuisgroups["mcsec"].append(nuis_norm)
 
@@ -278,13 +277,13 @@ def MakeWJetsCards(fname_mc, fname_qcd, channel, wptbin, etabin, doWpT = False, 
     # correlate MC systematic, ECAL and muon prefire 
     # between electron and muon channel
     # uncorrelate FSR, bkg, tagpt in electron ahd muon channel
-    nuis_SysWeight1 = Nuisance(name = "SysWeight1", type = "shape")
-    nuis_SysWeight2 = Nuisance(name = lepname + "_SysWeight2", type = "shape")
-    nuis_SysWeight3 = Nuisance(name = lepname + "_SysWeight3", type = "shape")
-    nuis_SysWeight4 = Nuisance(name = lepname + "_SysWeight4", type = "shape")
+    nuis_SysWeight1 = Nuisance(name = "SysWeight1_" + sqrtS, type = "shape")
+    nuis_SysWeight2 = Nuisance(name = lepname + "_SysWeight2_" + sqrtS, type = "shape")
+    nuis_SysWeight3 = Nuisance(name = lepname + "_SysWeight3_" + sqrtS, type = "shape")
+    nuis_SysWeight4 = Nuisance(name = lepname + "_SysWeight4_" + sqrtS, type = "shape")
     #nuis_Sysweight5 = Nuisance(name = channel + "_SysWeight5", type = "shape")
-    nuis_SysWeight8 = Nuisance(name = "SysWeight8", type = "shape")
-    nuis_SysWeight10 = Nuisance(name = "SysWeight10", type = "shape")
+    nuis_SysWeight8 = Nuisance(name = "SysWeight8_" + sqrtS, type = "shape")
+    nuis_SysWeight10 = Nuisance(name = "SysWeight10_" + sqrtS, type = "shape")
     nuisgroups["effsys"] = [nuis_SysWeight1, nuis_SysWeight2, nuis_SysWeight3, nuis_SysWeight4]
     nuisgroups["prefire"] = [nuis_SysWeight8, nuis_SysWeight10]
     #nuisgroups["sfsys"].append(nuis_Sysweight5)
@@ -295,7 +294,7 @@ def MakeWJetsCards(fname_mc, fname_qcd, channel, wptbin, etabin, doWpT = False, 
             for sysweight in nuisgroups["effsys"] + nuisgroups["prefire"]:
                 sysweight[proc.name] = 1.0
 
-    nuis_effstat = Nuisance(name = "effstat_" + channel + "_" + era, type = "lnN")
+    nuis_effstat = Nuisance(name = "effstat_" + channel + "_" + sqrtS, type = "lnN")
     for proc in processes:
         if proc.isSignal:
             # only apply eff/sf stat uncertainty to signals for now
@@ -309,7 +308,7 @@ def MakeWJetsCards(fname_mc, fname_qcd, channel, wptbin, etabin, doWpT = False, 
     nuisgroups["recoil"] = []
     recoil_indices = ["2", "3", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"]
     for iuvar in recoil_indices:
-        nuis_SysRecoil = Nuisance(name = lepname + "_SysRecoil" + iuvar, type = "shape")
+        nuis_SysRecoil = Nuisance(name = lepname + "_SysRecoil" + iuvar + "_" + sqrtS, type = "shape")
         for proc in processes:
             if proc.isV:
                 # all the V processes (including W and Z) apply the recoil corrections
@@ -322,14 +321,14 @@ def MakeWJetsCards(fname_mc, fname_qcd, channel, wptbin, etabin, doWpT = False, 
     prefix = channel + "_" + etabin + "_" + wptbin
     nbins = nMTBins
     for ibin in range(1, nbins+1):
-        nuis_QCDStat = Nuisance(name = prefix + f"_bin{ibin}shape", type = "shape")
+        nuis_QCDStat = Nuisance(name = prefix + f"_bin{ibin}shape_{sqrtS}", type = "shape")
         for proc in processes:
             if proc.isQCD:
                 nuis_QCDStat[proc.name] = 1.0
         nuisgroups["qcdbkg"].append(nuis_QCDStat)
 
     if True:
-        nuis_QCDMCCont = Nuisance(name = prefix + "_ScaledMCshape", type = "shape")
+        nuis_QCDMCCont = Nuisance(name = prefix + f"_ScaledMCshape_{sqrtS}", type = "shape")
         for proc in processes:
             if proc.isQCD:
                 nuis_QCDMCCont[proc.name] = 1.0
@@ -340,7 +339,7 @@ def MakeWJetsCards(fname_mc, fname_qcd, channel, wptbin, etabin, doWpT = False, 
     nuisgroups["qcdscale"] = []
     for wpt in range(len(Vptbins)-1):
         for par in ["MuF", "MuR", "MuFMuR"]:
-            nuis_QCDScale = Nuisance(name = par+str(wpt), type = "shape")
+            nuis_QCDScale = Nuisance(name = sqrtS + "_"+ par+str(wpt), type = "shape")
             for proc in processes:
                 if proc.isSignal:
                     nuis_QCDScale[proc.name] = 1.0
@@ -350,14 +349,14 @@ def MakeWJetsCards(fname_mc, fname_qcd, channel, wptbin, etabin, doWpT = False, 
     nuisgroups["pdfalphaS"] = []
     pdf_indices = list(range(1, 101))
     for ipdf in pdf_indices:
-        nuis_PDF = Nuisance(name = f"PDF{ipdf}", type = "shape")
+        nuis_PDF = Nuisance(name = f"{sqrtS}_PDF{ipdf}", type = "shape")
         for proc in processes:
             if proc.isSignal:
                 nuis_PDF[proc.name] = 1.0
         nuisgroups["pdfalphaS"].append(nuis_PDF)
     
     # alphaS variations
-    nuis_alphaS = Nuisance(name = "alphaS", type = "shape")
+    nuis_alphaS = Nuisance(name = f"{sqrtS}_alphaS", type = "shape")
     for proc in processes:
         if proc.isSignal:
             nuis_alphaS[proc.name] = 1.0
@@ -451,13 +450,13 @@ def MakeZJetsCards(fname, channel, rebinned = False, is5TeV = False, outdir = "c
     processes = sigs + [ttbar, ewk]
     
     lepname = "mu" if "mu" in channel else "e"
-    era = "13TeV" if not is5TeV else "5TeV"
+    sqrtS = "13TeV" if not is5TeV else "5TeV"
 
     # define different nuisance parameters, their groups,
     # and the impacts on each process
     nuisgroups = OrderedDict()
 
-    nuis_lumi = Nuisance(name = "lumi_" + era, type = "lnN")
+    nuis_lumi = Nuisance(name = "lumi_" + sqrtS, type = "lnN")
     for proc in processes:
         if proc.isMC:
             nuis_lumi[proc.name] = unc_lumi[nuis_lumi.name]
@@ -466,7 +465,7 @@ def MakeZJetsCards(fname, channel, rebinned = False, is5TeV = False, outdir = "c
     nuisgroups["mcsec"] = []
     for proc in processes:
         if not proc.isSignal and proc.isMC:
-            nuis_norm = Nuisance(name = "norm_" + proc.name, type = "lnN")
+            nuis_norm = Nuisance(name = "norm_" + proc.name + "_" + sqrtS, type = "lnN")
             nuis_norm[proc.name] = proc.xsecUnc
             nuisgroups["mcsec"].append(nuis_norm)
 
@@ -479,12 +478,12 @@ def MakeZJetsCards(fname, channel, rebinned = False, is5TeV = False, outdir = "c
     # correlate MC systematic, ECAL and muon prefire 
     # between electron and muon channel
     # uncorrelate FSR, bkg, tagpt in electron ahd muon channel
-    nuis_SysWeight1 = Nuisance(name = "SysWeight1", type = "shape")
-    nuis_SysWeight2 = Nuisance(name = lepname + "_SysWeight2", type = "shape")
-    nuis_SysWeight3 = Nuisance(name = lepname + "_SysWeight3", type = "shape")
-    nuis_SysWeight4 = Nuisance(name = lepname + "_SysWeight4", type = "shape")
-    nuis_SysWeight8 = Nuisance(name = "SysWeight8", type = "shape")
-    nuis_SysWeight10 = Nuisance(name = "SysWeight10", type = "shape")
+    nuis_SysWeight1 = Nuisance(name = "SysWeight1_" + sqrtS, type = "shape")
+    nuis_SysWeight2 = Nuisance(name = lepname + "_SysWeight2_" + sqrtS, type = "shape")
+    nuis_SysWeight3 = Nuisance(name = lepname + "_SysWeight3_" + sqrtS, type = "shape")
+    nuis_SysWeight4 = Nuisance(name = lepname + "_SysWeight4_" + sqrtS, type = "shape")
+    nuis_SysWeight8 = Nuisance(name = "SysWeight8_" + sqrtS, type = "shape")
+    nuis_SysWeight10 = Nuisance(name = "SysWeight10_" + sqrtS, type = "shape")
     nuisgroups["effsys"] = [nuis_SysWeight1, nuis_SysWeight2, nuis_SysWeight3, nuis_SysWeight4]
     nuisgroups["prefire"] = [nuis_SysWeight8, nuis_SysWeight10]
     for proc in processes:
@@ -494,8 +493,8 @@ def MakeZJetsCards(fname, channel, rebinned = False, is5TeV = False, outdir = "c
             for sysweight in nuisgroups["effsys"] + nuisgroups["prefire"]:
                 sysweight[proc.name] = 1.0
 
-    nuis_effstat_plus = Nuisance(name = "effstat_" + lepname + "plus_" + era, type = "lnN")
-    nuis_effstat_minus = Nuisance(name = "effstat_" + lepname + "minus_" + era, type = "lnN")
+    nuis_effstat_plus = Nuisance(name = "effstat_" + lepname + "plus_" + sqrtS, type = "lnN")
+    nuis_effstat_minus = Nuisance(name = "effstat_" + lepname + "minus_" + sqrtS, type = "lnN")
     for proc in processes:
         if proc.isSignal:
             # only apply eff/sf stat uncertainty to signals for now
@@ -508,7 +507,7 @@ def MakeZJetsCards(fname, channel, rebinned = False, is5TeV = False, outdir = "c
     nuisgroups["qcdscale"] = []
     for wpt in range(len(Vptbins)-1):
         for par in ["MuF", "MuR", "MuFMuR"]:
-            nuis_QCDScale = Nuisance(name = par+str(wpt), type = "shape")
+            nuis_QCDScale = Nuisance(name = sqrtS + "_" + par+str(wpt), type = "shape")
             for proc in processes:
                 if proc.isSignal:
                     nuis_QCDScale[proc.name] = 1.0
@@ -518,14 +517,14 @@ def MakeZJetsCards(fname, channel, rebinned = False, is5TeV = False, outdir = "c
     nuisgroups["pdfalphaS"] = []
     pdf_indices = list(range(1, 101))
     for ipdf in pdf_indices:
-        nuis_PDF = Nuisance(name = f"PDF{ipdf}", type = "shape")
+        nuis_PDF = Nuisance(name = sqrtS + f"_PDF{ipdf}", type = "shape")
         for proc in processes:
             if proc.isSignal:
                 nuis_PDF[proc.name] = 1.0
         nuisgroups["pdfalphaS"].append(nuis_PDF)
     
     # alphaS variations
-    nuis_alphaS = Nuisance(name = "alphaS", type = "shape")
+    nuis_alphaS = Nuisance(name = sqrtS + "_alphaS", type = "shape")
     for proc in processes:
         if proc.isSignal:
             nuis_alphaS[proc.name] = 1.0

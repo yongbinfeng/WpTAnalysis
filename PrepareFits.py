@@ -80,30 +80,30 @@ if __name__  == "__main__":
             # muon channel
             fwsig_input = "root/output_shapes_munu" + suffix
             fwsig_rebin = f"root/test/{sqrtS}/test{key}/output_shapes_munu_Rebin" + suffix
-            fwsig_mergeTau = f"root/test/{sqrtS}/test{key}/output_shapes_munu_mergeTau" + suffix
+            fwsig_mergeTau = f"cards/test/{sqrtS}/test{key}/output_shapes_munu_mergeTau" + suffix
 
             fqcd_input = "root/output_qcdshape_munu" + suffix
             fqcd_rebin = f"root/test/{sqrtS}/test{key}/output_qcdshape_munu_Rebin" + suffix
             fqcd_input_scaled = "root/output_qcdshape_munu_applyScaling" + suffix
             fqcd_rebin_scaled = f"root/test/{sqrtS}/test{key}/output_qcdshape_munu_Rebin_applyScaling" + suffix
-            fqcd_output = f"root/test/{sqrtS}/test{key}/qcdshape_extrapolated_munu" + suffix
+            fqcd_output = f"cards/test/{sqrtS}/test{key}/qcdshape_extrapolated_munu" + suffix
 
-            fzsig_output = f"root/test/{sqrtS}/test{key}/output_shapes_mumu_Rebin" + suffix
+            fzsig_output = f"cards/test/{sqrtS}/test{key}/output_shapes_mumu_Rebin" + suffix
 
             card_muplus, card_muminus, card_zmumu, card_xsec_muplus, card_xsec_muminus, card_xsec_mumu = RunPreparations(fwsig_input, fwsig_rebin, fwsig_mergeTau, fqcd_input, fqcd_rebin, fqcd_input_scaled, fqcd_rebin_scaled, fqcd_output, "mu", outdir_card = f"cards/test/{sqrtS}/test{key}", mass_bins_w = val, fzsig_input=fzsig_mumu_input, fzsig_output = fzsig_output, applyLFU=applyLFU, is5TeV=do5TeV)
 
             # electron channel
             fwsig_input = "root/output_shapes_enu" + suffix
             fwsig_rebin = f"root/test/{sqrtS}/test{key}/output_shapes_enu_Rebin" + suffix
-            fwsig_mergeTau = f"root/test/{sqrtS}/test{key}/output_shapes_enu_mergeTau" + suffix
+            fwsig_mergeTau = f"cards/test/{sqrtS}/test{key}/output_shapes_enu_mergeTau" + suffix
 
             fqcd_input = "root/output_qcdshape_enu" + suffix
             fqcd_rebin = f"root/test/{sqrtS}/test{key}/output_qcdshape_enu_Rebin" + suffix
             fqcd_input_scaled = "root/output_qcdshape_enu_applyScaling" + suffix
             fqcd_rebin_scaled = f"root/test/{sqrtS}/test{key}/output_qcdshape_enu_Rebin_applyScaling" + suffix
-            fqcd_output = f"root/test/{sqrtS}/test{key}/qcdshape_extrapolated_enu" + suffix
+            fqcd_output = f"cards/test/{sqrtS}/test{key}/qcdshape_extrapolated_enu" + suffix
 
-            fzsig_output = f"root/test/{sqrtS}/test{key}/output_shapes_ee_Rebin" + suffix
+            fzsig_output = f"cards/test/{sqrtS}/test{key}/output_shapes_ee_Rebin" + suffix
 
             card_eplus, card_eminus, card_zee, card_xsec_eplus, card_xsec_eminus, card_xsec_ee = RunPreparations(fwsig_input, fwsig_rebin, fwsig_mergeTau, fqcd_input, fqcd_rebin, fqcd_input_scaled, fqcd_rebin_scaled, fqcd_output, "e", outdir_card = f"cards/test/{sqrtS}/test{key}", mass_bins_w = val, fzsig_input=fzsig_ee_input, fzsig_output=fzsig_output, applyLFU=applyLFU, is5TeV=do5TeV)
 

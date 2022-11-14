@@ -431,6 +431,8 @@ def main():
         output_suffix += "_5TeV"
     output_suffix += ".root"
 
+    sqrtS = "5TeV" if do5TeV else "13TeV"
+
     #
     # write out mT histograms for combine
     #
@@ -491,7 +493,7 @@ def main():
                             #    suffix = lepname + "_" + lepeta + "_" + wpt + "_SysRecoil" + str(i)
                             #else:
                             #    suffix = lepname + "_" + "SysRecoil" + str(i)
-                            suffix = lepname + "_SysRecoil" + str(i)
+                            suffix = lepname + "_SysRecoil" + str(i) + "_" + sqrtS
 
                             hup.SetName("{}_{}Up".format(hcen.GetName(), suffix))
 
@@ -527,19 +529,19 @@ def main():
                                 # stat unc, decorrelate the plus and minus
                                 prefix = chg + "_"
                             if i<=6 or i==8 or i==10 or i==12 or i==13:
-                                suffix = prefix + "SysWeight" + str(i) + "Up"
+                                suffix = prefix + "SysWeight" + str(i) + "_" + sqrtS
                                 #hup.SetName("{}_SysWeight{}Up".format(hcen.GetName(), str(i)))
-                                hup.SetName("{}_{}".format(hcen.GetName(), suffix))
+                                hup.SetName("{}_{}Up".format(hcen.GetName(), suffix))
                             else:
-                                suffix = prefix + "SysWeight" + str(i-1) + "Down"
+                                suffix = prefix + "SysWeight" + str(i-1) + "_" + sqrtS
                                 #hup.SetName("{}_SysWeight{}Down".format(hcen.GetName(), str(i-1)))
-                                hup.SetName("{}_{}".format(hcen.GetName(), suffix))
+                                hup.SetName("{}_{}Down".format(hcen.GetName(), suffix))
 
                             if i<6 or i==12 or i==13:
                                 # for prefire, the up and down weights are calculated seperately
-                                suffix = prefix + "SysWeight" + str(i) + "Down"
+                                suffix = prefix + "SysWeight" + str(i) + "_" + sqrtS
                                 #hdn  = hcen.Clone("{}_SysWeight{}Down".format(hcen.GetName(), str(i)))
-                                hdn  = hcen.Clone("{}_{}".format(hcen.GetName(), suffix))
+                                hdn  = hcen.Clone("{}_{}Down".format(hcen.GetName(), suffix))
                                 for ibin in range(1, hup.GetNbinsX()+1):
                                     hdn.SetBinContent(ibin, 2*hcen.GetBinContent(ibin) - hup.GetBinContent(ibin))
                             
@@ -563,7 +565,7 @@ def main():
                             hcen = hlists_central[ih]
                             hup  = hlists_up[ih]
                             
-                            suffix = sysname
+                            suffix = sqrtS + "_" + sysname
                             hup.SetName("{}_{}".format(hcen.GetName(), suffix))
 
                             if doTheoryNorm:
@@ -577,7 +579,7 @@ def main():
                                 # prepare the down variation
                                 # alphaS down variation is not saved in W + jets samples
                                 # use the symmetrized up variation instead
-                                suffix = sysname.replace("Up", "Down")
+                                suffix = sqrtS + "_" + sysname.replace("Up", "Down")
                                 hdn  = hcen.Clone("{}_{}".format(hcen.GetName(), suffix))
                                 for ibin in range(1, hup.GetNbinsX()+1):
                                     hdn.SetBinContent(ibin, 2*hcen.GetBinContent(ibin) - hup.GetBinContent(ibin))

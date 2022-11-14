@@ -290,6 +290,8 @@ def main():
     #    print("integral: ", h.Integral())
     #    print("bin contents: ", h.Print("all"))
 
+    sqrtS = "5TeV" if do5TeV else "13TeV"
+
     output_suffix = lepname
     if do5TeV:
         output_suffix += "_5TeV"
@@ -329,9 +331,9 @@ def main():
                 prefix = channel + "_"
 
             if  i<=6 or i==8 or i==10:
-                suffix = prefix + "SysWeight{}Up".format(str(i))
+                suffix = prefix + "SysWeight{}_{}Up".format(str(i), sqrtS)
             else:
-                suffix = prefix + "SysWeight{}Down".format(str(i-1))
+                suffix = prefix + "SysWeight{}_{}Down".format(str(i-1), sqrtS)
 
             #if i==5:
             #    # need to uncorrelated statistical uncertainties (weight5)
@@ -350,7 +352,7 @@ def main():
             #    # for prefire, the up and down weights are calculated seperately
             #    hdn  = hcen.Clone("{}_{}_SysWeight{}Down".format(hcen.GetName(), lepname, str(i)))
             if i<6:
-                suffix = prefix + "SysWeight{}Down".format(str(i))
+                suffix = prefix + "SysWeight{}_{}Down".format(str(i), sqrtS)
                 hdn  = hcen.Clone("{}_{}".format(hcen.GetName(), suffix))
                 for ibin in range(1, hup.GetNbinsX()+1):
                     hdn.SetBinContent(ibin, 2*hcen.GetBinContent(ibin) - hup.GetBinContent(ibin))
@@ -370,7 +372,7 @@ def main():
             hcen = hlists_central[ih]
             hup  = hlists_up[ih]
 
-            suffix = sysname 
+            suffix = sqrtS + "_" + sysname 
             hup.SetName("{}_{}".format(hcen.GetName(), suffix))
             for ibin in range(1, hup.GetNbinsX()+1):
                 hup.SetBinError(ibin, 0.)
@@ -383,7 +385,7 @@ def main():
                     hup.Scale(hcen.Integral()/hup.Integral())
 
             if "PDF" in sysname:
-                suffix = sysname.replace("Up", "Down")
+                suffix = sqrtS + "_" + sysname.replace("Up", "Down")
                 hdn.SetName("{}_{}".format(hcen.GetName(), suffix))
                 for ibin in range(1, hup.GetNbinsX()+1):
                     hdn.SetBinContent(ibin, 2*hcen.GetBinContent(ibin) - hup.GetBinContent(ibin))
