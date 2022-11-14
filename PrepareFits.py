@@ -75,8 +75,8 @@ if __name__  == "__main__":
 
         # scan fit range
         for key, val in mass_bins_test.items():
-            #if key != 0:
-            #    continue
+            if key != 4:
+                continue
             # muon channel
             fwsig_input = "root/output_shapes_munu" + suffix
             fwsig_rebin = f"root/test/{sqrtS}/test{key}/output_shapes_munu_Rebin" + suffix
@@ -108,11 +108,11 @@ if __name__  == "__main__":
             card_eplus, card_eminus, card_zee, card_xsec_eplus, card_xsec_eminus, card_xsec_ee = RunPreparations(fwsig_input, fwsig_rebin, fwsig_mergeTau, fqcd_input, fqcd_rebin, fqcd_input_scaled, fqcd_rebin_scaled, fqcd_output, "e", outdir_card = f"cards/test/{sqrtS}/test{key}", mass_bins_w = val, fzsig_input=fzsig_ee_input, fzsig_output=fzsig_output, applyLFU=applyLFU, is5TeV=do5TeV)
 
             # combined fit
-            GenerateRunCommand("card_combined", [card_muplus, card_muminus, card_zmumu, card_eplus, card_eminus, card_zee], ["muplus", "muminus", "mumu", "eplus", "eminus", "ee"], [card_xsec_muplus, card_xsec_muminus, card_xsec_mumu, card_xsec_eplus, card_xsec_eminus, card_xsec_ee], applyLFU=applyLFU)
+            GenerateRunCommand("card_combined", [card_muplus, card_muminus, card_zmumu, card_eplus, card_eminus, card_zee], ["muplus", "muminus", "mumu", "eplus", "eminus", "ee"], [card_xsec_muplus, card_xsec_muminus, card_xsec_mumu, card_xsec_eplus, card_xsec_eminus, card_xsec_ee], applyLFU=applyLFU, do5TeV=do5TeV)
 
             # mu channel fit
-            GenerateRunCommand("card_mu", [card_muplus, card_muminus, card_zmumu], ["muplus", "muminus", "mumu"], [card_xsec_muplus, card_xsec_muminus, card_xsec_mumu], applyLFU=applyLFU)
+            GenerateRunCommand("card_mu", [card_muplus, card_muminus, card_zmumu], ["muplus", "muminus", "mumu"], [card_xsec_muplus, card_xsec_muminus, card_xsec_mumu], applyLFU=applyLFU, do5TeV=do5TeV)
 
             # e channel fit
-            GenerateRunCommand("card_e", [card_eplus, card_eminus, card_zee], ["eplus", "eminus", "ee"], [card_xsec_eplus, card_xsec_eminus, card_xsec_ee], applyLFU=applyLFU)
+            GenerateRunCommand("card_e", [card_eplus, card_eminus, card_zee], ["eplus", "eminus", "ee"], [card_xsec_eplus, card_xsec_eminus, card_xsec_ee], applyLFU=applyLFU, do5TeV=do5TeV)
 

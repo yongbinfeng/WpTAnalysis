@@ -67,6 +67,22 @@ class Nuisance(object):
         self.valuemap[key] = val
 
 
+def GetLumiUnc(isCorr: bool = False, is5TeV: bool = False):
+    """
+    return the lumi systematic uncertainty
+    taken from https://twiki.cern.ch/twiki/bin/view/CMS/LumiRecommendationsRun2#Combination_and_correlations_wit
+    """
+    unc_lumi = OrderedDict()
+    unc_lumi['13TeV_uncor'] = 1.009
+    unc_lumi['13TeV_cor'] = 1.015
+    unc_lumi['5TeV_uncor'] = 1.008
+    unc_lumi['5TeV_cor'] = 1.017
+
+    era = "5TeV" if is5TeV else "13TeV"
+    era += "_cor" if isCorr else "_uncor"
+    return unc_lumi[era]
+
+
 def WriteCard(data, processes, nuisgroups, cardname):
     """
     write the datacard provided with data, processes, and nuisances
@@ -143,10 +159,7 @@ def MakeWJetsCards(fname_mc, fname_qcd, channel, wptbin, etabin, doWpT = False, 
     if rebinned:
         prefix = "Rebinned_"
 
-    # from lumi    
-    unc_lumi = {}
-    unc_lumi['lumi_13TeV'] = 1.017
-    unc_lumi['lumi_5TeV'] = 1.019
+    sqrtS = "13TeV" if not is5TeV else "5TeV"
 
     # from eff calculations
     unc_effstat = {}
@@ -167,7 +180,7 @@ def MakeWJetsCards(fname_mc, fname_qcd, channel, wptbin, etabin, doWpT = False, 
     # sig processes
     sigs = []
     if not doWpT:
-        sig = Process(name = GetSigName(channel, applyLFU), fname = fname_mc, 
+        sig = Process(name = GetSigName(channel, applyLFU, is5TeV), fname = fname_mc, 
                      hname = prefix + "histo_wjets_{}_mT_1_{}_{}_grouped_wsig".format( channel, wptbin, etabin),
                      hsys  = prefix + "histo_wjets_{}_mT_1_{}_{}_grouped_wsig_".format(channel, wptbin, etabin),
                      isSignal = True,
@@ -191,7 +204,7 @@ def MakeWJetsCards(fname_mc, fname_qcd, channel, wptbin, etabin, doWpT = False, 
 
     # ttbar bkg
     sname = "ttbar3" if not is5TeV else "ttbar1"
-    ttbar = Process(name = "tt", fname = fname_mc,
+    ttbar = Process(name = f"tt_{sqrtS}", fname = fname_mc,
                     hname = prefix + "histo_wjets_{}_mT_1_{}_{}_grouped_{}".format(channel, wptbin, etabin, sname),
                     hsys  = prefix + "histo_wjets_{}_mT_1_{}_{}_grouped_{}_".format(channel, wptbin, etabin, sname),
                     isSignal = False,
@@ -202,7 +215,7 @@ def MakeWJetsCards(fname_mc, fname_qcd, channel, wptbin, etabin, doWpT = False, 
                 )
     # Z bkg
     sname = "zxx9" if not is5TeV else "zxx6"
-    zxx = Process(name = "zxx", fname = fname_mc,
+    zxx = Process(name = f"zxx_{sqrtS}", fname = fname_mc,
                   hname = prefix + "histo_wjets_{}_mT_1_{}_{}_grouped_{}".format(channel, wptbin, etabin, sname),
                   hsys  = prefix + "histo_wjets_{}_mT_1_{}_{}_grouped_{}_".format(channel, wptbin, etabin, sname),
                   isSignal = False,
@@ -213,7 +226,7 @@ def MakeWJetsCards(fname_mc, fname_qcd, channel, wptbin, etabin, doWpT = False, 
                   )
     # W->tau + nu bkg
     sname = "wx10" if not is5TeV else "wx7"
-    wtau = Process(name = "taunu", fname = fname_mc,
+    wtau = Process(name = f"taunu_{sqrtS}", fname = fname_mc,
                    hname = prefix + "histo_wjets_{}_mT_1_{}_{}_grouped_{}".format(channel, wptbin, etabin, sname),
                    hsys  = prefix + "histo_wjets_{}_mT_1_{}_{}_grouped_{}_".format(channel, wptbin, etabin, sname),
                    isSignal = False,
@@ -224,7 +237,7 @@ def MakeWJetsCards(fname_mc, fname_qcd, channel, wptbin, etabin, doWpT = False, 
                 )
     # VV bkg
     sname = "vv6" if not is5TeV else "vv2"
-    vv = Process(name = "VV", fname = fname_mc,
+    vv = Process(name = f"VV_{sqrtS}", fname = fname_mc,
                  hname = prefix + "histo_wjets_{}_mT_1_{}_{}_grouped_{}".format(channel, wptbin, etabin, sname),
                  hsys  = prefix + "histo_wjets_{}_mT_1_{}_{}_grouped_{}_".format(channel, wptbin, etabin, sname),
                  isSignal = False,
@@ -234,7 +247,7 @@ def MakeWJetsCards(fname_mc, fname_qcd, channel, wptbin, etabin, doWpT = False, 
                  xsecUnc = "1.10"
                  )
     # QCD bkg
-    qcd = Process(name = "QCD_"+channel+"_"+etabin+"_"+wptbin, fname = fname_qcd,
+    qcd = Process(name = "QCD_"+channel+"_"+etabin+"_"+wptbin+"_"+sqrtS, fname = fname_qcd,
                   hname = "h_QCD_Extrapolated_{}_{}_{}".format(channel, etabin, wptbin),
                   #hsys = "h_QCD_Extrapolated_{}_lepEta_".format(channel),
                   hsys = "h_QCD_Extrapolated_",
@@ -249,17 +262,18 @@ def MakeWJetsCards(fname_mc, fname_qcd, channel, wptbin, etabin, doWpT = False, 
     processes = sigs + [ttbar, zxx, vv, qcd]
     
     lepname = "mu" if "mu" in channel else "e"
-    sqrtS = "13TeV" if not is5TeV else "5TeV"
 
     # define different nuisance parameters, their groups,
     # and the impacts on each process
     nuisgroups = OrderedDict()
 
-    nuis_lumi = Nuisance(name = "lumi_" + sqrtS, type = "lnN")
+    nuis_uncor_lumi = Nuisance(name = "lumi_uncor_" + sqrtS, type = "lnN")
+    nuis_cor_lumi   = Nuisance(name = "lumi_cor_" + sqrtS,   type = "lnN")
     for proc in processes:
         if proc.isMC:
-            nuis_lumi[proc.name] = unc_lumi[nuis_lumi.name]
-    nuisgroups["lumi"] = [nuis_lumi]
+            nuis_uncor_lumi[proc.name] = GetLumiUnc(False, is5TeV)
+            nuis_cor_lumi[proc.name]   = GetLumiUnc(True, is5TeV)
+    nuisgroups["lumi"] = [nuis_uncor_lumi, nuis_cor_lumi]
 
     nuisgroups["mcsec"] = []
     for proc in processes:
@@ -389,10 +403,14 @@ def MakeZJetsCards(fname, channel, rebinned = False, is5TeV = False, outdir = "c
     if rebinned:
         prefix = "Rebinned_"
 
+    sqrtS = "5TeV" if is5TeV else "13TeV"
+
     # from lumi    
     unc_lumi = {}
-    unc_lumi['lumi_13TeV'] = 1.017
-    unc_lumi['lumi_5TeV'] = 1.019
+    unc_lumi['lumi_uncor_13TeV'] = 1.015
+    unc_lumi['lumi_cor_13TeV'] = 1.009
+    unc_lumi['lumi_uncor_5TeV'] = 1.017
+    unc_lumi['lumi_cor_5TeV'] = 1.008
 
     # from eff calculations
     unc_effstat = {}
@@ -412,7 +430,7 @@ def MakeZJetsCards(fname, channel, rebinned = False, is5TeV = False, outdir = "c
                    )
     # sig processes
     sigs = []
-    sig = Process(name = GetSigName(channel ,applyLFU), fname = fname, 
+    sig = Process(name = GetSigName(channel ,applyLFU, is5TeV), fname = fname, 
                  hname = prefix + f"histo_zjets_zmass_{channel}_weight_0_grouped_DY0",
                  hsys = prefix + f"histo_zjets_zmass_{channel}_weight_0_grouped_DY0_",
                  isSignal = True,
@@ -424,7 +442,7 @@ def MakeZJetsCards(fname, channel, rebinned = False, is5TeV = False, outdir = "c
 
     # ttbar bkg
     sname = "ttbar1" if not is5TeV else "ttbar1"
-    ttbar = Process(name = "tt", fname = fname,
+    ttbar = Process(name = f"tt_{sqrtS}", fname = fname,
                     hname = prefix + f"histo_zjets_zmass_{channel}_weight_0_grouped_ttbar1",
                     hsys = prefix + f"histo_zjets_zmass_{channel}_weight_0_grouped_ttbar1_",
                     isSignal = False,
@@ -435,7 +453,7 @@ def MakeZJetsCards(fname, channel, rebinned = False, is5TeV = False, outdir = "c
                 )
     # EWK bkg
     sname = "EWK2" if not is5TeV else "EWK2"
-    ewk = Process(name = "EWK", fname = fname,
+    ewk = Process(name = f"EWK_{sqrtS}", fname = fname,
                  hname = prefix + f"histo_zjets_zmass_{channel}_weight_0_grouped_EWK2",
                  hsys = prefix + f"histo_zjets_zmass_{channel}_weight_0_grouped_EWK2_",
                  isSignal = False,
@@ -450,17 +468,18 @@ def MakeZJetsCards(fname, channel, rebinned = False, is5TeV = False, outdir = "c
     processes = sigs + [ttbar, ewk]
     
     lepname = "mu" if "mu" in channel else "e"
-    sqrtS = "13TeV" if not is5TeV else "5TeV"
 
     # define different nuisance parameters, their groups,
     # and the impacts on each process
     nuisgroups = OrderedDict()
 
-    nuis_lumi = Nuisance(name = "lumi_" + sqrtS, type = "lnN")
+    nuis_uncor_lumi = Nuisance(name = "lumi_uncor_" + sqrtS, type = "lnN")
+    nuis_cor_lumi   = Nuisance(name = "lumi_cor_" + sqrtS,   type = "lnN")
     for proc in processes:
         if proc.isMC:
-            nuis_lumi[proc.name] = unc_lumi[nuis_lumi.name]
-    nuisgroups["lumi"] = [nuis_lumi]
+            nuis_uncor_lumi[proc.name] = GetLumiUnc(False, is5TeV)
+            nuis_cor_lumi[proc.name]   = GetLumiUnc(True, is5TeV)
+    nuisgroups["lumi"] = [nuis_uncor_lumi, nuis_cor_lumi]
 
     nuisgroups["mcsec"] = []
     for proc in processes:
@@ -553,7 +572,7 @@ def combineCards(labels, cards, oname):
     os.system(cmd)
 
 
-def GenerateRunCommand(output: str, cards: list, channels: list, cards_xsec: list = [], prefix: str = "./", applyLFU: bool = False):
+def GenerateRunCommand(output: str, cards: list, channels: list, cards_xsec: list = [], prefix: str = "./", applyLFU: bool = False, do5TeV: bool = False):
     """
     generate the script with commands to run combine.
     inputs can probably be improved here
@@ -595,7 +614,7 @@ def GenerateRunCommand(output: str, cards: list, channels: list, cards_xsec: lis
         zinc = set()
         # add the syntax to do the absolute xsec, charge asymmetry, and ratio measurements
         for channel in channels:
-            signame = GetSigName(channel, applyLFU)
+            signame = GetSigName(channel, applyLFU, do5TeV)
             if "plus" in channel:
                 wplus.add(signame)
             elif "minus" in channel:
@@ -674,7 +693,7 @@ def MakeXSecCard(channel: str, is5TeV: bool = False, outdir: str = "cards", appl
     f.Close()
 
     # sig mc xsec
-    sig = Process(name = GetSigName(channel, applyLFU), fname = fname, 
+    sig = Process(name = GetSigName(channel, applyLFU, is5TeV), fname = fname, 
                  hname = hname,
                  hsys = hname+"_",
                  isSignal = True,
@@ -695,13 +714,14 @@ def MakeXSecCard(channel: str, is5TeV: bool = False, outdir: str = "cards", appl
     return cardname
 
 
-def GetSigName(channel: str, applyLFU: bool = False):
+def GetSigName(channel: str, applyLFU: bool = False, do5TeV: bool = False):
     """
     return the signal process name
     """
     signame = channel
     if applyLFU:
         signame = signame.replace("e", "lep").replace("mu", "lep")
-    return signame + "_sig"
+    suffix = "5TeV" if do5TeV else "13TeV"
+    return signame + f"_{suffix}_sig"
 
 
