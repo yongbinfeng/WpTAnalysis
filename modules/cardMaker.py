@@ -679,10 +679,10 @@ def MakeXSecCard(channel: str, is5TeV: bool = False, outdir: str = "cards", appl
     """
     # get the xsec result
     xsec = GetXSec(channel, is5TeV)
-    suffix = "5TeV" if is5TeV else "13TeV"
+    sqrtS = "5TeV" if is5TeV else "13TeV"
 
     # write the xsec result to a root file
-    fname = f"{outdir}/xsec_{channel}_{suffix}.root"
+    fname = f"{outdir}/xsec_{channel}_{sqrtS}.root"
     f = ROOT.TFile(fname, "RECREATE")
     hname = f"xsec_{channel}_inAcc"
     h = ROOT.TH1D(hname, hname, 1, 0, 1)
@@ -702,9 +702,7 @@ def MakeXSecCard(channel: str, is5TeV: bool = False, outdir: str = "cards", appl
                  ) 
 
     # get the datacard
-    cardname = f"{outdir}/datacard_{channel}_xsec_InAcc.txt"
-    if is5TeV:
-        cardname = f"{outdir}/datacard_{channel}_xsec_InAcc_5TeV.txt"
+    cardname = f"{outdir}/datacard_{channel}_xsec_InAcc_{sqrtS}.txt"
 
     nuisgroups = OrderedDict()
     processes = [sig]
@@ -720,9 +718,9 @@ def GetSigName(channel: str, applyLFU: bool = False, is5TeV: bool = False):
     signame = channel
     if applyLFU:
         signame = signame.replace("eplus", "lepplus").replace("eminus", "lepminus").replace("ee", "leplep").replace("enu", "lepnu").replace("mu", "lep")
-    suffix = "5TeV" if is5TeV else "13TeV"
+    sqrtS = "5TeV" if is5TeV else "13TeV"
     if "TeV" not in signame:
-        signame += f"_{suffix}"
+        signame += f"_{sqrtS}"
     signame += "_sig"
     return signame
 
