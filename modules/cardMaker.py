@@ -26,7 +26,8 @@ class Process(object):
 
         #prefix_LPC = "/uscms/home/yfeng/nobackup/WpT/Cards/TestCode/WpTAnalysis/"
         #self.fname = prefix_LPC + kwargs.get('fname', 'test.root')
-        self.fname = kwargs.get('fname', "test.root").split('/')[-1]
+        # this should be changed depending on how cards and files are organized
+        self.fname = "../../root" + kwargs.get('fname', "test.root").rpartition('/root')[-1]
 
         #  regulation
         if self.isObs:
@@ -568,7 +569,7 @@ def combineCards(labels, cards, oname):
     os.system(cmd)
 
 
-def GenerateRunCommand(output: str, cards: list, channels: list, cards_xsec: list = [], prefix: str = "./", applyLFU: bool = False, is5TeV: bool = False):
+def GenerateRunCommand(output: str, cards: list, channels: list, cards_xsec: list = [], output_dir: str = "./", applyLFU: bool = False, is5TeV: bool = False, combineAll: bool = False):
     """
     generate the script with commands to run combine.
     inputs can probably be improved here
@@ -578,19 +579,17 @@ def GenerateRunCommand(output: str, cards: list, channels: list, cards_xsec: lis
         # if provided xsec cards, then it should have the same length as the hist cards and channels        
         assert len(cards_xsec) == len(channels), "xsec cards and channels should have the same length"
 
-    # these partitions can be changed depending on the directories and organizations
-    card0 = cards[0]
-    workdir = prefix + card0.rpartition('/')[0]
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
 
     for idx, card in enumerate(cards):
-        cards[idx] = card.split('/')[-1]
+        cards[idx] = "../../cards" + card.rpartition('/cards')[-1]
     
     for idx, card_xsec in enumerate(cards_xsec):
-        cards_xsec[idx] = card_xsec.split('/')[-1]
+        cards_xsec[idx] = "../../cards" + card_xsec.rpartition('/cards')[-1]
 
     cmd = ""
     cmd += "#!/bin/bash\n\n"
-    cmd += f"cd {workdir}\n\n\n"
 
     cmd += f"combineCards.py"
     for channel, card in zip(channels, cards):
@@ -605,34 +604,45 @@ def GenerateRunCommand(output: str, cards: list, channels: list, cards_xsec: lis
     cmd += f" > {output}.txt\n"
 
     if len(cards_xsec) > 0:
-        wplus = set()
-        wminus = set()
-        zinc = set()
-        # add the syntax to do the absolute xsec, charge asymmetry, and ratio measurements
-        for channel in channels:
-            signame = GetSigName(channel, applyLFU, is5TeV)
-            if "plus" in channel:
-                wplus.add(signame)
-            elif "minus" in channel:
-                wminus.add(signame)
-            else:
-                # others are z's
-                zinc.add(signame)
-        winc = wplus.union(wminus)
+        sqrtSs = ["13TeV", "5TeV"] if combineAll else ["5TeV"] if is5TeV else ["13TeV"]
+        for sqrtS in sqrtSs:
+            wplus = set()
+            wminus = set()
+            zinc = set()
+            # add the syntax to do the absolute xsec, charge asymmetry, and ratio measurements
+            for channel in channels:
+                signame = GetSigName(channel, applyLFU, is5TeV)
+                if "plus" in channel and sqrtS in channel:
+                    wplus.add(signame)
+                elif "minus" in channel and sqrtS in channel:
+                    wminus.add(signame)
+                else:
+                    if sqrtS in channel:
+                        # others are z's
+                        zinc.add(signame)
+            winc = wplus.union(wminus)
 
-        sqrtS = "5TeV" if is5TeV else "13TeV"
-
-        cmd += '\n\n'
-        cmd += '# syntax for absolute xsec, charge asymmetry, and xsec ratios\n'
-        cmd += '\n'
-        cmd += f'echo \"Wplus_{sqrtS}_sig sumGroup = {" ".join(sig for sig in wplus)}\" >> {output}.txt\n'
-        cmd += f'echo \"Wminus_{sqrtS}_sig sumGroup = {" ".join(sig for sig in wminus)}\" >> {output}.txt\n'
-        cmd += f'echo \"Winc_{sqrtS}_sig sumGroup = {" ".join(sig for sig in winc)}\" >> {output}.txt\n'
-        cmd += f'echo \"Zinc_{sqrtS}_sig sumGroup = {" ".join(sig for sig in zinc)}\" >> {output}.txt\n'
-        cmd += f'echo \"WchgAsym_{sqrtS} chargeMetaGroup = Wplus_{sqrtS}_sig Wminus_{sqrtS}_sig\" >> {output}.txt\n'
-        cmd += f'echo \"WchgRatio_{sqrtS} ratioMetaGroup = Wplus_{sqrtS}_sig Wminus_{sqrtS}_sig\" >> {output}.txt\n'
-        cmd += f'echo \"WZRatio_{sqrtS} ratioMetaGroup = Winc_{sqrtS}_sig Zinc_{sqrtS}_sig\" >> {output}.txt\n'
-        cmd += '\n\n'
+            cmd += '\n'
+            cmd += f'# syntax for absolute xsec, charge asymmetry, and xsec ratios at {sqrtS}\n'
+            cmd += '\n'
+            cmd += f'echo \"Wplus_{sqrtS}_sig sumGroup = {" ".join(sig for sig in wplus)}\" >> {output}.txt\n'
+            cmd += f'echo \"Wminus_{sqrtS}_sig sumGroup = {" ".join(sig for sig in wminus)}\" >> {output}.txt\n'
+            cmd += f'echo \"Winc_{sqrtS}_sig sumGroup = {" ".join(sig for sig in winc)}\" >> {output}.txt\n'
+            cmd += f'echo \"Zinc_{sqrtS}_sig sumGroup = {" ".join(sig for sig in zinc)}\" >> {output}.txt\n'
+            cmd += f'echo \"WchgAsym_{sqrtS} chargeMetaGroup = Wplus_{sqrtS}_sig Wminus_{sqrtS}_sig\" >> {output}.txt\n'
+            cmd += f'echo \"WchgRatio_{sqrtS} ratioMetaGroup = Wplus_{sqrtS}_sig Wminus_{sqrtS}_sig\" >> {output}.txt\n'
+            cmd += f'echo \"WZRatio_{sqrtS} ratioMetaGroup = Winc_{sqrtS}_sig Zinc_{sqrtS}_sig\" >> {output}.txt\n'
+            cmd += '\n'
+        
+        if combineAll:
+            cmd += '\n'
+            cmd += '# syntax for combine all 5 and 13 TeV\n'
+            cmd += '\n'
+            cmd += f'echo \"sqrtS_Wplus_ratio ratioMetaGroup = Wplus_13TeV_sig Wplus_5TeV_sig\" >> {output}.txt\n'
+            cmd += f'echo \"sqrtS_Wminus_ratio ratioMetaGroup = Wminus_13TeV_sig Wminus_5TeV_sig\" >> {output}.txt\n'
+            cmd += f'echo \"sqrtS_Winc_ratio ratioMetaGroup = Winc_13TeV_sig Winc_5TeV_sig\" >> {output}.txt\n'
+            cmd += f'echo \"sqrtS_Zinc_ratio ratioMetaGroup = Zinc_13TeV_sig Zinc_5TeV_sig\" >> {output}.txt\n'
+            cmd += '\n'
 
     cmd += f"text2hdf5.py {output}.txt"
     if len(cards_xsec) > 0:
@@ -643,9 +653,9 @@ def GenerateRunCommand(output: str, cards: list, channels: list, cards_xsec: lis
     cmd += f"combinetf.py {output}.hdf5 --binByBinStat --computeHistErrors --saveHists --doImpacts --output {output}.root\n"
 
     # write outputs to scripts
-    with open(f"{workdir}/{output}.sh", "w") as f:
+    with open(f"{output_dir}/{output}.sh", "w") as f:
         f.write(cmd)
-    os.system(f"chmod +x {workdir}/{output}.sh")
+    os.system(f"chmod +x {output_dir}/{output}.sh")
 
 
 def GetXSec(channel: str, is5TeV: bool = False):
@@ -673,7 +683,7 @@ def GetXSec(channel: str, is5TeV: bool = False):
     return xsecs["5TeV" if is5TeV else "13TeV"][channel]
 
 
-def MakeXSecCard(channel: str, is5TeV: bool = False, outdir: str = "cards", applyLFU: bool = False):
+def MakeXSecCard(channel: str, is5TeV: bool = False, outdir_root: str = "root", outdir_card: str = "cards", applyLFU: bool = False):
     """
     Generate the root file with xsec result, and also the datacard
     """
@@ -682,7 +692,7 @@ def MakeXSecCard(channel: str, is5TeV: bool = False, outdir: str = "cards", appl
     sqrtS = "5TeV" if is5TeV else "13TeV"
 
     # write the xsec result to a root file
-    fname = f"{outdir}/xsec_{channel}_{sqrtS}.root"
+    fname = f"{outdir_root}/xsec_{channel}_{sqrtS}.root"
     f = ROOT.TFile(fname, "RECREATE")
     hname = f"xsec_{channel}_inAcc"
     h = ROOT.TH1D(hname, hname, 1, 0, 1)
@@ -702,7 +712,7 @@ def MakeXSecCard(channel: str, is5TeV: bool = False, outdir: str = "cards", appl
                  ) 
 
     # get the datacard
-    cardname = f"{outdir}/datacard_{channel}_xsec_InAcc_{sqrtS}.txt"
+    cardname = f"{outdir_card}/datacard_{channel}_xsec_InAcc_{sqrtS}.txt"
 
     nuisgroups = OrderedDict()
     processes = [sig]

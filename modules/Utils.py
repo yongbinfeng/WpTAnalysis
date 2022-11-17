@@ -3,6 +3,21 @@ collecting some util scripts here
 """
 
 import pandas as pd
+from collections import OrderedDict
+import re
+
+
+def GetValues(pdict: OrderedDict, key: str):
+    """
+    given a dictionary, return all the values with keys matching the given key
+    """
+    results = []
+    for x, val in pdict.items():
+        if re.match(key, x):
+            if type(val) is not list:
+                val = [val]
+            results += val
+    return results
 
 def FormatOutputForWZ(istring: str):
     labelmaps = {}
