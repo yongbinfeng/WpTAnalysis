@@ -13,7 +13,7 @@ from modules.SampleManager import DrawConfig
 
 ROOT.gROOT.SetBatch(True)
 
-def MakePostPlot(ifilename: str, channel: str, bins: np.array, suffix: str, showpull: bool = False, is5TeV: bool = False, startbin: int = 1):
+def MakePostPlot(ifilename: str, channel: str, bins: np.array, suffix: str, showpull: bool = False, is5TeV: bool = False, startbin: int = 1, outdir: str = "plots"):
     """
     compare the unrolled postfit of data and templates
     """
@@ -26,7 +26,13 @@ def MakePostPlot(ifilename: str, channel: str, bins: np.array, suffix: str, show
     hkeys = [hkey.GetName() for hkey in hkeys]
     hnames_sig = []
     hnames_qcd = []
+    hnames_ewks = []
+    hnames_ttbar = []
     for hkey in hkeys:
+        if is5TeV and "13TeV" in hkey:
+            continue
+        if not is5TeV and "5TeV" in hkey:
+            continue
         # w signal
         if bool(re.match(r"expproc_\w*sig_postfit$", hkey)):
             hnames_sig.append( hkey )
@@ -36,14 +42,24 @@ def MakePostPlot(ifilename: str, channel: str, bins: np.array, suffix: str, show
         # qcd
         elif bool(re.match(r"expproc_QCD_\w*postfit$", hkey)):
             hnames_qcd.append( hkey )
+        # ewks: DY, taunu, diboson, etc and EWK (for Z's)
+        elif bool(re.match(r"expproc_taunu\w*postfit$", hkey)):
+            hnames_ewks.append( hkey )
+        elif bool(re.match(r"expproc_zxx\w*postfit$", hkey)):
+            hnames_ewks.append( hkey )
+        elif bool(re.match(r"expproc_VV\w*postfit$", hkey)):
+            hnames_ewks.append( hkey )
+        elif bool(re.match(r"expproc_EWK\w*postfit$", hkey)):
+            hnames_ewks.append( hkey )
+        # ttbar
+        elif bool(re.match(r"expproc_tt\w*postfit$", hkey)):
+            hnames_ttbar.append( hkey )
     assert len(hnames_sig)>=1, "There should be at least one sig histogram in file: {}".format(ifilename)
-    print(hnames_sig)
+    print("sig ", hnames_sig)
+    print("qcd ", hnames_qcd)
+    print("ewk ", hnames_ewks)
+    print("ttbar ", hnames_ttbar)
 
-    # ewk bkg includes W->tau+nu, z->ll, and diboson process (for w's)
-    # ewk processes for z's
-    hnames_ewks = ["expproc_taunu_postfit", "expproc_zxx_postfit", "expproc_VV_postfit", "expproc_EWK_postfit"]
-    hnames_ttbar = ["expproc_tt_postfit"]
-    
     ## read the postfit plots from input file
     hexpsig = None
     hexpewk = None
@@ -161,7 +177,7 @@ def MakePostPlot(ifilename: str, channel: str, bins: np.array, suffix: str, show
     hs_gmc.Add(hewk)
     hs_gmc.Add(hsig)
 
-    ymaxs = {"muplus": 3.5e4, "muminus": 2.5e4, "eplus": 2.5e4, "eminus": 1.8e4, "mumu": 2.5e4, "ee": 2.0e4}
+    ymaxs = {"muplus": 3.5e4, "muminus": 2.5e4, "eplus": 2.5e4, "eminus": 1.8e4, "mumu": 2.0e4, "ee": 1.5e4}
     if is5TeV:
         for key, val in ymaxs.items():
             ymaxs[key] = val*0.7
@@ -181,7 +197,7 @@ def MakePostPlot(ifilename: str, channel: str, bins: np.array, suffix: str, show
         # z's
         xlabel = "m_{ll} [GeV]"
         outputname = f"histo_zjets_{channel}_{suffix}"
-    drawconfigs = DrawConfig(xmin = bins.min(), xmax = bins.max(), xlabel = xlabel, ymin = 0, ymax = ymaxs[channel] / (int(nbins/36)+1), ylabel = "Events / GeV", outputname = outputname, dology=False, addOverflow=False, addUnderflow=False, yrmin=0.95, yrmax=1.05, yrlabel = "Data / Pred")
+    drawconfigs = DrawConfig(xmin = bins.min(), xmax = bins.max(), xlabel = xlabel, ymin = 0, ymax = ymaxs[channel] / (int(nbins/36)+1), ylabel = "Events / GeV", outputname = outdir + "/" + outputname, dology=False, addOverflow=False, addUnderflow=False, yrmin=0.95, yrmax=1.05, yrlabel = "Data / Pred")
     DrawHistos( [hdata, hs_gmc], ["Data", siglabels[channel], "EWK", "t#bar{t}", "QCD"], drawconfigs.xmin, drawconfigs.xmax, drawconfigs.xlabel, drawconfigs.ymin, drawconfigs.ymax, drawconfigs.ylabel, drawconfigs.outputname, dology=drawconfigs.dology, dologx=drawconfigs.dologx, showratio=drawconfigs.showratio, yrmax = drawconfigs.yrmax, yrmin = drawconfigs.yrmin, yrlabel = drawconfigs.yrlabel, donormalize=drawconfigs.donormalize, ratiobase=drawconfigs.ratiobase, legendPos = drawconfigs.legendPos, redrawihist = drawconfigs.redrawihist, extraText = drawconfigs.extraText, noCMS = drawconfigs.noCMS, addOverflow = drawconfigs.addOverflow, addUnderflow = drawconfigs.addUnderflow, nMaxDigits = drawconfigs.nMaxDigits, hratiopanel=hratio, drawoptions=['PE', 'HIST same'], showpull=showpull, hpulls=[hpull], W_ref = 600 * int(nbins/36+1), is5TeV = is5TeV) 
 
     return nevts
@@ -313,6 +329,10 @@ def result2json(ifilename: str, poiname: str, ofilename: str, hname: str = "nuis
 
         results['params'].append(systematic)
 
+    dirpath = ofilename.rpartition('/')[0]
+    if not os.path.exists(dirpath):
+        print(f"Make the directory {dirpath}")
+        os.makedirs(dirpath)
     with open(ofilename, 'w') as fp:
         json.dump(results, fp, indent=2)
     
@@ -395,3 +415,14 @@ def MakeWpTPostFitPlots(jsonNames, suffix=""):
 
     DrawHistos(list(himpacts.values()), list(himpacts.keys()), 0, 120, "W p_{T} [GeV]", 0, 0.20, "Uncertainty", "himpacts_wpt_"+suffix, dology=False, legendPos=[0.92, 0.88, 0.70, 0.40], drawashist=True)
 
+def WriteOutputToText(output, ofilename):
+    """
+    write the output to a tex file
+    """
+    outdir = ofilename.rpartition('/')[0]
+    if not os.path.exists(outdir):
+        print(f"Make the directory {outdir}")
+        os.makedirs(outdir)
+
+    with open(ofilename, 'w') as f:
+        f.write(output)

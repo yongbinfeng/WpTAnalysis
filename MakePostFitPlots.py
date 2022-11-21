@@ -1,7 +1,7 @@
 """
 script to make postfit comparisons
 """
-from modules.postFitScripts import MakePostPlot, result2json, MakeWpTPostFitPlots, GetPOIValue, ComparePOIs, DumpGroupImpacts
+from modules.postFitScripts import MakePostPlot, result2json, MakeWpTPostFitPlots, GetPOIValue, ComparePOIs, DumpGroupImpacts, WriteOutputToText
 from modules.CombineHarvester.plotImpacts import plotImpacts
 from modules.Binnings import mass_bins_w, mass_bins_z, mass_bins_test
 from modules.Utils import FormatTable
@@ -12,93 +12,127 @@ ROOT.gROOT.SetBatch(True)
 
 doInclusive = True
 doWpT = False
-doRebin = False
+doCombineYear = True
 
 # boolean flag to config if the pull
 # distribution should be included in the plots
 showPULL = True
 if doInclusive:
-    for sqrtS in ["5TeV", "13TeV"]:
-        ntests = len(mass_bins_test)
-        #if sqrtS != "5TeV":
-        #    continue
-        is5TeV = (sqrtS == "5TeV")
-        lumi_unc = 0.017 if not is5TeV else 0.019
+    ntests = len(mass_bins_test)
+
+    dvals_lep_pos = {}
+    dvals_lep_pos["5TeV"] = []
+    dvals_lep_pos["13TeV"] = []
+    dvals_lep_neg = {}
+    dvals_lep_neg["5TeV"] = []
+    dvals_lep_neg["13TeV"] = []
+    dvals_leplep = {}
+    dvals_leplep["5TeV"] = []
+    dvals_leplep["13TeV"] = []
+    derrs_lep_pos = {}
+    derrs_lep_pos["5TeV"] = []
+    derrs_lep_pos["13TeV"] = []
+    derrs_lep_neg = {}
+    derrs_lep_neg["5TeV"] = []
+    derrs_lep_neg["13TeV"] = []
+    derrs_leplep = {}
+    derrs_leplep["5TeV"] = []
+    derrs_leplep["13TeV"] = []
+
+    sqrtSs = ["5TeV", "13TeV"]
+
+    for idx in range(ntests):
+        if idx != 4:
+            continue
+        mass_bins = mass_bins_test[idx]
 
         starts_mT = []
-        vals_lep_pos = []
-        vals_lep_neg = []
-        vals_leplep  = []
-        errs_lep_pos = []
-        errs_lep_neg = []
-        errs_leplep  = []
+        starts_mT.append( mass_bins[0])
 
-        for idx in range(ntests):
-            if idx < 4:
-                continue
-            if idx != 4:
-                continue
-            mass_bins = mass_bins_test[idx]
-            starts_mT.append( mass_bins[0])
+        for sqrtS in sqrtSs:
+            is5TeV = (sqrtS == "5TeV")
+            lumi_unc = 0.017 if not is5TeV else 0.019
 
-            workdir = f"cards/test/{sqrtS}/test{idx}/"
-            filename = workdir + "card_combined.root"
+            workdir = f"forCombine/test/test{idx}/commands/scripts/"
+            if doCombineYear:
+                filename = workdir + "card_combined.root"
+            else:
+                filename = workdir + f"card_combined_{sqrtS}.root"
 
-            val_lep_pos, err_lep_pos = GetPOIValue(filename, "lepplus_sig_mu")
-            val_lep_neg, err_lep_neg = GetPOIValue(filename, "lepminus_sig_mu")
-            val_leplep,  err_leplep  = GetPOIValue(filename, "leplep_sig_mu")
-            vals_lep_pos.append( val_lep_pos )
-            errs_lep_pos.append( err_lep_pos )
-            vals_lep_neg.append( val_lep_neg )
-            errs_lep_neg.append( err_lep_neg )
-            vals_leplep .append( val_leplep  )
-            errs_leplep .append( err_leplep  )
+            outdir = f"forCombine/test/test{idx}/results/"
+
+            val_lep_pos, err_lep_pos = GetPOIValue(filename, f"lepplus_{sqrtS}_sig_mu")
+            val_lep_neg, err_lep_neg = GetPOIValue(filename, f"lepminus_{sqrtS}_sig_mu")
+            val_leplep,  err_leplep  = GetPOIValue(filename, f"leplep_{sqrtS}_sig_mu")
+            dvals_lep_pos[sqrtS].append( val_lep_pos )
+            derrs_lep_pos[sqrtS].append( err_lep_pos )
+            dvals_lep_neg[sqrtS].append( val_lep_neg )
+            derrs_lep_neg[sqrtS].append( err_lep_neg )
+            dvals_leplep[sqrtS] .append( val_leplep  )
+            derrs_leplep[sqrtS] .append( err_leplep  )
+
+            binBase =  len(mass_bins)*4 + len(mass_bins_z)*2 - 5 if is5TeV and doCombineYear else 1
 
             nevts = OrderedDict()
-            nevts['muplus']  = MakePostPlot(filename, "muplus",  mass_bins, f"_mT{idx}_{sqrtS}", showPULL, is5TeV=is5TeV)
-            nevts['muminus'] = MakePostPlot(filename, "muminus", mass_bins, f"_mT{idx}_{sqrtS}", showPULL, startbin = len(mass_bins), is5TeV=is5TeV)
-            nevts['mumu']    = MakePostPlot(filename, "mumu", mass_bins_z,  f"_mT{idx}_{sqrtS}", showPULL, startbin = len(mass_bins)*2 - 1, is5TeV=is5TeV)
-            nevts['eplus']   = MakePostPlot(filename, "eplus",  mass_bins,  f"_mT{idx}_{sqrtS}", showPULL, startbin = len(mass_bins)*2 + len(mass_bins_z) - 2, is5TeV=is5TeV)
-            nevts['eminus']  = MakePostPlot(filename, "eminus", mass_bins,  f"_mT{idx}_{sqrtS}", showPULL, startbin = len(mass_bins)*3 + len(mass_bins_z) - 3, is5TeV=is5TeV)
-            nevts['ee']      = MakePostPlot(filename, "ee",   mass_bins_z,  f"_mT{idx}_{sqrtS}", showPULL, startbin = len(mass_bins)*4 + len(mass_bins_z) - 4, is5TeV=is5TeV)
+            nevts['muplus']  = MakePostPlot(filename, "muplus",  mass_bins, f"_mT{idx}_{sqrtS}", showPULL, startbin = binBase, is5TeV=is5TeV, outdir = f"{outdir}/postfits")
+            nevts['muminus'] = MakePostPlot(filename, "muminus", mass_bins, f"_mT{idx}_{sqrtS}", showPULL, startbin = binBase + len(mass_bins) - 1, is5TeV=is5TeV, outdir = f"{outdir}/postfits")
+            nevts['mumu']    = MakePostPlot(filename, "mumu", mass_bins_z,  f"_mT{idx}_{sqrtS}", showPULL, startbin = binBase + len(mass_bins)*2 - 2, is5TeV=is5TeV, outdir = f"{outdir}/postfits")
+            nevts['eplus']   = MakePostPlot(filename, "eplus",  mass_bins,  f"_mT{idx}_{sqrtS}", showPULL, startbin = binBase + len(mass_bins)*2 + len(mass_bins_z) - 3, is5TeV=is5TeV, outdir = f"{outdir}/postfits")
+            nevts['eminus']  = MakePostPlot(filename, "eminus", mass_bins,  f"_mT{idx}_{sqrtS}", showPULL, startbin = binBase + len(mass_bins)*3 + len(mass_bins_z) - 4, is5TeV=is5TeV, outdir = f"{outdir}/postfits")
+            nevts['ee']      = MakePostPlot(filename, "ee",   mass_bins_z,  f"_mT{idx}_{sqrtS}", showPULL, startbin = binBase + len(mass_bins)*4 + len(mass_bins_z) - 5, is5TeV=is5TeV, outdir = f"{outdir}/postfits")
 
-            result2json(filename, "lepplus_sig_mu",  f"{workdir}/impacts_lepplus.json")
-            result2json(filename, "lepminus_sig_mu", f"{workdir}/impacts_lepminus.json")
-            result2json(filename, "leplep_sig_mu",   f"{workdir}/impacts_leplep.json")
-            result2json(filename, "Winc_sig_sumxsec", f"{workdir}/impacts_Winc.json", "nuisance_impact_sumpois")
-            result2json(filename, "WZRatio_ratiometaratio",   f"{workdir}/impacts_WZRatio.json",   "nuisance_impact_ratiometapois")
-            result2json(filename, "WchgRatio_ratiometaratio", f"{workdir}/impacts_WchgRatio.json", "nuisance_impact_ratiometapois")
-            #result2json(filename, "WchgAsym_chargemetaasym",  f"{workdir}/impacts_WchgAsym.json",  "nuisance_impact_chargemetapois")
+            result2json(filename, f"lepplus_{sqrtS}_sig_mu",  f"{outdir}/json/impacts_lepplus.json")
+            result2json(filename, f"lepminus_{sqrtS}_sig_mu", f"{outdir}/json/impacts_lepminus.json")
+            result2json(filename, f"leplep_{sqrtS}_sig_mu",   f"{outdir}/json/impacts_leplep.json")
+            result2json(filename, f"Winc_{sqrtS}_sig_sumxsec", f"{outdir}/json/impacts_Winc.json", "nuisance_impact_sumpois")
+            result2json(filename, f"WZRatio_{sqrtS}_ratiometaratio",   f"{outdir}/json/impacts_WZRatio.json",   "nuisance_impact_ratiometapois")
+            result2json(filename, f"WchgRatio_{sqrtS}_ratiometaratio", f"{outdir}/json/impacts_WchgRatio.json", "nuisance_impact_ratiometapois")
+            #result2json(filename, "WchgAsym_chargemetaasym",  f"{outdir}/impacts_WchgAsym.json",  "nuisance_impact_chargemetapois")
 
-            plotImpacts(f"{workdir}/impacts_lepplus.json",  f"impacts_lepplus_mT{idx}_{sqrtS}")
-            plotImpacts(f"{workdir}/impacts_lepminus.json", f"impacts_lepminus_mT{idx}_{sqrtS}")
-            plotImpacts(f"{workdir}/impacts_leplep.json",   f"impacts_leplep_mll_mT{idx}_{sqrtS}")
-            plotImpacts(f"{workdir}/impacts_Winc.json",     f"impacts_Winc_mT{idx}_{sqrtS}")
-            plotImpacts(f"{workdir}/impacts_WZRatio.json",   f"impacts_WZRatio_mT{idx}_{sqrtS}")
-            plotImpacts(f"{workdir}/impacts_WchgRatio.json", f"impacts_WchgRatio_mT{idx}_{sqrtS}")
-            #plotImpacts(f"{workdir}/impacts_WchgAsym.json",  f"impacts_WchgAsym_mT{idx}_{sqrtS}")
+            plotImpacts(f"{outdir}/json/impacts_lepplus.json",  f"{outdir}/impacts/impacts_lepplus_mT{idx}_{sqrtS}")
+            plotImpacts(f"{outdir}/json/impacts_lepminus.json", f"{outdir}/impacts/impacts_lepminus_mT{idx}_{sqrtS}")
+            plotImpacts(f"{outdir}/json/impacts_leplep.json",   f"{outdir}/impacts/impacts_leplep_mll_mT{idx}_{sqrtS}")
+            plotImpacts(f"{outdir}/json/impacts_Winc.json",     f"{outdir}/impacts/impacts_Winc_mT{idx}_{sqrtS}")
+            plotImpacts(f"{outdir}/json/impacts_WZRatio.json",   f"{outdir}/impacts/impacts_WZRatio_mT{idx}_{sqrtS}")
+            plotImpacts(f"{outdir}/json/impacts_WchgRatio.json", f"{outdir}/impacts/impacts_WchgRatio_mT{idx}_{sqrtS}")
 
             impacts = OrderedDict()
-            impacts['lepplus']  = DumpGroupImpacts(filename, "lepplus_sig_mu")
-            impacts['lepminus'] = DumpGroupImpacts(filename, "lepminus_sig_mu")
-            impacts['leplep']   = DumpGroupImpacts(filename, "leplep_sig_mu")
-            impacts['Winc']     = DumpGroupImpacts(filename, "Winc_sig_sumxsec",         "nuisance_group_impact_sumpois")
-            impacts['WOverZ']   = DumpGroupImpacts(filename, "WZRatio_ratiometaratio",   "nuisance_group_impact_ratiometapois")
-            impacts['WpOverWm'] = DumpGroupImpacts(filename, "WchgRatio_ratiometaratio", "nuisance_group_impact_ratiometapois")
+            impacts['lepplus']  = DumpGroupImpacts(filename, f"lepplus_{sqrtS}_sig_mu")
+            impacts['lepminus'] = DumpGroupImpacts(filename, f"lepminus_{sqrtS}_sig_mu")
+            impacts['leplep']   = DumpGroupImpacts(filename, f"leplep_{sqrtS}_sig_mu")
+            impacts['Winc']     = DumpGroupImpacts(filename, f"Winc_{sqrtS}_sig_sumxsec",         "nuisance_group_impact_sumpois")
+            impacts['WOverZ']   = DumpGroupImpacts(filename, f"WZRatio_{sqrtS}_ratiometaratio",   "nuisance_group_impact_ratiometapois")
+            impacts['WpOverWm'] = DumpGroupImpacts(filename, f"WchgRatio_{sqrtS}_ratiometaratio", "nuisance_group_impact_ratiometapois")
             #impacts['WAsym']    = DumpGroupImpacts(filename, "WchgAsym_chargemetaasym",  "nuisance_group_impact_chargemetapois")
 
             ## print out the nevts information
-            print(FormatTable(nevts, caption="Event yield at 13 TeV", label = f"tab:nevts_{sqrtS}"))
+            outputs = FormatTable(nevts, caption="Event yield at 13 TeV", label = f"tab:nevts_{sqrtS}")
+            print(outputs)
+            WriteOutputToText(outputs, f"{outdir}/tables/nevts_{sqrtS}.tex")
             print("\n\n\n\n")
-            print(FormatTable(impacts, caption=f"Systematic uncertainties in percentage at {sqrtS}", label = f"tab:impacts_{sqrtS}", precision=2))
+            outputs = FormatTable(impacts, caption=f"Systematic uncertainties in percentage at {sqrtS}", label = f"tab:impacts_{sqrtS}", precision=2)
+            print(outputs)
+            WriteOutputToText(outputs, f"{outdir}/tables/impacts_{sqrtS}.tex")
+
+        if doCombineYear:
+            result2json(filename, "sqrtS_Wplus_ratio_ratiometaratio",   f"{outdir}/json/impacts_Wplus_ratio_sqrtS.json", "nuisance_impact_ratiometapois")
+            result2json(filename, "sqrtS_Wminus_ratio_ratiometaratio",  f"{outdir}/json/impacts_Wminus_ratio_sqrtS.json",   "nuisance_impact_ratiometapois")
+            result2json(filename, "sqrtS_Winc_ratio_ratiometaratio",    f"{outdir}/json/impacts_Winc_ratio_sqrtS.json", "nuisance_impact_ratiometapois")
+            result2json(filename, "sqrtS_Zinc_ratio_ratiometaratio",    f"{outdir}/json/impacts_Zinc_ratio_sqrtS.json",  "nuisance_impact_ratiometapois")
+
+            plotImpacts(f"{outdir}/json/impacts_Wplus_ratio_sqrtS.json",  f"{outdir}/impacts/impacts_Wplus_ratio_mT{idx}_sqrtS")
+            plotImpacts(f"{outdir}/json/impacts_Wminus_ratio_sqrtS.json", f"{outdir}/impacts/impacts_Wminus_ratio_mT{idx}_sqrtS")
+            plotImpacts(f"{outdir}/json/impacts_Winc_ratio_sqrtS.json",   f"{outdir}/impacts/impacts_Winc_ratio_mT{idx}_sqrtS")
+            plotImpacts(f"{outdir}/json/impacts_Zinc_ratio_sqrtS.json",   f"{outdir}/impacts/impacts_Zinc_ratio_mT{idx}_sqrtS")
     
+    for sqrtS in sqrtSs:
         vals_mT = np.array(starts_mT)
-        vals_lep_pos = np.array(vals_lep_pos)
-        errs_lep_pos = np.array(errs_lep_pos)
-        vals_lep_neg = np.array(vals_lep_neg)
-        errs_lep_neg = np.array(errs_lep_neg)
-        vals_leplep  = np.array(vals_leplep)
-        errs_leplep  = np.array(errs_leplep)
+        vals_lep_pos = np.array(dvals_lep_pos[sqrtS])
+        errs_lep_pos = np.array(derrs_lep_pos[sqrtS])
+        vals_lep_neg = np.array(dvals_lep_neg[sqrtS])
+        errs_lep_neg = np.array(derrs_lep_neg[sqrtS])
+        vals_leplep  = np.array(dvals_leplep[sqrtS])
+        errs_leplep  = np.array(derrs_leplep[sqrtS])
 
         errs_lep_pos = np.sqrt(errs_lep_pos**2 - (lumi_unc * vals_lep_pos)**2)
         errs_lep_neg = np.sqrt(errs_lep_neg**2 - (lumi_unc * vals_lep_neg)**2)

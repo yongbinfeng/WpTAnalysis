@@ -6,6 +6,7 @@ import ROOT
 import math
 import json
 import argparse
+import os
 from . import plotting as plot
 from . import rounding as rounding
 
@@ -31,6 +32,11 @@ def GetRounded(nom, e_hi, e_lo):
     return (s_nom, s_hi, s_lo)
 
 def plotImpacts(ifilename, ofilename, blind=True):
+    dirpath = ofilename.rpartition('/')[0]
+    if not os.path.exists(dirpath):
+        print(f"Make the directory {dirpath}")
+        os.makedirs(dirpath)
+
     ROOT.gStyle.Reset()
     # Load the json output of combineTool.py -M Impacts
     data = {}
@@ -90,7 +96,7 @@ def plotImpacts(ifilename, ofilename, blind=True):
             plot.Set(color_group_hists[name], FillColor=col, Title=name)
     
     for page in range(n):
-        canv = ROOT.TCanvas("plots/"+ofilename, "plots/"+ofilename)
+        canv = ROOT.TCanvas(ofilename, ofilename)
         n_params = len(data['params'][show * page:show * (page + 1)])
         pdata = data['params'][show * page:show * (page + 1)]
         print('>> Doing page %i, have %i parameters' % (page, n_params))

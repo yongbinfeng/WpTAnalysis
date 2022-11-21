@@ -1,5 +1,6 @@
 import ROOT
-from ROOT import TH1F, TCanvas, TPad, Math, TF1, TLegend
+from ROOT import TH1F, TCanvas, TPad, Math
+import os
 from . import CMS_lumi
 from . import tdrstyle
 
@@ -403,9 +404,9 @@ def DrawHistos(myhistos, mylabels, xmin, xmax, xlabel, ymin, ymax, ylabel, outpu
         y0_l -= 0.03
 
     if not leftlegend:
-        legend = TLegend(x0_l, y0_l, x1_l, y1_l)
+        legend = ROOT.TLegend(x0_l, y0_l, x1_l, y1_l)
     else:
-        legend = TLegend(x0_l-0.40, y0_l, x1_l-0.40, y1_l)
+        legend = ROOT.TLegend(x0_l-0.40, y0_l, x1_l-0.40, y1_l)
     if lheader and lheader != "":
         legend.SetHeader(lheader)
     legend.SetNColumns(legendNCols)
@@ -660,10 +661,20 @@ def DrawHistos(myhistos, mylabels, xmin, xmax, xlabel, ymin, ymax, ylabel, outpu
         pad3.Update()
 
     canvas.Update()
-    print("save plot to plots/%s.pdf" % outputname)
-    canvas.Print("plots/%s.C"%outputname)
-    canvas.Print("plots/%s.pdf" % outputname)
-    #canvas.Print("plots/%s.png" % outputname)
-    #canvas.Print("plots/%s.root" % outputname)
+
+    if "/" not in outputname:
+        # path not included; by default put to plots/outputname
+        outputname = "plots/" + outputname
+    
+    dirpath = outputname.rpartition('/')[0]
+    if not os.path.exists(dirpath):
+        print(f"Make the directory {dirpath}")
+        os.makedirs(dirpath)
+    
+    print("save plot to %s.pdf" % outputname)
+    #canvas.Print("%s.C"%outputname)
+    canvas.Print("%s.pdf" % outputname)
+    #canvas.Print("%s.png" % outputname)
+    #canvas.Print("%s.root" % outputname)
     #print("function runs fine")
     return hratios if showratio else None

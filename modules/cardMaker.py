@@ -642,6 +642,8 @@ def GenerateRunCommand(output: str, cards: list, channels: list, cards_xsec: lis
             cmd += f'echo \"sqrtS_Wminus_ratio ratioMetaGroup = Wminus_13TeV_sig Wminus_5TeV_sig\" >> {output}.txt\n'
             cmd += f'echo \"sqrtS_Winc_ratio ratioMetaGroup = Winc_13TeV_sig Winc_5TeV_sig\" >> {output}.txt\n'
             cmd += f'echo \"sqrtS_Zinc_ratio ratioMetaGroup = Zinc_13TeV_sig Zinc_5TeV_sig\" >> {output}.txt\n'
+            cmd += f'echo \"sqrtS_WchgRatio_ratio ratioMetaGroup = WchgRatio_13TeV WchgRatio_5TeV\" >> {output}.txt\n'
+            cmd += f'echo \"sqrtS_WZRatio_ratio ratioMetaGroup = WZRatio_13TeV WZRatio_5TeV\" >> {output}.txt\n'
             cmd += '\n'
 
     cmd += f"text2hdf5.py {output}.txt"
