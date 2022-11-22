@@ -42,9 +42,21 @@ def ProcessHists(ifile, ofile, mass_bins, includeUnderflow = False, includeOverf
             AddOverflowsTH1(h)
         if includeUnderflow:
             AddOverflowsTH1(h, False)
+        RenameHist(h)
         SaveHistToFile(h, foutput)
 
     foutput.Close()
+
+def RenameHist(h):
+    """
+    rename some histograms to deal with nuisance correlations
+    """
+    hname_new = h.GetName()
+    hname_new = hname_new.replace("13TeV_PDF", "PDF")
+    hname_new = hname_new.replace("5TeV_PDF",  "PDF")
+    hname_new = hname_new.replace("13TeV_alphaS", "alphaS")
+    hname_new = hname_new.replace("5TeV_alphaS",  "alphaS")
+    h.SetName(hname_new)
 
 def CopyandMergeTau(iname, oname):
     """

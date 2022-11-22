@@ -264,13 +264,14 @@ def result2json(ifilename: str, poiname: str, ofilename: str, hname: str = "nuis
 
     def getNuisName(nuis):
         result = nuis
+        pieces = result.split("_")
         for key, val in nameMap.items():
-            if nuis.endswith(key):
-                #result = val
-                result = nuis.replace(key, val)
-                break
+            for i, piece in enumerate(pieces):
+                if key in piece:
+                    pieces[i] = val
+        result = "_".join(pieces)
         if bool(re.match(r"\w*bin\d+shape", nuis)):
-            result = ("QCD_" + nuis).replace("shape", "")
+            result = ("QCDBkg_" + nuis).replace("shape", "")
         return result.replace("lepEta_bin0_WpT_bin0_", "")
 
     ifile = ROOT.TFile(ifilename)
@@ -340,7 +341,7 @@ def DumpGroupImpacts(ifilename: str, poiname: str, hname = "nuisance_group_impac
     """
     print out the grouped impacts
     """
-    val_poi = GetPOIValue(ifilename, poiname)[0]
+    val_poi, err_poi = GetPOIValue(ifilename, poiname)
     print("val_poi ", val_poi)
     ifile = ROOT.TFile(ifilename)
     himpact_grouped = ifile.Get(hname)
@@ -358,7 +359,7 @@ def DumpGroupImpacts(ifilename: str, poiname: str, hname = "nuisance_group_impac
     for ibinY in range(1, himpact_grouped.GetNbinsY()+1):
         nuis = himpact_grouped.GetYaxis().GetBinLabel(ibinY)
         impacts[nuis] = himpact_grouped.GetBinContent(ibinX, ibinY) * 100.0 / val_poi
-
+    impacts['Total'] = err_poi / val_poi * 100.0
 
     # sort impacts, descending
     impacts = OrderedDict(sorted(list(impacts.items()), key=lambda x: abs(x[1]), reverse=True))

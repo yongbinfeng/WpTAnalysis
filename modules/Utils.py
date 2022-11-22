@@ -33,6 +33,9 @@ def FormatOutputForWZ(istring: str):
     labelmaps['Winc'] = '$\\mathrm{W}^{\\pm}\\rightarrow \\ell^{\\pm}\\nu$'
     labelmaps['WOverZ'] = '$\\mathrm{W}^{\pm}/\\mathrm{Z}$'
     labelmaps['WpOverWm'] = '$\\mathrm{W}^{+}/\\mathrm{W}^{-}$'
+    labelmaps['Wplus'] = labelmaps['lepplus']
+    labelmaps['Wminus'] = labelmaps['lepminus']
+    labelmaps['Zinc'] = labelmaps['leplep']
 
     procmaps = {}
     procmaps['data'] = 'Data'

@@ -74,10 +74,10 @@ def GetLumiUnc(isCorr: bool = False, is5TeV: bool = False):
     taken from https://twiki.cern.ch/twiki/bin/view/CMS/LumiRecommendationsRun2#Combination_and_correlations_wit
     """
     unc_lumi = OrderedDict()
-    unc_lumi['13TeV_uncor'] = 1.009
-    unc_lumi['13TeV_cor'] = 1.015
-    unc_lumi['5TeV_uncor'] = 1.008
-    unc_lumi['5TeV_cor'] = 1.017
+    unc_lumi['13TeV_uncor'] = 1.0154
+    unc_lumi['13TeV_cor'] = 1.0087
+    unc_lumi['5TeV_uncor'] = 1.0167
+    unc_lumi['5TeV_cor'] = 1.0082
 
     era = "5TeV" if is5TeV else "13TeV"
     era += "_cor" if isCorr else "_uncor"
@@ -364,14 +364,16 @@ def MakeWJetsCards(fname_mc, fname_qcd, channel, wptbin, etabin, doWpT = False, 
     nuisgroups["pdfalphaS"] = []
     pdf_indices = list(range(1, 101))
     for ipdf in pdf_indices:
-        nuis_PDF = Nuisance(name = f"{sqrtS}_PDF{ipdf}", type = "shape")
+        #nuis_PDF = Nuisance(name = f"{sqrtS}_PDF{ipdf}", type = "shape")
+        nuis_PDF = Nuisance(name = f"PDF{ipdf}", type = "shape")
         for proc in processes:
             if proc.isSignal:
                 nuis_PDF[proc.name] = 1.0
         nuisgroups["pdfalphaS"].append(nuis_PDF)
     
     # alphaS variations
-    nuis_alphaS = Nuisance(name = f"{sqrtS}_alphaS", type = "shape")
+    #nuis_alphaS = Nuisance(name = f"{sqrtS}_alphaS", type = "shape")
+    nuis_alphaS = Nuisance(name = "alphaS", type = "shape")
     for proc in processes:
         if proc.isSignal:
             nuis_alphaS[proc.name] = 1.0
@@ -535,14 +537,16 @@ def MakeZJetsCards(fname, channel, rebinned = False, is5TeV = False, outdir = "c
     nuisgroups["pdfalphaS"] = []
     pdf_indices = list(range(1, 101))
     for ipdf in pdf_indices:
-        nuis_PDF = Nuisance(name = sqrtS + f"_PDF{ipdf}", type = "shape")
+        #nuis_PDF = Nuisance(name = sqrtS + f"_PDF{ipdf}", type = "shape")
+        nuis_PDF = Nuisance(name = f"PDF{ipdf}", type = "shape")
         for proc in processes:
             if proc.isSignal:
                 nuis_PDF[proc.name] = 1.0
         nuisgroups["pdfalphaS"].append(nuis_PDF)
     
     # alphaS variations
-    nuis_alphaS = Nuisance(name = sqrtS + "_alphaS", type = "shape")
+    #nuis_alphaS = Nuisance(name = sqrtS + "_alphaS", type = "shape")
+    nuis_alphaS = Nuisance(name = "alphaS", type = "shape")
     for proc in processes:
         if proc.isSignal:
             nuis_alphaS[proc.name] = 1.0
@@ -642,8 +646,8 @@ def GenerateRunCommand(output: str, cards: list, channels: list, cards_xsec: lis
             cmd += f'echo \"sqrtS_Wminus_ratio ratioMetaGroup = Wminus_13TeV_sig Wminus_5TeV_sig\" >> {output}.txt\n'
             cmd += f'echo \"sqrtS_Winc_ratio ratioMetaGroup = Winc_13TeV_sig Winc_5TeV_sig\" >> {output}.txt\n'
             cmd += f'echo \"sqrtS_Zinc_ratio ratioMetaGroup = Zinc_13TeV_sig Zinc_5TeV_sig\" >> {output}.txt\n'
-            cmd += f'echo \"sqrtS_WchgRatio_ratio ratioMetaGroup = WchgRatio_13TeV WchgRatio_5TeV\" >> {output}.txt\n'
-            cmd += f'echo \"sqrtS_WZRatio_ratio ratioMetaGroup = WZRatio_13TeV WZRatio_5TeV\" >> {output}.txt\n'
+            #cmd += f'echo \"sqrtS_WchgRatio_ratio ratioMetaGroup = WchgRatio_13TeV WchgRatio_5TeV\" >> {output}.txt\n'
+            #cmd += f'echo \"sqrtS_WZRatio_ratio ratioMetaGroup = WZRatio_13TeV WZRatio_5TeV\" >> {output}.txt\n'
             cmd += '\n'
 
     cmd += f"text2hdf5.py {output}.txt"

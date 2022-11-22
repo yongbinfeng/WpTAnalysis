@@ -124,6 +124,17 @@ if doInclusive:
             plotImpacts(f"{outdir}/json/impacts_Wminus_ratio_sqrtS.json", f"{outdir}/impacts/impacts_Wminus_ratio_mT{idx}_sqrtS")
             plotImpacts(f"{outdir}/json/impacts_Winc_ratio_sqrtS.json",   f"{outdir}/impacts/impacts_Winc_ratio_mT{idx}_sqrtS")
             plotImpacts(f"{outdir}/json/impacts_Zinc_ratio_sqrtS.json",   f"{outdir}/impacts/impacts_Zinc_ratio_mT{idx}_sqrtS")
+
+            impacts = OrderedDict()
+            impacts['Wplus']  = DumpGroupImpacts(filename, "sqrtS_Wplus_ratio_ratiometaratio",   "nuisance_group_impact_ratiometapois")
+            impacts['Wminus'] = DumpGroupImpacts(filename, "sqrtS_Wminus_ratio_ratiometaratio",  "nuisance_group_impact_ratiometapois")
+            impacts['Winc']   = DumpGroupImpacts(filename, "sqrtS_Winc_ratio_ratiometaratio",    "nuisance_group_impact_ratiometapois")
+            impacts['Zinc']   = DumpGroupImpacts(filename, "sqrtS_Zinc_ratio_ratiometaratio",    "nuisance_group_impact_ratiometapois")
+
+            outputs = FormatTable(impacts, caption=f"Systematic uncertainties in percentage for the cross section ratios between 13TeV and 5TeV", label = f"tab:impacts_sqrtS_mT{idx}", precision=2)
+            print(outputs)
+            WriteOutputToText(outputs, f"{outdir}/tables/impacts_sqrtS_mT{idx}.tex")
+
     
     for sqrtS in sqrtSs:
         vals_mT = np.array(starts_mT)
