@@ -56,6 +56,11 @@ def RenameHist(h):
     hname_new = hname_new.replace("5TeV_PDF",  "PDF")
     hname_new = hname_new.replace("13TeV_alphaS", "alphaS")
     hname_new = hname_new.replace("5TeV_alphaS",  "alphaS")
+    hname_new = hname_new.replace("13TeV_MuF", "QCDScale_13TeV_MuF")
+    hname_new = hname_new.replace("5TeV_MuF",  "QCDScale_5TeV_MuF")
+    hname_new = hname_new.replace("13TeV_MuR", "QCDScale_13TeV_MuR")
+    hname_new = hname_new.replace("5TeV_MuR",  "QCDScale_5TeV_MuR")
+
     h.SetName(hname_new)
 
 def CopyandMergeTau(iname, oname):

@@ -354,7 +354,7 @@ def MakeWJetsCards(fname_mc, fname_qcd, channel, wptbin, etabin, doWpT = False, 
     nuisgroups["qcdscale"] = []
     for wpt in range(len(Vptbins)-1):
         for par in ["MuF", "MuR", "MuFMuR"]:
-            nuis_QCDScale = Nuisance(name = sqrtS + "_"+ par+str(wpt), type = "shape")
+            nuis_QCDScale = Nuisance(name = "QCDScale_" + sqrtS + "_" + par+str(wpt), type = "shape")
             for proc in processes:
                 if proc.isSignal:
                     nuis_QCDScale[proc.name] = 1.0
@@ -527,7 +527,7 @@ def MakeZJetsCards(fname, channel, rebinned = False, is5TeV = False, outdir = "c
     nuisgroups["qcdscale"] = []
     for wpt in range(len(Vptbins)-1):
         for par in ["MuF", "MuR", "MuFMuR"]:
-            nuis_QCDScale = Nuisance(name = sqrtS + "_" + par+str(wpt), type = "shape")
+            nuis_QCDScale = Nuisance(name = "QCDScale_" + sqrtS + "_" + par+str(wpt), type = "shape")
             for proc in processes:
                 if proc.isSignal:
                     nuis_QCDScale[proc.name] = 1.0
