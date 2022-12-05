@@ -33,4 +33,12 @@ TVector2 UVec(float lep_pt, float lep_phi, float met_pt, float met_phi){
     return (v2lep + v2met) * (-1);
 }
 
+Float_t ZptReWeight(float zpt, TH1D* h_zpt_ratio_MC_vs_data, bool isData = false)
+{
+    if( isData ) return 1.0;
+    float zptmax = h_zpt_ratio_MC_vs_data->GetXaxis()->GetXmax();
+    if( zpt>zptmax || zpt<0.01 ) return 1.0;
+    return h_zpt_ratio_MC_vs_data->GetBinContent( h_zpt_ratio_MC_vs_data->FindBin(zpt) );
+}
+
 #endif

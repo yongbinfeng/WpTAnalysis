@@ -35,6 +35,12 @@ def main():
 
     #ROOT.gROOT.ProcessLine('TFile* f_zpt = TFile::Open("results/zpt_weight.root")')
     #ROOT.gROOT.ProcessLine('TH1D* h_zpt_ratio  = (TH1D*)f_zpt->Get("h_zpt_ratio")')
+    if doMuon:
+        ROOT.gROOT.ProcessLine('TFile* f_zpt = TFile::Open("data/output_Zpt_mumu_13TeV.root")')
+        ROOT.gROOT.ProcessLine('TH1D* h_zpt_ratio = (TH1D*)f_zpt->Get("histo_zjets_zpt_mumu_Ratio")')
+    else:
+        ROOT.gROOT.ProcessLine('TFile* f_zpt = TFile::Open("data/output_Zpt_ee_13TeV.root")')
+        ROOT.gROOT.ProcessLine('TH1D* h_zpt_ratio = (TH1D*)f_zpt->Get("histo_zjets_zpt_ee_Ratio")')
 
     if not is5TeV:
         if doMuon:
@@ -95,9 +101,9 @@ def main():
         # W -> munu
         #wjetsnorm = 1.06
         wjetsnorm = 1.0
-        Wl0Samp   = Sample(input_wl0, isMC=True, name = "wl0", isWSR=True, additionalnorm = wjetsnorm)
-        Wl1Samp   = Sample(input_wl1, isMC=True, name = "wl1", isWSR=True, additionalnorm = wjetsnorm)
-        Wl2Samp   = Sample(input_wl2, isMC=True, name = "wl2", isWSR=True, additionalnorm = wjetsnorm)
+        Wl0Samp   = Sample(input_wl0, isMC=True, name = "wl0", isWSR=True, additionalnorm = wjetsnorm, reweightZpt=True)
+        Wl1Samp   = Sample(input_wl1, isMC=True, name = "wl1", isWSR=True, additionalnorm = wjetsnorm, reweightZpt=True)
+        Wl2Samp   = Sample(input_wl2, isMC=True, name = "wl2", isWSR=True, additionalnorm = wjetsnorm, reweightZpt=True)
         # ttbar
         TTbarSamp  = Sample(input_ttbar, isMC=True, name = "ttbar_dilepton", isWSR=True)
         TT1LepSamp = Sample(input_ttbar_1lep, isMC=True, name = "ttbar_1lepton", isWSR=True)
@@ -107,10 +113,10 @@ def main():
         WZSamp = Sample(input_wz, isMC=True, name = "WZ", isWSR=True)
         ZZSamp = Sample(input_zz, isMC=True, name = "ZZ", isWSR=True)
         # tau
-        ZXXSamp = Sample(input_zxx, isMC=True, name = "ZXX", isWSR=True)
-        Wx0Samp = Sample(input_wx0, isMC=True, name = "wx0", isWSR=True)
-        Wx1Samp = Sample(input_wx1, isMC=True, name = "wx1", isWSR=True)
-        Wx2Samp = Sample(input_wx2, isMC=True, name = "wx2", isWSR=True)
+        ZXXSamp = Sample(input_zxx, isMC=True, name = "ZXX", isWSR=True, reweightZpt=True)
+        Wx0Samp = Sample(input_wx0, isMC=True, name = "wx0", isWSR=True, reweightZpt=True)
+        Wx1Samp = Sample(input_wx1, isMC=True, name = "wx1", isWSR=True, reweightZpt=True)
+        Wx2Samp = Sample(input_wx2, isMC=True, name = "wx2", isWSR=True, reweightZpt=True)
 
         if not doTest:
             sampMan = SampleManager(DataSamp, [Wl0Samp, Wl1Samp, Wl2Samp, TTbarSamp, TT1LepSamp, TT0LepSamp, WWSamp, WZSamp, ZZSamp, ZXXSamp, Wx0Samp, Wx1Samp, Wx2Samp])
@@ -243,7 +249,7 @@ def main():
                 #    sampMan.DefineMC("weight_{}_{}_{}".format(str(i), wpt, lepeta), "evtWeight[{}] * self.fnorm * {} * {}".format(str(i), wpt, lepeta))
                 #else:
                 #    sampMan.DefineMC("weight_{}_{}_{}".format(str(i), wpt, lepeta), "(evtWeight[0] + TMath::Sqrt(TMath::Abs(evtWeight[{}]))) * self.fnorm * {} * {}".format(str(i), wpt, lepeta))
-                sampMan.DefineMC("weight_{}_{}_{}".format(str(i), wpt, lepeta), "(TMath::IsNaN(evtWeight[{}]) ? 0.: evtWeight[{}]) * self.fnorm * {} * {}".format(str(i), str(i), wpt, lepeta))
+                sampMan.DefineMC("weight_{}_{}_{}".format(str(i), wpt, lepeta), "(TMath::IsNaN(evtWeight[{}]) ? 0.: evtWeight[{}]) * ZptWeight * self.fnorm * {} * {}".format(str(i), str(i), wpt, lepeta))
                 DataSamp.Define("weight_{}_{}_{}".format(str(i), wpt, lepeta),  "1.0 * {} * {}".format(wpt, lepeta))
 
                 for chg in chgbins:
@@ -290,7 +296,7 @@ def main():
         for lepeta in etabins:
             for chg in chgbins:
                 for var in theoryVariations.values():
-                    sampMan.DefineMC(f"weight_{chg}_{var}_{wpt}_{lepeta}", f"(TMath::IsNaN(evtWeight[0])) ? 0. : evtWeight[0] * self.fnorm * {wpt} * {lepeta} * {var} * {chg}")
+                    sampMan.DefineMC(f"weight_{chg}_{var}_{wpt}_{lepeta}", f"(TMath::IsNaN(evtWeight[0])) ? 0. : evtWeight[0] * ZptWeight * self.fnorm * {wpt} * {lepeta} * {var} * {chg}")
                     DataSamp.Define( f"weight_{chg}_{var}_{wpt}_{lepeta}", f"1.0 * {wpt} * {lepeta} * {chg}")
 
     #

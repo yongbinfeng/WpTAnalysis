@@ -10,6 +10,7 @@ import numpy as np
 import sys
 from collections import OrderedDict
 from CMSPLOTS.myFunction import DrawHistos
+from termcolor import colored
 
 MINMASS = 60
 MAXMASS = 120
@@ -21,7 +22,6 @@ LUMI_5TeV = 298.0
 
 ROOT.ROOT.EnableImplicitMT()
 ROOT.gSystem.Load("./modules/Functions_cc.so")
-
 
 class DrawConfig(object):
     """
@@ -70,13 +70,14 @@ class DrawConfig(object):
 class Sample(object):
     def __init__(self, inputfiles, isMC=True, xsec=1.0, color=1, legend="", name="", 
                  isZSR=True, isWSR=False, nmcevt=-1, additionalnorm=1.0, is5TeV = False,
-                 doTheoryVariation=True):
+                 doTheoryVariation=True, reweightZpt = False):
         self.name = name
         self.mcxsec = xsec
         self.color = color
         self.is5TeV = is5TeV
         self.legend = legend
         self.isZSR = isZSR
+        self.reweightZpt = reweightZpt
         if isWSR:
             # can not be ZSR and WSR at the same time
             self.isZSR = False
@@ -118,6 +119,8 @@ class Sample(object):
         # do preprocessing
         self.prepareVars()
         self.select()
+
+        self.DoZptReweighting()
 
         self._garbagerdfs = []
 
@@ -275,7 +278,7 @@ class Sample(object):
         #    #                   .Define("u1",    "u_pt * TMath::Cos(u_phi + TMath::Pi() - Z_phi)") \
         #    #                   .Define("u2",    "u_pt * TMath::Sin(u_phi + TMath::Pi() - Z_phi)") \
         #    ## z pt reweight
-        #    #self.rdf_org = self.rdf_org.Define("ZptWeight", "ZptReWeight(Z_pt, h_zpt_ratio, isData)" if self.reweightzpt else "1.")
+        #    #self.rdf_org = self.rdf_org.Define("ZptWeight", "ZptReWeight(Z_pt, h_zpt_ratio, isData)" if self.reweightZpt else "1.")
 
         #    #self.rdf_org = self.rdf_org.Define("weight", "ZptWeight * weight_WoVpt")
         #elif self.isWSR and self.isMC:
@@ -294,6 +297,25 @@ class Sample(object):
 
         #else:
         #self.rdf_org = self.rdf_org.Define("weight", "weight_WoVpt")
+    def DoZptReweighting(self):
+        if self.reweightZpt:
+            print(colored(f"Apply Zpt Reweighting to Sample {self.name}", "red"))
+            self.rdf = self.rdf.Define("Z_pt", "genV.Pt()")\
+                               .Define("ZptWeight_Bare", "ZptReWeight(Z_pt, h_zpt_ratio, 0.)") \
+                               .Define("evtWeight_Bare", "evtWeight[0]") \
+                               .Define("evtWeight_Bare_WVpt", "evtWeight_Bare * ZptWeight_Bare") \
+                               .Define("dumbVal", "1.0")
+            # need to renormalize the weights
+            self.htemp_weighted = self.rdf.Histo1D(("_htemp_weighted", "_htemp_weighted", 2, 0, 2.0), "dumbVal", "evtWeight_Bare_WVpt")
+            self.htemp_woweight = self.rdf.Histo1D(("_htemp_woweight", "_htemp_woweight", 2, 0, 2.0), "dumbVal", "evtWeight_Bare")
+            self.zptrenorm = self.htemp_woweight.Integral() / self.htemp_weighted.Integral()
+            print("Without Zpt Reweighting: ", self.htemp_woweight.Integral())
+            print("With Zpt Reweighting: ", self.htemp_weighted.Integral())
+            print("Zpt renormalization factor: ", self.zptrenorm)
+            self.rdf = self.rdf.Define("ZptWeight", f"ZptWeight_Bare * {self.zptrenorm}")
+        else:
+            self.rdf = self.rdf.Define("ZptWeight", "1.")
+        self.rdf = self.rdf.Define("weight_WVpt", "ZptWeight * weight_WoVpt")
 
 
 class SampleManager(object):
@@ -380,7 +402,6 @@ class SampleManager(object):
                 mcnames_to_be_grouped.remove(mc.name)
 
         if mcnames_to_be_grouped:
-            from termcolor import colored
             print(colored('some somples are not grouped yet, please check the names...: {}'.format(mcnames_to_be_grouped), 'red'))
 
     def getMCByName(self, mcname):
@@ -397,7 +418,7 @@ class SampleManager(object):
         else:
             raise ValueError('The argument is problematic. It has to be either 4 or 6')
 
-    def cacheDraw_fb(self, varname, hname, nbins, xmin, xmax, drawconfigs, weightname="weight_WoVpt"):
+    def cacheDraw_fb(self, varname, hname, nbins, xmin, xmax, drawconfigs, weightname="weight_WVpt"):
         """ 
         cache the var to be drawn.
         But do not launch the action by the 'lazy action' in RDataFrame
@@ -410,7 +431,7 @@ class SampleManager(object):
 
         self.to_draw[hname] = (h_data, h_mcs, drawconfigs)
 
-    def cacheDraw_vb(self, varname, hname, xbins, drawconfigs, weightname="weight_WoVpt"):
+    def cacheDraw_vb(self, varname, hname, xbins, drawconfigs, weightname="weight_WVpt"):
         """
         cache the var to be drawn.
         But do not launch the action by the 'lazy action' in RDataFrame

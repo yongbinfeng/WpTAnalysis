@@ -3,7 +3,7 @@ import ROOT
 import numpy as np
 from collections import OrderedDict
 import sys
-from CMSPLOTS.myFunction import DrawHistos
+from CMSPLOTS.myFunction import DrawHistos, THStack2TH1
 import CMSPLOTS.CMS_lumi
 import pickle
 from modules.SampleManager import DrawConfig, Sample, SampleManager
@@ -32,6 +32,15 @@ def main():
     print("doTest:", doTest)
     print("is5TeV:", is5TeV)
 
+    #ROOT.gROOT.ProcessLine('TFile* f_zpt = TFile::Open("data/zpt_ratio_amc2data.root")')
+    #ROOT.gROOT.ProcessLine('TH1D* h_zpt_ratio  = (TH1D*)f_zpt->Get("hc")')
+    if doMuon:
+        ROOT.gROOT.ProcessLine('TFile* f_zpt = TFile::Open("data/output_Zpt_mumu_13TeV.root")')
+        ROOT.gROOT.ProcessLine('TH1D* h_zpt_ratio = (TH1D*)f_zpt->Get("histo_zjets_zpt_mumu_Ratio")')
+    else:
+        ROOT.gROOT.ProcessLine('TFile* f_zpt = TFile::Open("data/output_Zpt_ee_13TeV.root")')
+        ROOT.gROOT.ProcessLine('TH1D* h_zpt_ratio = (TH1D*)f_zpt->Get("histo_zjets_zpt_ee_Ratio")')
+        
     if not is5TeV:
         if doMuon:
             if doTest:
@@ -83,7 +92,7 @@ def main():
     if not is5TeV:
         TTbarSamp = Sample(input_ttbar, color=46,  legend="t#bar{t}", name="ttbar2lep")
         if not doTest:
-            DYSamp    = Sample(input_dy,    color=92,  legend=lepchannel, name="DY")
+            DYSamp    = Sample(input_dy,    color=92,  legend=lepchannel, name="DY", reweightZpt=True)
             WWSamp  = Sample(input_ww,  color=38,  legend="WW2L",     name="WW")
             WZSamp  = Sample(input_wz,  color=39,  legend="WZ3L",     name="WZ")
             ZZSamp  = Sample(input_zz,  color=37,  legend="ZZ2L",     name="ZZ")
@@ -145,7 +154,7 @@ def main():
 
     # sample weights
     for i in [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]:
-        sampMan.DefineMC("weight_{}_tmp".format(str(i)), f"evtWeight[{i}] * self.fnorm")
+        sampMan.DefineMC("weight_{}_tmp".format(str(i)), f"evtWeight[{i}] * self.fnorm * ZptWeight")
         # fix a few very rare nan cases
         sampMan.DefineMC("weight_{}".format(str(i)), "TMath::IsNaN(weight_{}_tmp) ? 0.: weight_{}_tmp".format(str(i), str(i)))
         DataSamp.Define("weight_{}".format(str(i)),  "1.0")
@@ -183,7 +192,7 @@ def main():
     theoryVariations["alphaSDown"] = f"lheweightS_{alphaSDown}"
 
     for var in theoryVariations.values():
-        sampMan.DefineMC(f"weight_{var}", f"(TMath::IsNaN(evtWeight[0])) ? 0. : evtWeight[0] * self.fnorm * {var}")
+        sampMan.DefineMC(f"weight_{var}", f"(TMath::IsNaN(evtWeight[0])) ? 0. : evtWeight[0] * ZptWeight * self.fnorm * {var}")
         DataSamp.Define( f"weight_{var}",  "1.0")
 
     sampMan.DefineAll("weight_noEcal", "prefireEcal == 0 ? 1 : (weight_0 / prefireEcal)")
@@ -212,6 +221,7 @@ def main():
 
     # z pt befor and after pt reweighting
     sampMan.cacheDraw("zpt",   "histo_zjets_zpt_WoZptWeight_" + lepname, u_bins, DrawConfig(xmin=0, xmax=150, xlabel='p_{{T}}^{{{leplabel}{leplabel}}} [GeV]'.format(leplabel=leplabel), yrmax=1.19, yrmin=0.81), weightname="weight_WoVpt")
+    sampMan.cacheDraw("zpt",   "histo_zjets_zpt_WZpTWeight_" + lepname, u_bins, DrawConfig(xmin=0, xmax=150, xlabel='p_{{T}}^{{{leplabel}{leplabel}}} [GeV]'.format(leplabel=leplabel), yrmax=1.19, yrmin=0.81), weightname="weight_WVpt")
     sampMan.cacheDraw("zmass", "histo_zjets_zmass_" + lepname, mass_bins, DrawConfig(xmin=70, xmax=110, xlabel='m_{{{leplabel}{leplabel}}} [GeV]'.format(leplabel=leplabel)))
 
     # z eta with prefiring variations
@@ -291,6 +301,29 @@ def main():
     #    print("bin contents: ", h.Print("all"))
 
     sqrtS = "5TeV" if is5TeV else "13TeV"
+
+    # zpt ratio
+    if False:
+        output_suffix = f"{lepname}_{sqrtS}.root"
+        outfile = ROOT.TFile.Open(f"data/output_Zpt_{output_suffix}", "recreate")
+        hdata_zpt = sampMan.hdatas[f"histo_zjets_zpt_WoZptWeight_{lepname}"]
+        hsmcs_zpt = sampMan.hsmcs[f"histo_zjets_zpt_WoZptWeight_{lepname}"]
+        hratio_zpt = list(sampMan.hratios[f"histo_zjets_zpt_WoZptWeight_{lepname}"].values())[0]
+
+        hmc_zpt = THStack2TH1(hsmcs_zpt)
+
+        hdata_zpt.SetName(f"histo_zjets_zpt_{lepname}_Data")
+        hmc_zpt.SetName(f"histo_zjets_zpt_{lepname}_MC")
+        hratio_zpt.SetName(f"histo_zjets_zpt_{lepname}_Ratio")
+
+        hdata_zpt.SetDirectory(outfile)
+        hdata_zpt.Write()
+        hmc_zpt.SetDirectory(outfile)
+        hmc_zpt.Write()
+        hratio_zpt.SetDirectory(outfile)
+        hratio_zpt.Write()
+
+        outfile.Close()
 
     output_suffix = f"{lepname}_{sqrtS}.root"
     outfile = ROOT.TFile.Open("root/output_shapes_"+output_suffix, "recreate")
