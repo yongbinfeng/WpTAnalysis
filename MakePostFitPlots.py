@@ -119,17 +119,24 @@ if doInclusive:
             result2json(filename, "sqrtS_Wminus_ratio_ratiometaratio",  f"{outdir}/json/impacts_Wminus_ratio_sqrtS.json",   "nuisance_impact_ratiometapois")
             result2json(filename, "sqrtS_Winc_ratio_ratiometaratio",    f"{outdir}/json/impacts_Winc_ratio_sqrtS.json", "nuisance_impact_ratiometapois")
             result2json(filename, "sqrtS_Zinc_ratio_ratiometaratio",    f"{outdir}/json/impacts_Zinc_ratio_sqrtS.json",  "nuisance_impact_ratiometapois")
+            # double ratios
+            result2json(filename, "sqrtS_WchgRatio_ratio_doubleratiometaratio",     f"{outdir}/json/impacts_WchgRatio_sqrtS.json", "nuisance_impact_doubleratiometapois")
+            result2json(filename, "sqrtS_WZRatio_ratio_doubleratiometaratio",       f"{outdir}/json/impacts_WZRatio_sqrtS.json", "nuisance_impact_doubleratiometapois")
 
             plotImpacts(f"{outdir}/json/impacts_Wplus_ratio_sqrtS.json",  f"{outdir}/impacts/impacts_Wplus_ratio_mT{idx}_sqrtS")
             plotImpacts(f"{outdir}/json/impacts_Wminus_ratio_sqrtS.json", f"{outdir}/impacts/impacts_Wminus_ratio_mT{idx}_sqrtS")
             plotImpacts(f"{outdir}/json/impacts_Winc_ratio_sqrtS.json",   f"{outdir}/impacts/impacts_Winc_ratio_mT{idx}_sqrtS")
             plotImpacts(f"{outdir}/json/impacts_Zinc_ratio_sqrtS.json",   f"{outdir}/impacts/impacts_Zinc_ratio_mT{idx}_sqrtS")
+            plotImpacts(f"{outdir}/json/impacts_WchgRatio_sqrtS.json",    f"{outdir}/impacts/impacts_WchgRatio_mT{idx}_sqrtS")
+            plotImpacts(f"{outdir}/json/impacts_WZRatio_sqrtS.json",      f"{outdir}/impacts/impacts_WZRatio_mT{idx}_sqrtS")
 
             impacts = OrderedDict()
             impacts['Wplus']  = DumpGroupImpacts(filename, "sqrtS_Wplus_ratio_ratiometaratio",   "nuisance_group_impact_ratiometapois")
             impacts['Wminus'] = DumpGroupImpacts(filename, "sqrtS_Wminus_ratio_ratiometaratio",  "nuisance_group_impact_ratiometapois")
             impacts['Winc']   = DumpGroupImpacts(filename, "sqrtS_Winc_ratio_ratiometaratio",    "nuisance_group_impact_ratiometapois")
             impacts['Zinc']   = DumpGroupImpacts(filename, "sqrtS_Zinc_ratio_ratiometaratio",    "nuisance_group_impact_ratiometapois")
+            impacts['WOverZ']   = DumpGroupImpacts(filename, "sqrtS_WZRatio_ratio_doubleratiometaratio",     "nuisance_group_impact_doubleratiometapois")
+            impacts['WpOverWm'] = DumpGroupImpacts(filename, "sqrtS_WchgRatio_ratio_doubleratiometaratio",   "nuisance_group_impact_doubleratiometapois")
 
             outputs = FormatTable(impacts, caption=f"Systematic uncertainties in percentage for the cross section ratios between 13TeV and 5TeV", label = f"tab:impacts_sqrtS_mT{idx}", precision=2)
             print(outputs)
