@@ -17,6 +17,13 @@ doCombineYear = True
 # boolean flag to config if the pull
 # distribution should be included in the plots
 showPULL = True
+
+# whether to analyze the results of fitting only muon or electron channel
+doElectronOnly = True
+doMuonOnly = False
+doCombineChannel = False
+assert doElectronOnly + doMuonOnly + doCombineChannel == 1, "Only one of doElectronOnly, doMuonOnly, doCombineChannel can be True"
+
 if doInclusive:
     ntests = len(mass_bins_test)
 
@@ -39,7 +46,7 @@ if doInclusive:
     derrs_leplep["5TeV"] = []
     derrs_leplep["13TeV"] = []
 
-    sqrtSs = ["5TeV", "13TeV"]
+    sqrtSs = ["13TeV", "5TeV"]
 
     for idx in range(ntests):
         if idx != 4:
@@ -49,17 +56,20 @@ if doInclusive:
         starts_mT = []
         starts_mT.append( mass_bins[0])
 
+        binBase = 1
+
         for sqrtS in sqrtSs:
             is5TeV = (sqrtS == "5TeV")
             lumi_unc = 0.017 if not is5TeV else 0.019
 
             workdir = f"forCombine/test/test{idx}/commands/scripts/"
+            suffix = "combined" if doCombineChannel else "mu" if doMuonOnly else "e"
             if doCombineYear:
-                filename = workdir + "card_combined.root"
+                filename = workdir + f"card_{suffix}.root"
             else:
-                filename = workdir + f"card_combined_{sqrtS}.root"
+                filename = workdir + f"card_{suffix}_{sqrtS}.root"
 
-            outdir = f"forCombine/test/test{idx}/results/"
+            outdir = f"forCombine/test/test{idx}/results_{suffix}/"
 
             val_lep_pos, err_lep_pos = GetPOIValue(filename, f"lepplus_{sqrtS}_sig_mu")
             val_lep_neg, err_lep_neg = GetPOIValue(filename, f"lepminus_{sqrtS}_sig_mu")
@@ -71,15 +81,23 @@ if doInclusive:
             dvals_leplep[sqrtS] .append( val_leplep  )
             derrs_leplep[sqrtS] .append( err_leplep  )
 
-            binBase =  len(mass_bins)*4 + len(mass_bins_z)*2 - 5 if is5TeV and doCombineYear else 1
+            # todo: binBase needs to be recomputed if not combine all years
+            #binBase =  len(mass_bins)*4 + len(mass_bins_z)*2 - 5 if is5TeV and doCombineYear else 1
 
             nevts = OrderedDict()
-            nevts['muplus']  = MakePostPlot(filename, "muplus",  mass_bins, f"_mT{idx}_{sqrtS}", showPULL, startbin = binBase, is5TeV=is5TeV, outdir = f"{outdir}/postfits")
-            nevts['muminus'] = MakePostPlot(filename, "muminus", mass_bins, f"_mT{idx}_{sqrtS}", showPULL, startbin = binBase + len(mass_bins) - 1, is5TeV=is5TeV, outdir = f"{outdir}/postfits")
-            nevts['mumu']    = MakePostPlot(filename, "mumu", mass_bins_z,  f"_mT{idx}_{sqrtS}", showPULL, startbin = binBase + len(mass_bins)*2 - 2, is5TeV=is5TeV, outdir = f"{outdir}/postfits")
-            nevts['eplus']   = MakePostPlot(filename, "eplus",  mass_bins,  f"_mT{idx}_{sqrtS}", showPULL, startbin = binBase + len(mass_bins)*2 + len(mass_bins_z) - 3, is5TeV=is5TeV, outdir = f"{outdir}/postfits")
-            nevts['eminus']  = MakePostPlot(filename, "eminus", mass_bins,  f"_mT{idx}_{sqrtS}", showPULL, startbin = binBase + len(mass_bins)*3 + len(mass_bins_z) - 4, is5TeV=is5TeV, outdir = f"{outdir}/postfits")
-            nevts['ee']      = MakePostPlot(filename, "ee",   mass_bins_z,  f"_mT{idx}_{sqrtS}", showPULL, startbin = binBase + len(mass_bins)*4 + len(mass_bins_z) - 5, is5TeV=is5TeV, outdir = f"{outdir}/postfits")
+            if doCombineChannel or doMuonOnly:
+                nevts['muplus']  = MakePostPlot(filename, "muplus",  mass_bins, f"_mT{idx}_{sqrtS}", showPULL, startbin = binBase, is5TeV=is5TeV, outdir = f"{outdir}/postfits")
+                nevts['muminus'] = MakePostPlot(filename, "muminus", mass_bins, f"_mT{idx}_{sqrtS}", showPULL, startbin = binBase + len(mass_bins) - 1, is5TeV=is5TeV, outdir = f"{outdir}/postfits")
+                nevts['mumu']    = MakePostPlot(filename, "mumu", mass_bins_z,  f"_mT{idx}_{sqrtS}", showPULL, startbin = binBase + len(mass_bins)*2 - 2, is5TeV=is5TeV, outdir = f"{outdir}/postfits")
+
+                binBase = binBase + len(mass_bins)*2 + len(mass_bins_z) - 3
+            
+            if doCombineChannel or doElectronOnly:
+                nevts['eplus']   = MakePostPlot(filename, "eplus",  mass_bins,  f"_mT{idx}_{sqrtS}", showPULL, startbin = binBase, is5TeV=is5TeV, outdir = f"{outdir}/postfits")
+                nevts['eminus']  = MakePostPlot(filename, "eminus", mass_bins,  f"_mT{idx}_{sqrtS}", showPULL, startbin = binBase + len(mass_bins) - 1, is5TeV=is5TeV, outdir = f"{outdir}/postfits")
+                nevts['ee']      = MakePostPlot(filename, "ee",   mass_bins_z,  f"_mT{idx}_{sqrtS}", showPULL, startbin = binBase + len(mass_bins)*2 - 2, is5TeV=is5TeV, outdir = f"{outdir}/postfits")
+
+                binBase = binBase + len(mass_bins)*2 + len(mass_bins_z) - 3
 
             result2json(filename, f"lepplus_{sqrtS}_sig_mu",  f"{outdir}/json/impacts_lepplus.json")
             result2json(filename, f"lepminus_{sqrtS}_sig_mu", f"{outdir}/json/impacts_lepminus.json")
