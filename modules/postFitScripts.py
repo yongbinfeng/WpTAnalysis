@@ -13,14 +13,15 @@ from modules.SampleManager import DrawConfig
 
 ROOT.gROOT.SetBatch(True)
 
-def MakePostPlot(ifilename: str, channel: str, bins: np.array, suffix: str, showpull: bool = False, is5TeV: bool = False, startbin: int = 1, outdir: str = "plots"):
+def MakeDataMCPlot(ifilename: str, channel: str, bins: np.array, suffix: str, showpull: bool = False, is5TeV: bool = False, startbin: int = 1, outdir: str = "plots", doPostfit = True):
     """
-    compare the unrolled postfit of data and templates
+    compare the unrolled pre/post-fit of data and templates
     """
-    ifile = ROOT.TFile(ifilename)
-    
-    horgdata = ifile.Get("obs")
+    hsuffix = "postfit" if doPostfit else "prefit"
 
+    ifile = ROOT.TFile(ifilename)
+
+    horgdata = ifile.Get("obs")
     # get the list of histograms saved in the file
     hkeys = ifile.GetListOfKeys()
     hkeys = [hkey.GetName() for hkey in hkeys]
@@ -34,25 +35,25 @@ def MakePostPlot(ifilename: str, channel: str, bins: np.array, suffix: str, show
         if not is5TeV and "5TeV" in hkey:
             continue
         # w signal
-        if bool(re.match(r"expproc_\w*sig_postfit$", hkey)):
+        if bool(re.match(fr"expproc_\w*sig_{hsuffix}$", hkey)):
             hnames_sig.append( hkey )
         # z signal
-        elif bool(re.match(r"expproc_\w*sig_postfit$", hkey)):
+        elif bool(re.match(fr"expproc_\w*sig_{hsuffix}$", hkey)):
             hnames_sig.append( hkey )
         # qcd
-        elif bool(re.match(r"expproc_QCD_\w*postfit$", hkey)):
+        elif bool(re.match(fr"expproc_QCD_\w*{hsuffix}$", hkey)):
             hnames_qcd.append( hkey )
         # ewks: DY, taunu, diboson, etc and EWK (for Z's)
-        elif bool(re.match(r"expproc_taunu\w*postfit$", hkey)):
+        elif bool(re.match(fr"expproc_taunu\w*{hsuffix}$", hkey)):
             hnames_ewks.append( hkey )
-        elif bool(re.match(r"expproc_zxx\w*postfit$", hkey)):
+        elif bool(re.match(fr"expproc_zxx\w*{hsuffix}$", hkey)):
             hnames_ewks.append( hkey )
-        elif bool(re.match(r"expproc_VV\w*postfit$", hkey)):
+        elif bool(re.match(fr"expproc_VV\w*{hsuffix}$", hkey)):
             hnames_ewks.append( hkey )
-        elif bool(re.match(r"expproc_EWK\w*postfit$", hkey)):
+        elif bool(re.match(fr"expproc_EWK\w*{hsuffix}$", hkey)):
             hnames_ewks.append( hkey )
         # ttbar
-        elif bool(re.match(r"expproc_tt\w*postfit$", hkey)):
+        elif bool(re.match(fr"expproc_tt\w*postfit$", hkey)):
             hnames_ttbar.append( hkey )
     assert len(hnames_sig)>=1, "There should be at least one sig histogram in file: {}".format(ifilename)
     print("sig ", hnames_sig)
@@ -197,7 +198,9 @@ def MakePostPlot(ifilename: str, channel: str, bins: np.array, suffix: str, show
         # z's
         xlabel = "m_{ll} [GeV]"
         outputname = f"histo_zjets_{channel}_{suffix}"
-    drawconfigs = DrawConfig(xmin = bins.min(), xmax = bins.max(), xlabel = xlabel, ymin = 0, ymax = ymaxs[channel] / (int(nbins/36)+1), ylabel = "Events / GeV", outputname = outdir + "/" + outputname, dology=False, addOverflow=False, addUnderflow=False, yrmin=0.95, yrmax=1.05, yrlabel = "Data / Pred")
+    yrmin = 0.95 if doPostfit else 0.89
+    yrmax = 1.05 if doPostfit else 1.11
+    drawconfigs = DrawConfig(xmin = bins.min(), xmax = bins.max(), xlabel = xlabel, ymin = 0, ymax = ymaxs[channel] / (int(nbins/36)+1), ylabel = "Events / GeV", outputname = outdir + "/" + outputname, dology=False, addOverflow=False, addUnderflow=False, yrmin=yrmin, yrmax=yrmax, yrlabel = "Data / Pred")
     DrawHistos( [hdata, hs_gmc], ["Data", siglabels[channel], "EWK", "t#bar{t}", "QCD"], drawconfigs.xmin, drawconfigs.xmax, drawconfigs.xlabel, drawconfigs.ymin, drawconfigs.ymax, drawconfigs.ylabel, drawconfigs.outputname, dology=drawconfigs.dology, dologx=drawconfigs.dologx, showratio=drawconfigs.showratio, yrmax = drawconfigs.yrmax, yrmin = drawconfigs.yrmin, yrlabel = drawconfigs.yrlabel, donormalize=drawconfigs.donormalize, ratiobase=drawconfigs.ratiobase, legendPos = drawconfigs.legendPos, redrawihist = drawconfigs.redrawihist, extraText = drawconfigs.extraText, noCMS = drawconfigs.noCMS, addOverflow = drawconfigs.addOverflow, addUnderflow = drawconfigs.addUnderflow, nMaxDigits = drawconfigs.nMaxDigits, hratiopanel=hratio, drawoptions=['PE', 'HIST same'], showpull=showpull, hpulls=[hpull], W_ref = 600 * int(nbins/36+1), is5TeV = is5TeV) 
 
     return nevts
