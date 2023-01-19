@@ -2,7 +2,7 @@ import ROOT
 import re
 import numpy as np
 from CMSPLOTS.myFunction import AddOverflowsTH1, RebinHisto
-from modules.qcdExtrapolater import ExtrapolateQCD
+from modules.qcdExtrapolater import ExtrapolateQCD, LoadQCDNorms
 from modules.cardMaker import MakeWJetsCards, MakeZJetsCards, GenerateRunCommand, MakeXSecCard
 from modules.histProcessor import ProcessHists, CopyandMergeTau
 from modules.Binnings import mass_bins_w, mass_bins_z, mass_bins_test
@@ -33,7 +33,13 @@ def RunPreparations(fwsig_input, fwsig_rebin, fwsig_mergeTau, fqcd_input, fqcd_r
     ProcessHists(fqcd_input_scaled, fqcd_rebin_scaled, mass_bins_w, includeUnderflow, includeOverflow)
 
     # extrapolate the QCD template from anti-isolated region to isolated region
-    ExtrapolateQCD(fqcd_rebin, fqcd_output, [lepname+"plus", lepname+"minus"], "WpT_bin0", ["lepEta_bin0"], fname_scaled=fqcd_rebin_scaled, rebinned = True, is5TeV = is5TeV)
+    # manually set the QCD normalization factors for the prefit impacts
+    # very hacky, not ideal at all; only temporary solution
+    fqcdnorm = "data/QCDNorms.json"
+    qcdnorms = LoadQCDNorms(fqcdnorm)
+    print("QCD Norms: ", qcdnorms)
+    #qcdnorms = {}
+    ExtrapolateQCD(fqcd_rebin, fqcd_output, [lepname+"plus", lepname+"minus"], "WpT_bin0", ["lepEta_bin0"], fname_scaled=fqcd_rebin_scaled, rebinned = True, is5TeV = is5TeV, qcdnorms=qcdnorms)
 
     # generate card based on the signal and qcd templates
     card_plus = MakeWJetsCards(fwsig_mergeTau, fqcd_output, lepname+"plus", "WpT_bin0", "lepEta_bin0", rebinned = True, nMTBins = len(mass_bins_w)-1, is5TeV = is5TeV, outdir = outdir_card, applyLFU=applyLFU)

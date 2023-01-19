@@ -656,7 +656,13 @@ def GenerateRunCommand(output: str, cards: list, channels: list, cards_xsec: lis
         for channel in channels:
             cmd += f" --maskedChan {channel}_xsec"
         cmd += " --X-allow-no-background"
+    cmd += "\n\n"
+    # fit on asimov
+    cmd += "# fit on asimov\n"
+    cmd += f"combinetf.py {output}.hdf5 --binByBinStat --computeHistErrors --saveHists --doImpacts --output {output}_asimov.root -t -1 \n"
+    # fit on data
     cmd += "\n"
+    cmd += "# fit on data\n"
     cmd += f"combinetf.py {output}.hdf5 --binByBinStat --computeHistErrors --saveHists --doImpacts --output {output}.root\n"
 
     # write outputs to scripts

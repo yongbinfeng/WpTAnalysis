@@ -2,6 +2,7 @@ import ROOT
 import os,sys
 import numpy as np
 from CMSPLOTS.myFunction import DrawHistos
+import json
 
 ROOT.gROOT.SetBatch(True)
 
@@ -93,7 +94,7 @@ def ExpltOneBin(isocenters, bincontents, binerrors, isoSR, mTmin, mTmax, suffix=
     return (val_pol1_par1, err_pol1_par1), (val_pol1_par0, err_pol1_par0), (val_scaled_pol1_par1, err_scaled_pol1_par1)
 
 
-def ExtrapolateQCD(fname, oname, channels, wptbin, etabins, fname_scaled=None, is5TeV=False, rebinned = False):
+def ExtrapolateQCD(fname, oname, channels, wptbin, etabins, fname_scaled=None, is5TeV=False, rebinned = False, qcdnorms = {}):
     """
     run the QCd extrapolation in all mT bins,
     save the statistical and systematic variations for HComb, and
@@ -316,23 +317,42 @@ def ExtrapolateQCD(fname, oname, channels, wptbin, etabins, fname_scaled=None, i
 
                 labels.append(f"{isocuts[idx]} < I < {isocuts[idx+1]}")
             DrawHistos( h_todraws, labels, 0, 120, "m_{T} [GeV]", 0., 0.3, "A.U.", "mTShape_QCD_"+suffix, dology=False, nMaxDigits=3, legendPos=[0.65, 0.50, 0.88, 0.85], lheader=extraText, noCMS = True, donormalize=True, drawashist=True, showratio=True, yrmin=0.81, addOverflow = True, yrmax=1.39, is5TeV = is5TeV)
-               
+
+            norm = 1.0
+            if qcdnorms:   
+                norm = GetQCDNorm(qcdnorms, channel, is5TeV)
 
             #
             # write the variations to the output
             #
+            hnew.Scale(norm)
             hnew.SetDirectory(ofile)
             hnew.Write()
             #for h in h_todraws + [h_pol1_par0]:
             #    h.SetDirectory(ofile)
             #    h.Write()
             for hnew_up in hnew_ups:
+                hnew_up.Scale(norm)
                 hnew_up.SetDirectory(ofile)
                 hnew_up.Write()
             for hnew_down in hnew_downs:
+                hnew_down.Scale(norm)
                 hnew_down.SetDirectory(ofile)
                 hnew_down.Write()
 
     ofile.Close()
 
+def LoadQCDNorms(fname):
+    """
+    read the QCD normalization from the json file
+    """
+    with open(fname, "r") as f:
+        norms = json.load(f)
+    return norms
 
+def GetQCDNorm(norms, channel, is5TeV = False):
+    """
+    get the QCD normalization for a given channel
+    """
+    suffix = "5TeV" if is5TeV else "13TeV"
+    return norms[f"QCD_{channel}_lepEta_bin0_WpT_bin0_{suffix}"]
