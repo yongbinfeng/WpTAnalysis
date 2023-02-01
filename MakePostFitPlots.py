@@ -11,7 +11,7 @@ from collections import OrderedDict
 ROOT.gROOT.SetBatch(True)
 
 doInclusive = True
-doWpT = False
+doDifferential = False
 doCombineYear = True
 
 # boolean flag to config if the pull
@@ -24,7 +24,8 @@ doMuonOnly = False
 doCombineChannel = True
 assert doElectronOnly + doMuonOnly + doCombineChannel == 1, "Only one of doElectronOnly, doMuonOnly, doCombineChannel can be True"
 
-if doInclusive:
+if not doDifferential:
+    idir = "Inclusive" if doInclusive else "Fiducial"
     for fits in ["asimov", "data"]:
         ntests = len(mass_bins_test)
 
@@ -50,7 +51,7 @@ if doInclusive:
         sqrtSs = ["13TeV", "5TeV"]
 
         for idx in range(ntests):
-            if idx != 4:
+            if idx != 0:
                 continue
             mass_bins = mass_bins_test[idx]
 
@@ -63,7 +64,7 @@ if doInclusive:
                 is5TeV = (sqrtS == "5TeV")
                 lumi_unc = 0.017 if not is5TeV else 0.019
 
-                workdir = f"forCombine/test/test{idx}/commands/scripts/"
+                workdir = f"forCombine/{idir}/test{idx}/commands/scripts/"
                 suffix = "combined" if doCombineChannel else "mu" if doMuonOnly else "e"
                 if doCombineYear:
                     filename = workdir + f"card_{suffix}"
@@ -74,7 +75,7 @@ if doInclusive:
                     filename += "_asimov"
                 filename += ".root"
 
-                outdir = f"forCombine/test/test{idx}/results_{suffix}"
+                outdir = f"forCombine/{idir}/test{idx}/results_{suffix}"
                 if fits == "asimov":
                     outdir += "_asimov"
 
@@ -228,7 +229,7 @@ if doInclusive:
             #plotImpacts("cards/impacts_eplus_qcd.json",       "impacts_eplus_lepEta_qcd")
 
 
-if doWpT:
+if doDifferential:
     MakeDataMCPlot("cards/datacard_muplus_lepEta_bin0_WpT.root", "muplus", "WpT", showPULL)
 
     wpttruthbins  = ["WpT_truth_bin1", "WpT_truth_bin2", "WpT_truth_bin3", "WpT_truth_bin4", "WpT_truth_bin5", "WpT_truth_bin6", "WpT_truth_bin7", "WpT_truth_bin8", "WpT_truth_bin9"]
