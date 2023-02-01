@@ -218,7 +218,7 @@ def ExtrapolateQCD(fname, oname, channels, wptbin, etabins, fname_scaled=None, i
 
                 mTmin = histos_norm[isomin].GetBinLowEdge(ibin)
                 mTmax = histos_norm[isomin].GetBinLowEdge(ibin) + histos_norm[isomin].GetBinWidth(ibin)
-                suffix = channel+"_bin_"+str(ibin)+"_"+ etabin+"_"+wptbin
+                suffix = channel+"_bin_"+str(ibin)+"_"+ etabin+"_"+wptbin + "_" + sqrtS
                 #extraText = channelLabels[channel] +" "+ etaLabels[etabin]
                 extraText = channelLabels[channel]
                 #results_pol1_par1, results_pol1_par0, results_pol2_par2, results_scaled_pol1_par1 = ExpltOneBin(isocenters, bincontents, binerrors, isoSR, mTmin, mTmax, suffix=suffix, extraText=extraText, bincontents_scaled = bincontents_scaled, binerrors_scaled = binerrors_scaled)
@@ -301,7 +301,7 @@ def ExtrapolateQCD(fname, oname, channels, wptbin, etabins, fname_scaled=None, i
             #
             h_todraws = []
             labels = []
-            suffix = channel+"_"+ etabin+"_"+wptbin
+            suffix = channel+"_"+ etabin+"_"+wptbin + "_"+sqrtS
             extraText = channelLabels[channel] 
             colors = [1, 2, 3, 4, 6, 7, 8, 9, 28]
             icolor = 0
