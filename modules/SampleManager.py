@@ -10,24 +10,27 @@ import numpy as np
 import sys
 from collections import OrderedDict
 from CMSPLOTS.myFunction import DrawHistos
+from typing import List
 from termcolor import colored
 
 MINMASS = 60
 MAXMASS = 120
 LEPPTMIN = 25.0
 LEPETA = 2.4
-#LUMI = 199.27
+# LUMI = 199.27
 LUMI = 200.87
 LUMI_5TeV = 298.0
 
 ROOT.ROOT.EnableImplicitMT()
 ROOT.gSystem.Load("./modules/Functions_cc.so")
 
+
 class DrawConfig(object):
     """
     try to sync with the arguments in DrawHistos
     in /afs/cern.ch/work/y/yofeng/public/CMSPLOTS
     """
+
     def __init__(self, **kwargs):
         self.xmin = kwargs.get('xmin', 0.0)
         self.xmax = kwargs.get('xmax', 0.0)
@@ -47,8 +50,8 @@ class DrawConfig(object):
 
         self.showratio = kwargs.get('showratio', True)
         self.ratiobase = kwargs.get('ratiobase', 1)
-        #self.yrmin = kwargs.get('yrmin', 0.71)
-        #self.yrmax = kwargs.get('yrmax', 1.29)
+        # self.yrmin = kwargs.get('yrmin', 0.71)
+        # self.yrmax = kwargs.get('yrmax', 1.29)
         self.yrmin = kwargs.get('yrmin', 0.86)
         self.yrmax = kwargs.get('yrmax', 1.14)
         self.yrlabel = kwargs.get('yrlabel', 'Data / MC ')
@@ -61,16 +64,16 @@ class DrawConfig(object):
         self.redrawihist = kwargs.get('redrawihist', 0)
         self.extraText = kwargs.get('extraText', None)
         self.noCMS = kwargs.get('noCMS', True)
-        
+
         self.nMaxDigits = kwargs.get('nMaxDigits', 3)
 
         self.outputname = kwargs.get('outputname', 'test')
 
 
 class Sample(object):
-    def __init__(self, inputfiles, isMC=True, xsec=1.0, color=1, legend="", name="", 
-                 isZSR=True, isWSR=False, nmcevt=-1, additionalnorm=1.0, is5TeV = False,
-                 doTheoryVariation=True, reweightZpt = False):
+    def __init__(self, inputfiles, isMC=True, xsec=1.0, color=1, legend="", name="",
+                 isZSR=True, isWSR=False, nmcevt=-1, additionalnorm=1.0, is5TeV=False,
+                 doTheoryVariation=True, reweightZpt=False):
         self.name = name
         self.mcxsec = xsec
         self.color = color
@@ -82,16 +85,18 @@ class Sample(object):
             # can not be ZSR and WSR at the same time
             self.isZSR = False
         self.isWSR = isWSR
-        #assert not (self.isZSR and self.isWSR), "can not be ZSR and WSR at the same time !!"
+        # assert not (self.isZSR and self.isWSR), "can not be ZSR and WSR at the same time !!"
         self.additionalnorm = additionalnorm
         self.isMC = isMC
-        # this variable is used in cases where the xsec is allowed to 
+        # this variable is used in cases where the xsec is allowed to
         # free-float, or normalized to the rest of (data-MC_sum)
         self.renormalize = False
+        if isinstance(inputfiles, str):
+            inputfiles = [inputfiles]
         self.initRDF(inputfiles)
 
         if isMC:
-            if nmcevt>0:
+            if nmcevt > 0:
                 self.nmcevt = nmcevt
             else:
                 self.nmcevt = self.getNMCEvt(inputfiles)
@@ -114,7 +119,7 @@ class Sample(object):
                 if nevts == 0:
                     nevts = self.nmcevt
                 self.nmcevts_varied.append(nevts)
-                self.fnorms_varied.append( self.calculateNorm(nevts) )
+                self.fnorms_varied.append(self.calculateNorm(nevts))
 
         # do preprocessing
         self.prepareVars()
@@ -126,68 +131,74 @@ class Sample(object):
 
     def initRDF(self, inputfiles):
         # this is a bit weird in ROOT.
-        # the tree must be held by some vars, or else it would be 
+        # the tree must be held by some vars, or else it would be
         # closed after this function and the rdf would crash
         self.tree = ROOT.TChain("Events")
-        for line in open( inputfiles, "r"):
-            fname = line.rstrip()
-            if fname.startswith('#'):
-                continue
-            print(fname)
-            self.tree.Add( fname )
+        for ifile in inputfiles:
+            for line in open(ifile, "r"):
+                fname = line.rstrip()
+                if fname.startswith('#'):
+                    continue
+                print(fname)
+                self.tree.Add(fname)
 
-        #self.rdf_org = ROOT.ROOT.RDataFrame( self.tree )
-        self.rdf_temp = ROOT.ROOT.RDataFrame( self.tree )
-        self.rdf_org = self.rdf_temp.Filter('if(tdfentry_ == 0) {cout << "Running evtloop" << endl; } return true; ')
-        #print self.rdf_org.Count().GetValue()
+        # self.rdf_org = ROOT.ROOT.RDataFrame( self.tree )
+        self.rdf_temp = ROOT.ROOT.RDataFrame(self.tree)
+        self.rdf_org = self.rdf_temp.Filter(
+            'if(tdfentry_ == 0) {cout << "Running evtloop" << endl; } return true; ')
+        # print self.rdf_org.Count().GetValue()
 
     def getNMCEvt(self, inputfiles):
-        #print("count total number of MC events from:")
+        # print("count total number of MC events from:")
         Nevt = 0.
-        for line in open( inputfiles, "r"):
-            fname = line.rstrip()
-            if fname.startswith('#'):
-                continue
-            #print(fname)
-            ifile = ROOT.TFile.Open(fname)
-            hist = ifile.Get("hGenWeights")
-            Nevt += hist.Integral()
-            ifile.Close()
-            #if Nevt > 0:
-            #    # the histograms saved in other files of the same dataset
-            #    # is copied from the same mother histogram, so only needs the
-            #    # first histogram, to get the total number of events before selection
-            #    break;
+        for ifile in inputfiles:
+            for line in open(ifile, "r"):
+                fname = line.rstrip()
+                if fname.startswith('#'):
+                    continue
+                # print(fname)
+                ifile = ROOT.TFile.Open(fname)
+                hist = ifile.Get("hGenWeights")
+                Nevt += hist.Integral()
+                ifile.Close()
+                # if Nevt > 0:
+                #    # the histograms saved in other files of the same dataset
+                #    # is copied from the same mother histogram, so only needs the
+                #    # first histogram, to get the total number of events before selection
+                #    break;
         print("total number of events: {}".format(Nevt))
         return Nevt
-    
+
     def getNMCEvtFromBranch(self):
         hname = "h_evtWeight_"+self.name
-        self.rdf_org = self.rdf_org.Define("EvtWeight", "((genWeight > 0) ? 1 : -1)")
-        h_evts = self.rdf_org.Histo1D( (hname, hname, 2, -2, 2), "EvtWeight")
+        self.rdf_org = self.rdf_org.Define(
+            "EvtWeight", "((genWeight > 0) ? 1 : -1)")
+        h_evts = self.rdf_org.Histo1D((hname, hname, 2, -2, 2), "EvtWeight")
         Npos = h_evts.GetBinContent(2)
         Nneg = h_evts.GetBinContent(1)
-        print("total number of events: {}, in which {} are positive, {} are negative".format(Npos+Nneg, Npos, Nneg))
+        print("total number of events: {}, in which {} are positive, {} are negative".format(
+            Npos+Nneg, Npos, Nneg))
         return Npos-Nneg
-    
-    def getNMCEvtWithTheoryVariations(self, inputfiles: str, ivariation: int) -> int:
+
+    def getNMCEvtWithTheoryVariations(self, inputfiles: List[str], ivariation: int) -> int:
         """
         hLHEWeightSum saves the sum of weights for each theory variation
         before the selections. 
         can be used to normalize the MC histograms
         with different theory variations.
         """
-        #print(f"count total number of MC events with theory variation : {ivariation}")
+        # print(f"count total number of MC events with theory variation : {ivariation}")
         Nevt = 0.
-        for line in open( inputfiles, "r"):
-            fname = line.rstrip()
-            if fname.startswith('#'):
-                continue
-            ifile = ROOT.TFile.Open(fname)
-            hist = ifile.Get("hLHEWeightSum")
-            Nevt += hist.GetBinContent(ivariation + 1)
-            ifile.Close()
-        #print("total number of events: {}".format(Nevt))
+        for ifile in inputfiles:
+            for line in open(ifile, "r"):
+                fname = line.rstrip()
+                if fname.startswith('#'):
+                    continue
+                ifile = ROOT.TFile.Open(fname)
+                hist = ifile.Get("hLHEWeightSum")
+                Nevt += hist.GetBinContent(ivariation + 1)
+                ifile.Close()
+        # print("total number of events: {}".format(Nevt))
         return Nevt
 
     def select(self):
@@ -199,24 +210,24 @@ class Sample(object):
         """
         if self.isZSR:
             self.rdf = self.rdf_org.Filter("category==1 || category==2 || category==3") \
-                                .Filter("abs(lep1.Eta()) < 2.4 && abs(lep2.Eta()) < 2.4") \
-                                .Define("Z", "(lep1 + lep2)") \
-                                .Define("ZMass", "Z.M()") \
-                                .Filter("ZMass > {MINMASS} && ZMass < {MAXMASS}".format(MINMASS=MINMASS, MAXMASS=MAXMASS))
-                                #.Filter("Muon.pt[0] > {} && Muon.pt[1] > {}".format(LEPPTMIN, LEPPTMIN))  \
-                                #.Filter("abs(Muon.eta[0]) < {} && abs(Muon.eta[1]) < {}".format(LEPETA, LEPETA))
-                                #.Filter("lep_n==2")
-                                #.Filter("Z_pt < 40.0")
+                .Filter("abs(lep1.Eta()) < 2.4 && abs(lep2.Eta()) < 2.4") \
+                .Define("Z", "(lep1 + lep2)") \
+                .Define("ZMass", "Z.M()") \
+                .Filter("ZMass > {MINMASS} && ZMass < {MAXMASS}".format(MINMASS=MINMASS, MAXMASS=MAXMASS))
+            # .Filter("Muon.pt[0] > {} && Muon.pt[1] > {}".format(LEPPTMIN, LEPPTMIN))  \
+            # .Filter("abs(Muon.eta[0]) < {} && abs(Muon.eta[1]) < {}".format(LEPETA, LEPETA))
+            # .Filter("lep_n==2")
+            # .Filter("Z_pt < 40.0")
         elif self.isWSR:
             self.rdf = self.rdf_org.Filter("abs(lep.Eta())<2.4") \
                                    .Filter("lep.Pt()>25.0")
         else:
             self.rdf = self.rdf_org
-        #print self.rdf.Count().GetValue()
+        # print self.rdf.Count().GetValue()
 
     def ApplyCut(self, cutstring):
-        rdf_postcut = self.rdf.Filter( cutstring )
-        self._garbagerdfs.append( self.rdf )
+        rdf_postcut = self.rdf.Filter(cutstring)
+        self._garbagerdfs.append(self.rdf)
         print("applied cut {} to Sample {}".format(cutstring, self.name))
         self.rdf = rdf_postcut
 
@@ -233,21 +244,22 @@ class Sample(object):
                 try:
                     val = eval(piece)
                     pieces[i] = str(val)
-                    #formula = formula.replace(piece + " ", str(val) + " ")
+                    # formula = formula.replace(piece + " ", str(val) + " ")
                 except:
-                    print(f"Sample {self.name} does not have attribute {piece} in the string {formula}")
+                    print(
+                        f"Sample {self.name} does not have attribute {piece} in the string {formula}")
                     sys.exit(1)
             formula = " ".join(pieces)
         self.rdf = self.rdf.Define(varname, formula)
 
-    def calculateNorm(self, total = -1) -> float:
+    def calculateNorm(self, total=-1) -> float:
         if not self.isMC:
             # data
             return 1
         lumi = LUMI_5TeV if self.is5TeV else LUMI
         if total < 0:
             total = self.nmcevt
-        #print(f"lumi {lumi}, weight {lumi/total}")
+        # print(f"lumi {lumi}, weight {lumi/total}")
         return lumi / total * self.additionalnorm
 
     def prepareVars(self):
@@ -256,15 +268,16 @@ class Sample(object):
         define some common variables (weights, make V, etc.)
         """
         # define weight
-        #if self.isMC:
+        # if self.isMC:
         #    self.rdf_org = self.rdf_org.Define("weight_WoVpt", "( PUWeight * NLOWeight )")
         if self.isMC:
             if self.isWSR or self.isZSR:
-                self.rdf_org = self.rdf_org.Define("weight_WoVpt", f"evtWeight[0] * {self.fnorm}")
+                self.rdf_org = self.rdf_org.Define(
+                    "weight_WoVpt", f"evtWeight[0] * {self.fnorm}")
         else:
             self.rdf_org = self.rdf_org.Define("weight_WoVpt", "1.0")
 
-        #if self.isZSR:
+        # if self.isZSR:
         #    pass
         #    ## make Z boson
         #    #self.rdf_org = self.rdf_org.Define("Zvec",  "VVec(mu_pt[0], mu_eta[0], mu_phi[0], mu_e[0], mu_pt[1], mu_eta[1], mu_phi[1], mu_e[1])")  \
@@ -281,7 +294,7 @@ class Sample(object):
         #    #self.rdf_org = self.rdf_org.Define("ZptWeight", "ZptReWeight(Z_pt, h_zpt_ratio, isData)" if self.reweightZpt else "1.")
 
         #    #self.rdf_org = self.rdf_org.Define("weight", "ZptWeight * weight_WoVpt")
-        #elif self.isWSR and self.isMC:
+        # elif self.isWSR and self.isMC:
         #    ## make W boson in the transverse plane
         #    #self.rdf_org = self.rdf_org.Define("Wvec", "VVec(mu_pt[0], mu_eta[0], mu_phi[0], mu_e[0], gen_met_pt, 0., gen_met_phi, gen_met_pt)") \
         #    #                           .Define("W_pt",  "Wvec.Pt()") \
@@ -295,50 +308,55 @@ class Sample(object):
         #    # weights
         #    self.rdf_org = self.rdf_org.Define("weight", "weight_WoVpt")
 
-        #else:
-        #self.rdf_org = self.rdf_org.Define("weight", "weight_WoVpt")
+        # else:
+        # self.rdf_org = self.rdf_org.Define("weight", "weight_WoVpt")
     def DoZptReweighting(self):
         if self.reweightZpt:
-            print(colored(f"Apply Zpt Reweighting to Sample {self.name}", "red"))
+            print(
+                colored(f"Apply Zpt Reweighting to Sample {self.name}", "red"))
             self.rdf = self.rdf.Define("Z_pt", "genV.Pt()")\
                                .Define("ZptWeight_Bare", "ZptReWeight(Z_pt, h_zpt_ratio, 0.)") \
                                .Define("evtWeight_Bare", "evtWeight[0]") \
                                .Define("evtWeight_Bare_WVpt", "evtWeight_Bare * ZptWeight_Bare") \
                                .Define("dumbVal", "1.0")
             # need to renormalize the weights
-            self.htemp_weighted = self.rdf.Histo1D(("_htemp_weighted", "_htemp_weighted", 2, 0, 2.0), "dumbVal", "evtWeight_Bare_WVpt")
-            self.htemp_woweight = self.rdf.Histo1D(("_htemp_woweight", "_htemp_woweight", 2, 0, 2.0), "dumbVal", "evtWeight_Bare")
+            self.htemp_weighted = self.rdf.Histo1D(
+                ("_htemp_weighted", "_htemp_weighted", 2, 0, 2.0), "dumbVal", "evtWeight_Bare_WVpt")
+            self.htemp_woweight = self.rdf.Histo1D(
+                ("_htemp_woweight", "_htemp_woweight", 2, 0, 2.0), "dumbVal", "evtWeight_Bare")
             self.zptrenorm = self.htemp_woweight.Integral() / self.htemp_weighted.Integral()
             print("Without Zpt Reweighting: ", self.htemp_woweight.Integral())
             print("With Zpt Reweighting: ", self.htemp_weighted.Integral())
             print("Zpt renormalization factor: ", self.zptrenorm)
-            self.rdf = self.rdf.Define("ZptWeight", f"ZptWeight_Bare * {self.zptrenorm}")
+            self.rdf = self.rdf.Define(
+                "ZptWeight", f"ZptWeight_Bare * {self.zptrenorm}")
         else:
             self.rdf = self.rdf.Define("ZptWeight", "1.")
         self.rdf = self.rdf.Define("weight_WVpt", "ZptWeight * weight_WoVpt")
 
 
 class SampleManager(object):
-    def __init__(self, data, mcs=[], is5TeV = False):
+    def __init__(self, data, mcs=[], is5TeV=False):
         self.data = data
         self.mcs = mcs
         self.to_draw = OrderedDict()
         self.initGroups()
 
         self.is5TeV = is5TeV
-        # sanity check: 
+        # sanity check:
         # if samplemanager is at 5Tev, then all MC samples should be at 5Tev
         # also true for the opposite
         for mc in self.mcs:
-            assert self.is5TeV == mc.is5TeV, "for MC {} is at 5TeV? {}, inconsistent with the samplemanager {}".format(mc.name, mc.is5TeV, self.is5TeV)
+            assert self.is5TeV == mc.is5TeV, "for MC {} is at 5TeV? {}, inconsistent with the samplemanager {}".format(
+                mc.name, mc.is5TeV, self.is5TeV)
 
         # collection to save all histograms, stacks, etc, for further uses
-        # For future improvements, some of them are sample-related, 
+        # For future improvements, some of them are sample-related,
         # so can probably go to Sample class
-        self.hdatas  = {}
-        self.hsmcs   = {}
+        self.hdatas = {}
+        self.hsmcs = {}
         self.hratios = {}
-        self.hmcs    = {}
+        self.hmcs = {}
 
         # count the number of events in data and MC
         self.counts = []
@@ -354,30 +372,35 @@ class SampleManager(object):
                 print("Apply Cut {} for sample {}".format(cutstring, mc.name))
                 mc.ApplyCut(cutstring)
             elif mc.groupname in sampgroupnames:
-                print("Apply Cut {} for sample {} in grouped sample {}".format(cutstring, mc.name, mc.groupname))
+                print("Apply Cut {} for sample {} in grouped sample {}".format(
+                    cutstring, mc.name, mc.groupname))
                 mc.ApplyCut(cutstring)
 
     def DefineAll(self, varname, formula, excludes=[], excludeGroups=[]):
         self.DefineData(varname, formula)
-        self.DefineMC(  varname, formula, excludes, excludeGroups)
+        self.DefineMC(varname, formula, excludes, excludeGroups)
 
     def DefineMC(self, varname, formula, excludes=[], excludeGroups=[]):
         for mc in self.mcs:
             if mc.name in excludes:
-                print("Define {} with {}. Skip sample {}".format(varname, formula, mc.name))
+                print("Define {} with {}. Skip sample {}".format(
+                    varname, formula, mc.name))
                 continue
             if mc.groupname in excludeGroups:
-                print("Define {} with {}. Skip sample {} in grouped sample {}".format(varname, formula, mc.name, mc.groupname))
+                print("Define {} with {}. Skip sample {} in grouped sample {}".format(
+                    varname, formula, mc.name, mc.groupname))
                 continue
             mc.Define(varname, formula)
 
     def DefineSpecificMCs(self, varname, formula, sampnames=[], sampgroupnames=[]):
         for mc in self.mcs:
             if mc.name in sampnames:
-                print("Define {} with {} for sample {}".format(varname, formula, mc.name))
+                print("Define {} with {} for sample {}".format(
+                    varname, formula, mc.name))
                 mc.Define(varname, formula)
             elif mc.groupname in sampgroupnames:
-                print("Define {} with {} for sample {} in grouped sample {}".format(varname, formula, mc.name, mc.groupname))
+                print("Define {} with {} for sample {} in grouped sample {}".format(
+                    varname, formula, mc.name, mc.groupname))
                 mc.Define(varname, formula)
 
     def DefineData(self, varname, formula):
@@ -402,7 +425,8 @@ class SampleManager(object):
                 mcnames_to_be_grouped.remove(mc.name)
 
         if mcnames_to_be_grouped:
-            print(colored('some somples are not grouped yet, please check the names...: {}'.format(mcnames_to_be_grouped), 'red'))
+            print(colored('some somples are not grouped yet, please check the names...: {}'.format(
+                mcnames_to_be_grouped), 'red'))
 
     def getMCByName(self, mcname):
         for mc in self.mcs:
@@ -413,21 +437,24 @@ class SampleManager(object):
     def cacheDraw(self, *args, **kwds):
         if len(args) == 6:
             self.cacheDraw_fb(*args, **kwds)
-        elif len(args) == 4:   
+        elif len(args) == 4:
             self.cacheDraw_vb(*args, **kwds)
         else:
-            raise ValueError('The argument is problematic. It has to be either 4 or 6')
+            raise ValueError(
+                'The argument is problematic. It has to be either 4 or 6')
 
     def cacheDraw_fb(self, varname, hname, nbins, xmin, xmax, drawconfigs, weightname="weight_WVpt"):
         """ 
         cache the var to be drawn.
         But do not launch the action by the 'lazy action' in RDataFrame
         """
-        h_data = self.data.rdf.Histo1D( (hname+"_data", hname, nbins, xmin, xmax), varname, weightname )
+        h_data = self.data.rdf.Histo1D(
+            (hname+"_data", hname, nbins, xmin, xmax), varname, weightname)
         h_mcs = []
         for imc in range(len(self.mcs)):
             mc = self.mcs[imc]
-            h_mcs.append( mc.rdf.Histo1D( (hname+"_mc_"+str(imc), hname, nbins, xmin, xmax), varname, weightname) )
+            h_mcs.append(mc.rdf.Histo1D(
+                (hname+"_mc_"+str(imc), hname, nbins, xmin, xmax), varname, weightname))
 
         self.to_draw[hname] = (h_data, h_mcs, drawconfigs)
 
@@ -438,11 +465,13 @@ class SampleManager(object):
         """
         assert isinstance(xbins, np.ndarray), "input must be np array"
         nbins = xbins.size - 1
-        h_data = self.data.rdf.Histo1D( (hname+"_data", hname, nbins, xbins), varname, weightname )
+        h_data = self.data.rdf.Histo1D(
+            (hname+"_data", hname, nbins, xbins), varname, weightname)
         h_mcs = []
         for imc in range(len(self.mcs)):
             mc = self.mcs[imc]
-            h_mcs.append( mc.rdf.Histo1D( (hname+"_mc_"+str(imc), hname, nbins, xbins), varname, weightname) )
+            h_mcs.append(mc.rdf.Histo1D(
+                (hname+"_mc_"+str(imc), hname, nbins, xbins), varname, weightname))
 
         self.to_draw[hname] = (h_data, h_mcs, drawconfigs)
 
@@ -458,11 +487,12 @@ class SampleManager(object):
         legends.append("Data")
 
         # count the number of events only need to be done once
-        docounting = (len(self.counts)==0)
+        docounting = (len(self.counts) == 0)
         intgoption = "width" if drawconfigs.donormalizebin == "width" else ""
 
         if docounting:
-            self.counts.append(h_data.Integral(0, h_data.GetNbinsX()+1, intgoption))
+            self.counts.append(h_data.Integral(
+                0, h_data.GetNbinsX()+1, intgoption))
 
         hgroupedmcs = OrderedDict()
         hmcs = {}
@@ -472,41 +502,47 @@ class SampleManager(object):
                 h_mcs[imc].Scale(1.0, "width")
 
             if docounting:
-                self.counts.append( h_mcs[imc].Integral(0, h_mcs[imc].GetNbinsX()+1, intgoption) )
-    
+                self.counts.append(h_mcs[imc].Integral(
+                    0, h_mcs[imc].GetNbinsX()+1, intgoption))
+
             groupname = self.mcs[imc].groupname
             if groupname not in hgroupedmcs:
-                hgroupedmcs[groupname] = h_mcs[imc].Clone(h_mcs[imc].GetName().replace("_mc_","_grouped_"+groupname))
-                hgroupedmcs[groupname].SetLineColor( self.mcs[imc].groupcolor )
-                hgroupedmcs[groupname].SetFillColor( self.mcs[imc].groupcolor )
+                hgroupedmcs[groupname] = h_mcs[imc].Clone(
+                    h_mcs[imc].GetName().replace("_mc_", "_grouped_"+groupname))
+                hgroupedmcs[groupname].SetLineColor(self.mcs[imc].groupcolor)
+                hgroupedmcs[groupname].SetFillColor(self.mcs[imc].groupcolor)
 
-                legends.append( self.mcs[imc].grouplegend )
+                legends.append(self.mcs[imc].grouplegend)
 
                 if self.mcs[imc].renormalize:
                     group_to_renormalize = groupname
             else:
                 # group mc already exist. Add to the histogram
-                hgroupedmcs[groupname].Add( h_mcs[imc].GetValue() )
-            
+                hgroupedmcs[groupname].Add(h_mcs[imc].GetValue())
+
             # save the histogram to collection
-            hmcs[self.mcs[imc].name] = h_mcs[imc].Clone(h_mcs[imc].GetName().replace("_mc_","_"+self.mcs[imc].name))
+            hmcs[self.mcs[imc].name] = h_mcs[imc].Clone(
+                h_mcs[imc].GetName().replace("_mc_", "_"+self.mcs[imc].name))
 
         if group_to_renormalize:
             ndata = h_data.Integral(0, h_data.GetNbinsX()+1, intgoption)
-            nmc=0
+            nmc = 0
             for gname, ghisto in hgroupedmcs.items():
-                if gname!=group_to_renormalize:
+                if gname != group_to_renormalize:
                     nmc += ghisto.Integral(0, ghisto.GetNbinsX()+1, intgoption)
-            weight = float(ndata-nmc) / hgroupedmcs[group_to_renormalize].Integral(0, hgroupedmcs[group_to_renormalize].GetNbinsX()+1)
-            print("Renormalize group for {}, with {} data, {} MC and weight {}".format(group_to_renormalize, ndata, nmc, weight))
+            weight = float(ndata-nmc) / hgroupedmcs[group_to_renormalize].Integral(
+                0, hgroupedmcs[group_to_renormalize].GetNbinsX()+1)
+            print("Renormalize group for {}, with {} data, {} MC and weight {}".format(
+                group_to_renormalize, ndata, nmc, weight))
             hgroupedmcs[group_to_renormalize].Scale(weight)
 
         hsname = "hs_" + drawconfigs.outputname
-        hs_gmc = ROOT.THStack( hsname, hsname)
+        hs_gmc = ROOT.THStack(hsname, hsname)
+        n_mcs = len(hgroupedmcs)
         for h_gmc in reversed(list(hgroupedmcs.values())):
-            #if drawconfigs.donormalizebin:
+            # if drawconfigs.donormalizebin:
             #    h_gmc.Scale(1.0, "width")
-            hs_gmc.Add( h_gmc )
+            hs_gmc.Add(h_gmc)
 
         if not drawconfigs.legends:
             drawconfigs.legends = legends
@@ -515,11 +551,15 @@ class SampleManager(object):
             # change default outputname to the histo name
             drawconfigs.outputname = hname
 
-        self.hdatas[ drawconfigs.outputname] = h_data
-        self.hsmcs[  drawconfigs.outputname] = hs_gmc
-        self.hmcs[   drawconfigs.outputname] = hmcs
-        self.hratios[drawconfigs.outputname] = DrawHistos( [h_data, hs_gmc], drawconfigs.legends, drawconfigs.xmin, drawconfigs.xmax, drawconfigs.xlabel, drawconfigs.ymin, drawconfigs.ymax, drawconfigs.ylabel, drawconfigs.outputname, dology=drawconfigs.dology, dologx=drawconfigs.dologx, showratio=drawconfigs.showratio, yrmax = drawconfigs.yrmax, yrmin = drawconfigs.yrmin, yrlabel = drawconfigs.yrlabel, donormalize=drawconfigs.donormalize, ratiobase=drawconfigs.ratiobase, legendPos = drawconfigs.legendPos, redrawihist = drawconfigs.redrawihist, extraText = drawconfigs.extraText, noCMS = drawconfigs.noCMS, addOverflow = drawconfigs.addOverflow, addUnderflow = drawconfigs.addUnderflow, nMaxDigits = drawconfigs.nMaxDigits, is5TeV = self.is5TeV, lheader = drawconfigs.lheader)
-    
+        self.hdatas[drawconfigs.outputname] = h_data
+        self.hsmcs[drawconfigs.outputname] = hs_gmc
+        self.hmcs[drawconfigs.outputname] = hmcs
+        if n_mcs > 0:
+            h_to_draw = [h_data, hs_gmc]
+        else:
+            h_to_draw = [h_data]
+        self.hratios[drawconfigs.outputname] = DrawHistos(h_to_draw, drawconfigs.legends, drawconfigs.xmin, drawconfigs.xmax, drawconfigs.xlabel, drawconfigs.ymin, drawconfigs.ymax, drawconfigs.ylabel, drawconfigs.outputname, dology=drawconfigs.dology, dologx=drawconfigs.dologx, showratio=drawconfigs.showratio, yrmax=drawconfigs.yrmax, yrmin=drawconfigs.yrmin, yrlabel=drawconfigs.yrlabel,
+                                                          donormalize=drawconfigs.donormalize, ratiobase=drawconfigs.ratiobase, legendPos=drawconfigs.legendPos, redrawihist=drawconfigs.redrawihist, extraText=drawconfigs.extraText, noCMS=drawconfigs.noCMS, addOverflow=drawconfigs.addOverflow, addUnderflow=drawconfigs.addUnderflow, nMaxDigits=drawconfigs.nMaxDigits, is5TeV=self.is5TeV, lheader=drawconfigs.lheader)
 
     def launchDraw(self):
         """
@@ -527,7 +567,7 @@ class SampleManager(object):
         """
         print("starting drawing")
         for hname, plotinfo in self.to_draw.items():
-            self._DrawPlot( plotinfo[0], plotinfo[1], plotinfo[2], hname)
+            self._DrawPlot(plotinfo[0], plotinfo[1], plotinfo[2], hname)
         self.to_draw.clear()
         print("finished drawing..")
 
@@ -536,12 +576,12 @@ class SampleManager(object):
         dump the number of events in data and MC
         """
         print("dump the counts..")
-        if len(self.counts)==0:
+        if len(self.counts) == 0:
             print("draw at least one distribution and then count")
             return
 
         print((self.counts))
 
-        print("Data %d"%self.counts[0])
+        print("Data %d" % self.counts[0])
         for imc in range(len(self.mcs)):
-            print("MC %s count %f"%(self.mcs[imc].name, self.counts[imc+1]))
+            print("MC %s count %f" % (self.mcs[imc].name, self.counts[imc+1]))
