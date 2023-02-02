@@ -1,0 +1,478 @@
+"""
+plot the isolation distributions in different mt bins for different processes
+"""
+import ROOT
+import numpy as np
+from collections import OrderedDict
+import sys
+import argparse
+from CMSPLOTS.myFunction import THStack2TH1
+
+from modules.SampleManager import DrawConfig, Sample, SampleManager
+
+ROOT.gROOT.SetBatch(True)
+ROOT.ROOT.EnableImplicitMT(10)
+
+
+def main():
+    print("Program start...")
+
+    parser = argparse.ArgumentParser(
+        description="Make plots for Wlnu analysis in the lepton anti-isolated region")
+    parser.add_argument("--doTest", action="store_true", dest="doTest",
+                        help="Run on a subset of DataSamples for debugging; false runs on all dataset.")
+    parser.add_argument("--doWpT", action="store_true", dest="doWpT",
+                        help="Bin in different W pt bins; false runs inclusively")
+    parser.add_argument("--is5TeV", action="store_true", dest="is5TeV",
+                        help="Analyze the 5TeV data; false runs on 13TeV data")
+    parser.add_argument("--doElectron", action="store_true", dest="doElectron",
+                        help="Analyze the electron channel; false runs the muon channel")
+    args = parser.parse_args()
+
+    doMuon = not args.doElectron
+    doTest = args.doTest
+    doWpT = args.doWpT
+    is5TeV = args.is5TeV
+
+    print("doMuon: ", doMuon)
+    print("doTest:", doTest)
+    print("doWpT:", doWpT)
+    print("is5TeV:", is5TeV)
+
+    if not is5TeV:
+        if doMuon:
+            input_antiiso_data = "inputs/awmunu/input_data.txt"
+            input_antiiso_wl0 = "inputs/awmunu/input_wm0.txt"
+            input_antiiso_wl1 = "inputs/awmunu/input_wm1.txt"
+            input_antiiso_wl2 = "inputs/awmunu/input_wm2.txt"
+            input_antiiso_ttbar = "inputs/awmunu/input_ttbar_dilepton.txt"
+            input_antiiso_ttbar_1lep = "inputs/awmunu/input_ttbar_singlelepton.txt"
+            input_antiiso_ttbar_0lep = "inputs/awmunu/input_ttbar_hadronic.txt"
+            input_antiiso_ww = "inputs/awmunu/input_ww.txt"
+            input_antiiso_wz = "inputs/awmunu/input_wz.txt"
+            input_antiiso_zz = "inputs/awmunu/input_zz.txt"
+            input_antiiso_zxx = "inputs/awmunu/input_zxx.txt"
+            input_antiiso_wx0 = "inputs/awmunu/input_wx0.txt"
+            input_antiiso_wx1 = "inputs/awmunu/input_wx1.txt"
+            input_antiiso_wx2 = "inputs/awmunu/input_wx2.txt"
+            input_data = "inputs/wmunu/input_data.txt"
+            input_wl0 = "inputs/wmunu/input_wm0.txt"
+            input_wl1 = "inputs/wmunu/input_wm1.txt"
+            input_wl2 = "inputs/wmunu/input_wm2.txt"
+            input_ttbar = "inputs/wmunu/input_ttbar_dilepton.txt"
+            input_ttbar_1lep = "inputs/wmunu/input_ttbar_singlelepton.txt"
+            input_ttbar_0lep = "inputs/wmunu/input_ttbar_hadronic.txt"
+            input_ww = "inputs/wmunu/input_ww.txt"
+            input_wz = "inputs/wmunu/input_wz.txt"
+            input_zz = "inputs/wmunu/input_zz.txt"
+            input_zxx = "inputs/wmunu/input_zxx.txt"
+            input_wx0 = "inputs/wmunu/input_wx0.txt"
+            input_wx1 = "inputs/wmunu/input_wx1.txt"
+            input_wx2 = "inputs/wmunu/input_wx2.txt"
+        else:
+            input_antiiso_data = "inputs/awenu/input_data.txt"
+            input_antiiso_wl0 = "inputs/awenu/input_we0.txt"
+            input_antiiso_wl1 = "inputs/awenu/input_we1.txt"
+            input_antiiso_wl2 = "inputs/awenu/input_we2.txt"
+            input_antiiso_ttbar = "inputs/awenu/input_ttbar_dilepton.txt"
+            input_antiiso_ttbar_1lep = "inputs/awenu/input_ttbar_singlelepton.txt"
+            input_antiiso_ttbar_0lep = "inputs/awenu/input_ttbar_hadronic.txt"
+            input_antiiso_ww = "inputs/awenu/input_ww.txt"
+            input_antiiso_wz = "inputs/awenu/input_wz.txt"
+            input_antiiso_zz = "inputs/awenu/input_zz.txt"
+            input_antiiso_zxx = "inputs/awenu/input_zxx.txt"
+            input_antiiso_wx0 = "inputs/awenu/input_wx0.txt"
+            input_antiiso_wx1 = "inputs/awenu/input_wx1.txt"
+            input_antiiso_wx2 = "inputs/awenu/input_wx2.txt"
+            input_data = "inputs/wenu/input_data.txt"
+            input_wl0 = "inputs/wenu/input_we0.txt"
+            input_wl1 = "inputs/wenu/input_we1.txt"
+            input_wl2 = "inputs/wenu/input_we2.txt"
+            input_ttbar = "inputs/wenu/input_ttbar_dilepton.txt"
+            input_ttbar_1lep = "inputs/wenu/input_ttbar_singlelepton.txt"
+            input_ttbar_0lep = "inputs/wenu/input_ttbar_hadronic.txt"
+            input_ww = "inputs/wenu/input_ww.txt"
+            input_wz = "inputs/wenu/input_wz.txt"
+            input_zz = "inputs/wenu/input_zz.txt"
+            input_zxx = "inputs/wenu/input_zxx.txt"
+            input_wx0 = "inputs/wenu/input_wx0.txt"
+            input_wx1 = "inputs/wenu/input_wx1.txt"
+            input_wx2 = "inputs/wenu/input_wx2.txt"
+
+    else:
+        # analyze 5TeV data
+        if doMuon:
+            input_antiiso_data = "inputs_5TeV/awmunu/input_data.txt"
+            input_antiiso_wl = "inputs_5TeV/awmunu/input_wm.txt"
+            input_antiiso_ttbar = "inputs_5TeV/awmunu/input_ttbar.txt"
+            input_antiiso_ww = "inputs_5TeV/awmunu/input_ww.txt"
+            input_antiiso_wz = "inputs_5TeV/awmunu/input_wz.txt"
+            input_antiiso_zz2l = "inputs_5TeV/awmunu/input_zz2l.txt"
+            input_antiiso_zz4l = "inputs_5TeV/awmunu/input_zz4l.txt"
+            input_antiiso_zxx = "inputs_5TeV/awmunu/input_zxx.txt"
+            input_antiiso_wx = "inputs_5TeV/awmunu/input_wx.txt"
+            input_wl = "inputs_5TeV/wmunu/input_wm.txt"
+            input_ttbar = "inputs_5TeV/wmunu/input_ttbar.txt"
+            input_ww = "inputs_5TeV/wmunu/input_ww.txt"
+            input_wz = "inputs_5TeV/wmunu/input_wz.txt"
+            input_zz2l = "inputs_5TeV/wmunu/input_zz2l.txt"
+            input_zz4l = "inputs_5TeV/wmunu/input_zz4l.txt"
+            input_zxx = "inputs_5TeV/wmunu/input_zxx.txt"
+            input_wx = "inputs_5TeV/wmunu/input_wx.txt"
+        else:
+            input_antiiso_data = "inputs_5TeV/awenu/input_data.txt"
+            input_antiiso_wl = "inputs_5TeV/awenu/input_we.txt"
+            input_antiiso_ttbar = "inputs_5TeV/awenu/input_ttbar.txt"
+            input_antiiso_ww = "inputs_5TeV/awenu/input_ww.txt"
+            input_antiiso_wz = "inputs_5TeV/awenu/input_wz.txt"
+            input_antiiso_zz2l = "inputs_5TeV/awenu/input_zz2l.txt"
+            input_antiiso_zz4l = "inputs_5TeV/awenu/input_zz4l.txt"
+            input_antiiso_zxx = "inputs_5TeV/awenu/input_zxx.txt"
+            input_antiiso_wx = "inputs_5TeV/awenu/input_wx.txt"
+            input_data = "inputs_5TeV/wenu/input_data.txt"
+            input_wl = "inputs_5TeV/wenu/input_we.txt"
+            input_ttbar = "inputs_5TeV/wenu/input_ttbar.txt"
+            input_ww = "inputs_5TeV/wenu/input_ww.txt"
+            input_wz = "inputs_5TeV/wenu/input_wz.txt"
+            input_zz2l = "inputs_5TeV/wenu/input_zz2l.txt"
+            input_zz4l = "inputs_5TeV/wenu/input_zz4l.txt"
+            input_zxx = "inputs_5TeV/wenu/input_zxx.txt"
+            input_wx = "inputs_5TeV/wenu/input_wx.txt"
+
+    inputs_data = []
+    inputs_data.append(input_antiiso_data)
+    inputs_data.append(input_data)
+
+    DataSamp = Sample(inputs_data, isMC=False, name="Data",
+                      isWSR=True, legend='QCD', color='226')
+    if not is5TeV:
+        qcdnorm = 1.0
+        mcscale = 1.0
+        Wl0AisoSamp = Sample(input_antiiso_wl0, isMC=True, name="wl0_aiso",
+                             isWSR=True, additionalnorm=qcdnorm * mcscale, doTheoryVariation=False)
+        Wl1AisoSamp = Sample(input_antiiso_wl1, isMC=True, name="wl1_aiso",
+                             isWSR=True, additionalnorm=qcdnorm * mcscale, doTheoryVariation=False)
+        Wl2AisoSamp = Sample(input_antiiso_wl2, isMC=True, name="wl2_aiso",
+                             isWSR=True, additionalnorm=qcdnorm * mcscale, doTheoryVariation=False)
+        # ttbar
+        TTbarAisoSamp = Sample(input_antiiso_ttbar, isMC=True, name="ttbar_dilepton_aiso",
+                               isWSR=True, additionalnorm=qcdnorm * mcscale, doTheoryVariation=False)
+        TT1LepAisoSamp = Sample(input_antiiso_ttbar_1lep, isMC=True, name="ttbar_1lepton_aiso",
+                                isWSR=True, additionalnorm=qcdnorm * mcscale, doTheoryVariation=False)
+        TT0LepAisoSamp = Sample(input_antiiso_ttbar_0lep, isMC=True, name="ttbar_0lepton_aiso",
+                                isWSR=True, additionalnorm=qcdnorm * mcscale, doTheoryVariation=False)
+        # dibosons
+        WWAisoSamp = Sample(input_antiiso_ww, isMC=True, name="WW_aiso",
+                            isWSR=True, additionalnorm=qcdnorm * mcscale, doTheoryVariation=False)
+        WZAisoSamp = Sample(input_antiiso_wz, isMC=True, name="WZ_aiso",
+                            isWSR=True, additionalnorm=qcdnorm * mcscale, doTheoryVariation=False)
+        ZZAisoSamp = Sample(input_antiiso_zz, isMC=True, name="ZZ_aiso",
+                            isWSR=True, additionalnorm=qcdnorm * mcscale, doTheoryVariation=False)
+        # tau
+        ZXXAisoSamp = Sample(input_antiiso_zxx, isMC=True, name="ZXX_aiso",
+                             isWSR=True, additionalnorm=qcdnorm * mcscale, doTheoryVariation=False)
+        Wx0AisoSamp = Sample(input_antiiso_wx0, isMC=True, name="wx0_aiso",
+                             isWSR=True, additionalnorm=qcdnorm * mcscale, doTheoryVariation=False)
+        Wx1AisoSamp = Sample(input_antiiso_wx1, isMC=True, name="wx1_aiso",
+                             isWSR=True, additionalnorm=qcdnorm * mcscale, doTheoryVariation=False)
+        Wx2AisoSamp = Sample(input_antiiso_wx2, isMC=True, name="wx2_aiso",
+                             isWSR=True, additionalnorm=qcdnorm * mcscale, doTheoryVariation=False)
+        # W -> munu
+        # wjetsnorm = 1.06
+        wjetsnorm = 1.0
+        Wl0Samp = Sample(input_wl0, isMC=True, name="wl0",
+                         isWSR=True, additionalnorm=wjetsnorm, reweightZpt=False)
+        Wl1Samp = Sample(input_wl1, isMC=True, name="wl1",
+                         isWSR=True, additionalnorm=wjetsnorm, reweightZpt=False)
+        Wl2Samp = Sample(input_wl2, isMC=True, name="wl2",
+                         isWSR=True, additionalnorm=wjetsnorm, reweightZpt=False)
+        # ttbar
+        TTbarSamp = Sample(input_ttbar, isMC=True,
+                           name="ttbar_dilepton", isWSR=True)
+        TT1LepSamp = Sample(input_ttbar_1lep, isMC=True,
+                            name="ttbar_1lepton", isWSR=True)
+        TT0LepSamp = Sample(input_ttbar_0lep, isMC=True,
+                            name="ttbar_0lepton", isWSR=True)
+        # dibosons
+        WWSamp = Sample(input_ww, isMC=True, name="WW", isWSR=True)
+        WZSamp = Sample(input_wz, isMC=True, name="WZ", isWSR=True)
+        ZZSamp = Sample(input_zz, isMC=True, name="ZZ", isWSR=True)
+        # tau
+        ZXXSamp = Sample(input_zxx, isMC=True, name="ZXX",
+                         isWSR=True, reweightZpt=False)
+        Wx0Samp = Sample(input_wx0, isMC=True, name="wx0",
+                         isWSR=True, reweightZpt=False)
+        Wx1Samp = Sample(input_wx1, isMC=True, name="wx1",
+                         isWSR=True, reweightZpt=False)
+        Wx2Samp = Sample(input_wx2, isMC=True, name="wx2",
+                         isWSR=True, reweightZpt=False)
+
+        sampMan = SampleManager(DataSamp, [Wl0Samp, Wl1Samp, Wl2Samp, TTbarSamp, TT1LepSamp,
+                                           TT0LepSamp, WWSamp, WZSamp, ZZSamp, ZXXSamp, Wx0Samp, Wx1Samp, Wx2Samp, Wl0AisoSamp, Wl1AisoSamp, Wl2AisoSamp, TTbarAisoSamp, TT1LepAisoSamp,
+                                           TT0LepAisoSamp, WWAisoSamp, WZAisoSamp, ZZAisoSamp, ZXXAisoSamp, Wx0AisoSamp, Wx1AisoSamp, Wx2AisoSamp])
+        sampMan.groupMCs(["wx0", "wx1", "wx2", "wx0_aiso",
+                         "wx1_aiso", "wx2_aiso"], "wx", 216, 'wx')
+        sampMan.groupMCs(['ZXX', 'ZXX_aiso'], 'zxx', 216, 'zxx')
+        sampMan.groupMCs(["WW_aiso", "WZ_aiso", "ZZ_aiso",
+                         "wx0_aiso", "wx1_aiso", "wx2_aiso", "WW", "WZ", "ZZ"], "EWK", 216, "EWK")
+        sampMan.groupMCs(["ttbar_dilepton_aiso", "ttbar_1lepton_aiso",
+                         "ttbar_0lepton_aiso", "ttbar_dilepton", "ttbar_1lepton",
+                          "ttbar_0lepton"], "ttbar", 96, "t#bar{t}")
+        label = "W#rightarrow#mu#nu" if doMuon else "W#rightarrow e#nu"
+        sampMan.groupMCs(
+            ['wl0_aiso', 'wl1_aiso', 'wl2_aiso', 'wl0', 'wl1', 'wl2'], "wlnu", 92, label)
+
+    else:
+        # 5 TeV
+        # W -> lnu
+        label = "W#rightarrow#mu#nu" if doMuon else "W#rightarrow e#nu"
+        WlAisoSamp = Sample(input_antiiso_wl, isMC=True, name="wlnu_aiso", isWSR=True, additionalnorm=qcdnorm *
+                            mcscale, is5TeV=True, color=92, legend=label, doTheoryVariation=False)
+        # ttbar
+        TTbarAisoSamp = Sample(input_antiiso_ttbar, isMC=True, name="ttbar_aiso",     isWSR=True,
+                               additionalnorm=qcdnorm * mcscale, is5TeV=True, color=96, legend="t#bar{t}", doTheoryVariation=False)
+        # dibosons
+        WWAisoSamp = Sample(input_antiiso_ww, isMC=True, name="WW_aiso", isWSR=True,
+                            additionalnorm=qcdnorm * mcscale, is5TeV=True, doTheoryVariation=False)
+        WZAisoSamp = Sample(input_antiiso_wz, isMC=True, name="WZ_aiso", isWSR=True,
+                            additionalnorm=qcdnorm * mcscale, is5TeV=True, doTheoryVariation=False)
+        ZZ2LAisoSamp = Sample(input_antiiso_zz2l, isMC=True, name="ZZ2L_aiso", isWSR=True,
+                              additionalnorm=qcdnorm * mcscale, is5TeV=True, doTheoryVariation=False)
+        ZZ4LAisoSamp = Sample(input_antiiso_zz4l, isMC=True, name="ZZ4L_aiso", isWSR=True,
+                              additionalnorm=qcdnorm * mcscale, is5TeV=True, doTheoryVariation=False)
+        # tau
+        ZXXAisoSamp = Sample(input_antiiso_zxx, isMC=True, name="ZXX_aiso", isWSR=True,
+                             additionalnorm=qcdnorm * mcscale, is5TeV=True, doTheoryVariation=False)
+        WxAisoSamp = Sample(input_antiiso_wx,  isMC=True, name="wx_aiso",  isWSR=True,
+                            additionalnorm=qcdnorm * mcscale, is5TeV=True, doTheoryVariation=False)
+
+        wjetsnorm = 1.0
+        WlSamp = Sample(input_wl, isMC=True, name="wlnu", color=92,
+                        legend="W#rightarrow#mu#nu", isWSR=True, additionalnorm=wjetsnorm, is5TeV=True, reweightZpt=False)
+        # ttbar
+        TTbarSamp = Sample(input_ttbar, isMC=True, name="ttbar",
+                           color=86, legend="t#bar{t}", isWSR=True, is5TeV=True)
+        # dibosons
+        WWSamp = Sample(input_ww, isMC=True, name="WW",
+                        isWSR=True, is5TeV=True)
+        WZSamp = Sample(input_wz, isMC=True, name="WZ",
+                        isWSR=True, is5TeV=True)
+        ZZ2LSamp = Sample(input_zz2l, isMC=True, name="ZZ2L",
+                          isWSR=True, is5TeV=True)
+        ZZ4LSamp = Sample(input_zz4l, isMC=True, name="ZZ4L",
+                          isWSR=True, is5TeV=True)
+        # tau
+        ZXXSamp = Sample(input_zxx, isMC=True, name="ZXX",
+                         isWSR=True, is5TeV=True, reweightZpt=False)
+        WxSamp = Sample(input_wx, isMC=True, name="WX",
+                        color=216, legend="WX", isWSR=True, is5TeV=True, reweightZpt=False)
+
+        sampMan = SampleManager(DataSamp, [WlAisoSamp, TTbarAisoSamp, WWAisoSamp, WZAisoSamp, ZZ2LAisoSamp, ZZ4LAisoSamp,
+                                ZXXAisoSamp, WxAisoSamp, WlSamp, TTbarSamp, WWSamp, WZSamp, ZZ2LSamp, ZZ4LSamp, ZXXSamp, WxSamp], is5TeV=True)
+        sampMan.groupMCs(["WW", "WZ", "ZZ2L", "ZZ4L", "WW_aiso",
+                         "WZ_aiso", "ZZ2L_aiso", "ZZ4L_aiso"], 'EWK', 216, 'EWK')
+        sampMan.groupMCs(['ZXX', 'ZXX_aiso'], 'zxx', 216, 'zxx')
+        sampMan.groupMCs(['WX', 'wx_aiso'], 'wx', 216, 'wx')
+        sampMan.groupMCs(['ttbar', 'ttbar_aiso'], 'ttbar', 86, 't#bar{t}')
+        label = "W#rightarrow#mu#nu" if doMuon else "W#rightarrow e#nu"
+        sampMan.groupMCs(['wlnu_aiso', 'wlnu'], "wl", 92, label)
+
+    # customize legends
+    label_plus = "W^{+}#rightarrow#mu^{+}#nu" if doMuon else "W^{+}#rightarrow e^{+}#nu"
+    label_minus = "W^{-}#rightarrow#mu^{-}#bar{#nu}" if doMuon else "W^{-}#rightarrow e^{-}#bar{#nu}"
+    legends = ["Data", label_plus, "t#bar{t}", "EWK"]
+
+    sampMan.DefineAll("Lep_pt", "lep.Pt()")
+    sampMan.ApplyCutAll("Lep_pt > 25.0")
+    sampMan.DefineAll("Lep_eta", "lep.Eta()")
+    sampMan.ApplyCutAll("fabs(Lep_eta) < 2.4")
+
+    # muon and electron isolation distributions are different
+    # more coarse binning for electrons to make sure enough statistics
+    if doMuon:
+        isoCuts = [0.0, 0.15, 0.20, 0.25, 0.30, 0.35, 0.40, 0.45, 0.50,
+                   0.55, 0.60, 0.65, 0.70, 0.75, 0.80, 0.85, 0.90, 0.95]
+        isobins = []
+        sampMan.DefineAll("RelIso", "relIso")
+        for isobin in range(3, 20):
+            sampMan.DefineAll(
+                f"w_iso{isobin}", f"(relIso > {isoCuts[isobin-3]} && relIso < {isoCuts[isobin-2]})")
+            isobins.append(f"iso{isobin}")
+
+    else:
+        isoCuts = [0.0, 0.10, 0.15, 0.20, 0.25,
+                   0.30, 0.35, 0.40, 0.50, 0.65, 0.90]
+        isobins = []
+        sampMan.DefineAll("isEB",   "fabs(Lep_eta) <= 1.4442")
+        # sampMan.DefineAll("RelIso", "isEB ? (relIso + 0.0287 - 0.0478) : (relIso + 0.0445 - 0.0658)")
+        sampMan.DefineAll("RelIso", "(pfCombIso/lep.Pt())")
+        for isobin in range(3, 13):
+            sampMan.DefineAll(
+                f"w_iso{isobin}", f"(RelIso > {isoCuts[isobin-3]} && RelIso < {isoCuts[isobin-2]})")
+            isobins.append(f"iso{isobin}")
+
+    sampMan.DefineMC("met_pt", "metVars[1]")
+    sampMan.DefineMC("met_phi", "TVector2::Phi_mpi_pi(metVarsPhi[1])")
+    DataSamp.Define("met_pt", "metVars[0]")
+    DataSamp.Define("met_phi", "TVector2::Phi_mpi_pi(metVarsPhi[0])")
+
+    # recoil variables
+    sampMan.DefineAll("V2W", "UVec(lep.Pt(), lep.Phi(), met_pt, met_phi)")
+    sampMan.DefineAll("WpT", "V2W.Mod()")
+    sampMan.DefineAll("Wphi", "TVector2::Phi_mpi_pi(V2W.Phi())")
+
+    # charge
+    lepname = "mu" if doMuon else "e"
+    sampMan.DefineAll(lepname+"plus",  "q > 0")
+    sampMan.DefineAll(lepname+"minus", "q < 0")
+    chgbins = [lepname+"plus", lepname + "minus"]
+
+    # WpT bins
+    sampMan.DefineAll("WpT_bin0",  "WpT>=0.")
+    wptbins = ["WpT_bin0"]
+    if doWpT:
+        sampMan.DefineAll("WpT_bin1",  "WpT>=0. && WpT<8.0")
+        sampMan.DefineAll("WpT_bin2",  "WpT>=8.0 &&  WpT<16.0")
+        sampMan.DefineAll("WpT_bin3",  "WpT>=16.0 && WpT<24.0")
+        sampMan.DefineAll("WpT_bin4",  "WpT>=24.0 && WpT<32.0")
+        sampMan.DefineAll("WpT_bin5",  "WpT>=32.0 && WpT<40.0")
+        sampMan.DefineAll("WpT_bin6",  "WpT>=40.0 && WpT<50.0")
+        sampMan.DefineAll("WpT_bin7",  "WpT>=50.0 && WpT<70.0")
+        sampMan.DefineAll("WpT_bin8",  "WpT>=70.0 && WpT<100.0")
+        sampMan.DefineAll("WpT_bin9",  "WpT>=100.0")
+        wptbins = ["WpT_bin0", "WpT_bin1", "WpT_bin2", "WpT_bin3", "WpT_bin4",
+                   "WpT_bin5", "WpT_bin6", "WpT_bin7", "WpT_bin8", "WpT_bin9"]
+
+    # eta bins for electrons: barral and endcap
+    sampMan.DefineAll("lepEta_bin0", "1.0")
+    sampMan.DefineAll("lepEta_bin1", "abs(lep.Eta()) <= 1.4442")
+    sampMan.DefineAll("lepEta_bin2", "abs(lep.Eta()) > 1.4442")
+
+    if doMuon:
+        etabins = ["lepEta_bin0"]
+    else:
+        etabins = ["lepEta_bin0", "lepEta_bin1", "lepEta_bin2"]
+    etabins = ["lepEta_bin0"]
+
+    # draw the lepton isolation distribution
+    nbins = 50
+    xmin = 0.
+    xmax = 0.75
+    ymax = 5e7 if doMuon else 1e6
+    for wpt in wptbins:
+        for lepeta in etabins:
+            strname = f"weight_{wpt}_{lepeta}"
+            sampMan.DefineAll(strname, f"weight_WoVpt * {wpt} * {lepeta}")
+            sampMan.cacheDraw("RelIso", f"histo_wjets_{lepname}_RelIso_{lepeta}_{wpt}", 100, 0, 0.72, DrawConfig(xmin=xmin, xmax=xmax, xlabel="Relative Isolation", ylabel=f"Events / {(xmax-xmin)/nbins:.2f}",
+                              dology=True, ymax=ymax, donormalizebin=False, addOverflow=True, addUnderflow=True, showratio=False, legendPos=[0.94, 0.88, 0.70, 0.68]), weightname=strname)
+
+    # do the fine binning first; then rebin in the processHists
+    mass_bins = np.array(
+        [0., 10., 20., 30., 40., 50., 60., 70., 80., 90., 120.])
+    mtbins = []
+    for imt in range(len(mass_bins)-1):
+        sampMan.DefineAll(
+            f"mt{imt}", f"mtCorr >= {mass_bins[imt]} && mtCorr < {mass_bins[imt+1]}")
+        mtbins.append(f"mt{imt}")
+
+    nbins = 12
+    xmin = 0
+    xmax = 120
+    idx = 0
+    for iso in isobins:
+        for wpt in wptbins:
+            for lepeta in etabins:
+                for chg in chgbins:
+                    strname = "weight_{}_{}_{}_{}".format(
+                        chg, iso, wpt, lepeta)
+
+                    sampMan.DefineAll(
+                        strname, "w_{} * weight_WoVpt * {} * {} * {}".format(iso, wpt, lepeta, chg))
+                    legends[1] = label_plus if "plus" in chg else label_minus
+
+                    outputname = "histo_wjetsAntiIso_mtcorr_" + strname
+                    # draw the isolation in different bins, in order to calculate the mean in each bin
+                    sampMan.cacheDraw("RelIso", f"histo_wjetsAntiIso_RelIso_{strname}", 100, isoCuts[idx], isoCuts[idx + 1], DrawConfig(
+                        xmin=xmin, xmax=xmax, xlabel="Relative Isolation", ylabel=f"Events / {(xmax-xmin)/nbins:.2f}", dology=True, ymax=ymax, donormalizebin=False, addOverflow=True, addUnderflow=True, showratio=False, legendPos=[0.94, 0.88, 0.70, 0.68]), weightname=strname)
+
+                    for mt in mtbins:
+                        strname = "weight_{}_{}_{}_{}_{}".format(
+                            chg, iso, wpt, lepeta, mt)
+                        sampMan.DefineAll(
+                            strname, "w_{} * weight_WoVpt * {} * {} * {} * {}".format(iso, wpt, lepeta, chg, mt))
+                        legends[1] = label_plus if "plus" in chg else label_minus
+
+                        outputname = "histo_wjetsAntiIso_mtcorr_" + strname
+                        sampMan.cacheDraw("RelIso", f"histo_wjetsAntiIso_RelIso_{strname}", 100, isoCuts[idx], isoCuts[idx + 1], DrawConfig(
+                            xmin=isoCuts[idx], xmax=isoCuts[idx+1], xlabel="Relative Isolation", ylabel=f"Events / {(isoCuts[idx+1]-isoCuts[idx])/100:.2f}", dology=True, ymax=ymax, donormalizebin=False, addOverflow=True, addUnderflow=True, showratio=False, legendPos=[0.94, 0.88, 0.70, 0.68]), weightname=strname)
+
+        idx += 1
+
+    sampMan.launchDraw()
+
+    hIsos = OrderedDict()
+    hIsos_mt = OrderedDict()
+
+    # hetas_mtCut_comp = OrderedDict()
+    for iso in isobins:
+        for wpt in wptbins:
+            for lepeta in etabins:
+                for chg in chgbins:
+                    strname = "weight_{}_{}_{}_{}".format(
+                        chg, iso, wpt, lepeta)
+
+                    # for isolation
+                    outputname = f"histo_wjetsAntiIso_RelIso_{strname}"
+                    hIsos[strname] = sampMan.hdatas[outputname]
+                    hstacked = THStack2TH1(sampMan.hsmcs[outputname])
+                    for ibin in range(hstacked.GetNbinsX()+1):
+                        # hstacked should always be above 0
+                        hstacked.SetBinContent(
+                            ibin, max(hstacked.GetBinContent(ibin), 0))
+                    sampMan.hdatas[outputname].Add(hstacked, -1.0)
+                    hIsos[strname] = sampMan.hdatas[outputname]
+                    hIsos[strname].SetName(outputname)
+
+                    for mt in mtbins:
+                        strname = "weight_{}_{}_{}_{}_{}".format(
+                            chg, iso, wpt, lepeta, mt)
+
+                        # for isolation
+                        outputname = f"histo_wjetsAntiIso_RelIso_{strname}"
+                        hIsos_mt[strname] = sampMan.hdatas[outputname]
+                        hstacked = THStack2TH1(sampMan.hsmcs[outputname])
+                        for ibin in range(hstacked.GetNbinsX()+1):
+                            # hstacked should always be above 0
+                            hstacked.SetBinContent(
+                                ibin, max(hstacked.GetBinContent(ibin), 0))
+                        sampMan.hdatas[outputname].Add(hstacked, -1.0)
+                        hIsos_mt[strname].SetName(outputname)
+
+    postfix = lepname + "nu"
+    sqrtS = "5TeV" if is5TeV else "13TeV"
+    postfix += f"_{sqrtS}.root"
+
+    sampMan.dumpCounts()
+
+    outfile = ROOT.TFile.Open("root/output_qcdIsoMean_"+postfix, "recreate")
+    for isobin, h in hIsos.items():
+        print(f"{isobin} mean: {h.GetMean():.3f}")
+        h.SetDirectory(outfile)
+        h.Write()
+
+    for isobin, h in hIsos_mt.items():
+        print(f"{isobin} mean: {h.GetMean():.3f}")
+        h.SetDirectory(outfile)
+        h.Write()
+
+    outfile.Close()
+
+    print("Program end...")
+
+    input()
+
+    return
+
+
+if __name__ == "__main__":
+    main()
