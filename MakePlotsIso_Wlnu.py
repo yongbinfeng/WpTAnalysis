@@ -111,6 +111,7 @@ def main():
             input_antiiso_zz4l = "inputs_5TeV/awmunu/input_zz4l.txt"
             input_antiiso_zxx = "inputs_5TeV/awmunu/input_zxx.txt"
             input_antiiso_wx = "inputs_5TeV/awmunu/input_wx.txt"
+            input_data = "inputs_5TeV/wmunu/input_data.txt"
             input_wl = "inputs_5TeV/wmunu/input_wm.txt"
             input_ttbar = "inputs_5TeV/wmunu/input_ttbar.txt"
             input_ww = "inputs_5TeV/wmunu/input_ww.txt"
@@ -223,6 +224,8 @@ def main():
             ['wl0_aiso', 'wl1_aiso', 'wl2_aiso', 'wl0', 'wl1', 'wl2'], "wlnu", 92, label)
 
     else:
+        qcdnorm = 1.0
+        mcscale = 1.0
         # 5 TeV
         # W -> lnu
         label = "W#rightarrow#mu#nu" if doMuon else "W#rightarrow e#nu"

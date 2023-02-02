@@ -139,14 +139,15 @@ def ExtrapolateQCD(fname, oname, channels, wptbin, etabins, fname_scaled=None, i
                 isomax = 20
                 isocuts = [0.20, 0.25, 0.30, 0.35, 0.40, 0.45, 0.50, 0.55, 0.60, 0.65, 0.70, 0.75, 0.80, 0.85, 0.90, 0.95]
                 isocenters = [0.225, 0.275, 0.325, 0.375, 0.425, 0.475, 0.525, 0.575, 0.625, 0.675, 0.725, 0.775, 0.825, 0.875, 0.925]
-                isoSR = 0.025 # average isolation value in the signal region
+                #isoSR = 0.025 # average isolation value in the signal region
+                isoSR = 0.084 # average isolation value in the signal region
             else:
                 isomin = 5
                 isomax = 12
                 isocuts = [0.15, 0.20, 0.25, 0.30, 0.35, 0.40, 0.50, 0.65, 0.90]
                 isocenters = [0.173, 0.223, 0.273, 0.323, 0.373, 0.441, 0.556, 0.724]
                 if etabin == "lepEta_bin0":
-                    isoSR = 0.09
+                    isoSR = 0.044
                 elif etabin == "lepEta_bin1":
                     isoSR = 0.1007
                 else:
