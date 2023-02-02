@@ -13,10 +13,14 @@ def ExpltOneBin(isocenters, bincontents, binerrors, isoSR, mTmin, mTmax, suffix=
     """
     fitmax = 0.95 if isMuon else 0.65
     graph = ROOT.TGraphErrors(len(bincontents), np.array(isocenters), np.array(bincontents), np.zeros(len(bincontents)), np.array(binerrors))
-    f1 = ROOT.TF1("pol1_"+suffix, "[0]*(x-{}) + [1]".format(str(isoSR)), -0.1, fitmax)
-    #f2 = ROOT.TF1("pol2_"+suffix, "[0]*(x-{isoSR})*(x-{isoSR}) + [1]*(x-{isoSR}) + [2]".format(isoSR=str(isoSR)), -0.1, 0.60)
+    #f1 = ROOT.TF1("pol1_"+suffix, "[0]*(x-{}) + [1]".format(str(isoSR)), -0.1, fitmax)
+    f1 = ROOT.TF1("pol2_"+suffix, "[0]*(x-{isoSR})*(x-{isoSR}) + [2]*(x-{isoSR}) + [1]".format(isoSR=str(isoSR)), -0.1, fitmax)
     # fit range
-    fitmin = 0.205
+    #fitmin = 0.205
+    if isMuon: 
+        fitmin = 0.205
+    else:
+        fitmin = 0.165
     #fitmax = 0.70
     fitmax = fitmax
 
@@ -143,7 +147,7 @@ def ExtrapolateQCD(fname, oname, channels, wptbin, etabins, fname_scaled=None, i
                 isoSR = 0.084 # average isolation value in the signal region
             else:
                 isomin = 5
-                isomax = 12
+                isomax = 11
                 isocuts = [0.15, 0.20, 0.25, 0.30, 0.35, 0.40, 0.50, 0.65, 0.90]
                 isocenters = [0.173, 0.223, 0.273, 0.323, 0.373, 0.441, 0.556, 0.724]
                 if etabin == "lepEta_bin0":
@@ -179,11 +183,14 @@ def ExtrapolateQCD(fname, oname, channels, wptbin, etabins, fname_scaled=None, i
                     histos_scaled_norm[iso] = h_norm
 
             href = histos_norm[isomin]
-            counts = href.Integral()
+            #counts = href.Integral()
+            counts = href.GetBinContent(1)
             for iso in range(isomin, isomax):
-                histos_norm[iso].Scale(counts / (histos_norm[iso].Integral() + 1e-6))
+                #histos_norm[iso].Scale(counts / (histos_norm[iso].Integral() + 1e-6))
+                histos_norm[iso].Scale(counts / (histos_norm[iso].GetBinContent(1) + 1e-6))
                 if fname_scaled:
-                    histos_scaled_norm[iso].Scale(counts / (histos_scaled_norm[iso].Integral() + 1e-6))
+                    #histos_scaled_norm[iso].Scale(counts / (histos_scaled_norm[iso].Integral() + 1e-6))
+                    histos_scaled_norm[iso].Scale(counts / (histos_scaled_norm[iso].GetBinContent(1) + 1e-6))
 
             # some histograms to save the trend of function parameter variation as a function of mT
             # mostly for plotting purpose
@@ -271,7 +278,7 @@ def ExtrapolateQCD(fname, oname, channels, wptbin, etabins, fname_scaled=None, i
 
             # scaled MC as another systematic
             if fname_scaled:
-                hnew_scaled.Scale(hnew.Integral() / (hnew_scaled.Integral() + 1e-6))
+                #hnew_scaled.Scale(hnew.Integral() / (hnew_scaled.Integral() + 1e-6))
                 hnew_scaledDn = hnew_scaled.Clone("h_QCD_Extrapolated_" + channel + "_" + etabin + "_" + wptbin + "_ScaledMCshape_" + sqrtS + "Down")
                 for ibin in range(1, hnew.GetNbinsX()+1):
                     hnew_scaledDn.SetBinContent(ibin, 2*hnew.GetBinContent(ibin) - hnew_scaled.GetBinContent(ibin))
