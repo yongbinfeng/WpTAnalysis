@@ -336,7 +336,7 @@ class Sample(object):
 
 
 class SampleManager(object):
-    def __init__(self, data, mcs=[], is5TeV=False):
+    def __init__(self, data, mcs=[], is5TeV=False, outdir="plots"):
         self.data = data
         self.mcs = mcs
         self.to_draw = OrderedDict()
@@ -349,6 +349,9 @@ class SampleManager(object):
         for mc in self.mcs:
             assert self.is5TeV == mc.is5TeV, "for MC {} is at 5TeV? {}, inconsistent with the samplemanager {}".format(
                 mc.name, mc.is5TeV, self.is5TeV)
+
+        # output directory for plots
+        self.outdir = outdir
 
         # collection to save all histograms, stacks, etc, for further uses
         # For future improvements, some of them are sample-related,
@@ -559,7 +562,7 @@ class SampleManager(object):
         else:
             h_to_draw = [h_data]
         self.hratios[drawconfigs.outputname] = DrawHistos(h_to_draw, drawconfigs.legends, drawconfigs.xmin, drawconfigs.xmax, drawconfigs.xlabel, drawconfigs.ymin, drawconfigs.ymax, drawconfigs.ylabel, drawconfigs.outputname, dology=drawconfigs.dology, dologx=drawconfigs.dologx, showratio=drawconfigs.showratio, yrmax=drawconfigs.yrmax, yrmin=drawconfigs.yrmin, yrlabel=drawconfigs.yrlabel,
-                                                          donormalize=drawconfigs.donormalize, ratiobase=drawconfigs.ratiobase, legendPos=drawconfigs.legendPos, redrawihist=drawconfigs.redrawihist, extraText=drawconfigs.extraText, noCMS=drawconfigs.noCMS, addOverflow=drawconfigs.addOverflow, addUnderflow=drawconfigs.addUnderflow, nMaxDigits=drawconfigs.nMaxDigits, is5TeV=self.is5TeV, lheader=drawconfigs.lheader)
+                                                          donormalize=drawconfigs.donormalize, ratiobase=drawconfigs.ratiobase, legendPos=drawconfigs.legendPos, redrawihist=drawconfigs.redrawihist, extraText=drawconfigs.extraText, noCMS=drawconfigs.noCMS, addOverflow=drawconfigs.addOverflow, addUnderflow=drawconfigs.addUnderflow, nMaxDigits=drawconfigs.nMaxDigits, is5TeV=self.is5TeV, lheader=drawconfigs.lheader, outdir=self.outdir)
 
     def launchDraw(self):
         """

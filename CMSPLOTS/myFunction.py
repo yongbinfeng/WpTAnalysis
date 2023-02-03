@@ -79,7 +79,7 @@ def ScaleWithWidth(th1):
 def myDivide(num, den):
     # set the ratio to 1 if denominator is 0
     if den == 0:
-        #print bcolors.RED, "denominator is zero. Set the ratio to 1", bcolors.ENDC
+        # print bcolors.RED, "denominator is zero. Set the ratio to 1", bcolors.ENDC
         return 0.
     else:
         return num/den
@@ -101,7 +101,7 @@ def CalculateChi(hobsclone, hexp, doNewman=False, doPearson=False, ignoreHistErr
         elif doNewman and not ignoreHistError:
             den = hobsclone.GetBinError(ibin)
 
-        #print ibin, hobsclone.GetBinContent(ibin), hexp.GetBinContent(ibin), num, den
+        # print ibin, hobsclone.GetBinContent(ibin), hexp.GetBinContent(ibin), num, den
 
         hobsclone.SetBinContent(ibin, myDivide(num, den))
         hobsclone.SetBinError(ibin, 0.)
@@ -113,14 +113,11 @@ def CalculateChi(hobsclone, hexp, doNewman=False, doPearson=False, ignoreHistErr
         print("Chi2 for %s is %.2f" % (hobsclone.GetName(), chi2))
 
 
-'''
-Read file, color, label and list of histograms information from the input file
-ignore lines starting with #
-'''
-
-
 def myRead(inputfile):
-
+    """
+    Read file, color, label and list of histograms information from the input file
+    ignore lines starting with #
+    """
     list_input = open("%s" % inputfile)
 
     files = []
@@ -200,24 +197,29 @@ def THStack2TH1(hstack, postfix=""):
     list(map(h1.Add, hlist[1:]))
     return h1
 
+
 def AddOverflowsTH1(h1, dolastbin=True):
     assert isinstance(h1, ROOT.TH1), "input must be a ROOT.TH1"
     nbins = h1.GetNbinsX()
     if dolastbin:
         # merge overflow bin to the last bin
-        h1.SetBinContent(nbins, h1.GetBinContent(nbins)+h1.GetBinContent(nbins+1))
+        h1.SetBinContent(nbins, h1.GetBinContent(
+            nbins)+h1.GetBinContent(nbins+1))
         # treat the uncertainties as uncorrelated
-        h1.SetBinError(nbins, ROOT.TMath.Sqrt((h1.GetBinError(nbins))**2 + (h1.GetBinError(nbins+1))**2))
+        h1.SetBinError(nbins, ROOT.TMath.Sqrt(
+            (h1.GetBinError(nbins))**2 + (h1.GetBinError(nbins+1))**2))
         # clean the old bins
         h1.SetBinContent(nbins + 1, 0)
         h1.SetBinError(nbins + 1, 0)
     else:
         h1.SetBinContent(1, h1.GetBinContent(0)+h1.GetBinContent(1))
         # treat the uncertainties as uncorrelated
-        h1.SetBinError(1, ROOT.TMath.Sqrt((h1.GetBinError(1))**2 + (h1.GetBinError(0))**2))
+        h1.SetBinError(1, ROOT.TMath.Sqrt(
+            (h1.GetBinError(1))**2 + (h1.GetBinError(0))**2))
         # clean the old bins
         h1.SetBinContent(0, 0)
         h1.SetBinError(0, 0)
+
 
 def AddOverflows(hinput, dolastbin=True):
     '''
@@ -231,23 +233,22 @@ def AddOverflows(hinput, dolastbin=True):
         hlist = list(hinput.GetHists())
         list(map(AddOverflowsTH1, hlist, [dolastbin]*len(hlist)))
 
+
 def Ratio2Diff(hratio, inpercent=True):
     '''
     convert the ratio plot to diff, by substracting 1.0,
     and may show it in percentile
     '''
-    for ibin in range(0,hratio.GetNbinsX()+1):
+    for ibin in range(0, hratio.GetNbinsX()+1):
         hratio.SetBinContent(ibin, hratio.GetBinContent(ibin)-1.0)
     if inpercent:
         hratio.Scale(100.0)
 
 
-'''
-draw histograms with the CMS tdr style
-'''
-
-
-def DrawHistos(myhistos, mylabels, xmin, xmax, xlabel, ymin, ymax, ylabel, outputname, dology=True, showratio=False, dologx=False, lheader=None, donormalize=False, binomialratio=False, yrmax=2.0, yrmin=0.0, yrlabel=None, MCOnly=False, leftlegend=False, mycolors=[], legendPos=[], legendNCols=1, linestyles=[], markerstyles=[], showpull=False, doNewman=False, doPearson=False, ignoreHistError=False, ypullmin=-3.99, ypullmax=3.99, drawashist=False, padsize=(2, 0.9, 1.1), setGridx=False, setGridy=False, drawoptions=[], legendoptions=[], ratiooptions=[], dologz=False, doth2=False, ratiobase=0, redrawihist=-1, extraText=None, noCMS=False, noLumi=False, nMaxDigits=None, addOverflow=False, addUnderflow=False, plotdiff=False, hratiopanel = None, doratios=None, hpulls=None, W_ref = 600, is5TeV = False):
+def DrawHistos(myhistos, mylabels, xmin, xmax, xlabel, ymin, ymax, ylabel, outputname, dology=True, showratio=False, dologx=False, lheader=None, donormalize=False, binomialratio=False, yrmax=2.0, yrmin=0.0, yrlabel=None, MCOnly=False, leftlegend=False, mycolors=[], legendPos=[], legendNCols=1, linestyles=[], markerstyles=[], showpull=False, doNewman=False, doPearson=False, ignoreHistError=False, ypullmin=-3.99, ypullmax=3.99, drawashist=False, padsize=(2, 0.9, 1.1), setGridx=False, setGridy=False, drawoptions=[], legendoptions=[], ratiooptions=[], dologz=False, doth2=False, ratiobase=0, redrawihist=-1, extraText=None, noCMS=False, noLumi=False, nMaxDigits=None, addOverflow=False, addUnderflow=False, plotdiff=False, hratiopanel=None, doratios=None, hpulls=None, W_ref=600, is5TeV=False, outdir="plots"):
+    """
+    draw histograms with the CMS tdr style
+    """
     # set the tdr style
     tdrstyle.setTDRStyle()
     # not sure why need this...
@@ -257,8 +258,8 @@ def DrawHistos(myhistos, mylabels, xmin, xmax, xlabel, ymin, ymax, ylabel, outpu
     # used with iPeriod = 0, e.g. for simulation-only plots (default is an empty string)
     CMS_lumi.lumi_sqrtS = "(13 TeV)"
     CMS_lumi.relPosX = 0.12
-    #CMS_lumi.extraText = "Internal"
-    #if MCOnly:
+    # CMS_lumi.extraText = "Internal"
+    # if MCOnly:
     #    CMS_lumi.extraText = "Simulation"
     if isinstance(extraText, str):
         CMS_lumi.extraText = extraText
@@ -287,7 +288,7 @@ def DrawHistos(myhistos, mylabels, xmin, xmax, xlabel, ymin, ymax, ylabel, outpu
     elif npads == 1:
         canvas = TCanvas("c2"+outputname, "c2", 50, 50, W, 600)
         canvas.SetGrid(setGridx, setGridy)
-        canvas.SetTicks(1,1)
+        canvas.SetTicks(1, 1)
         padsize1 = 1.0
         if doth2:
             canvas.SetRightMargin(0.10)
@@ -301,13 +302,13 @@ def DrawHistos(myhistos, mylabels, xmin, xmax, xlabel, ymin, ymax, ylabel, outpu
         padsize3 = float(padsize[2])/(padsize[0]+padsize[1]+padsize[2])
 
     if dology:
-        #print "set y axis to log scale"
+        # print "set y axis to log scale"
         canvas.SetLogy()
     if dologx:
-        #print "set x axis to log scale"
+        # print "set x axis to log scale"
         canvas.SetLogx()
     if dologz:
-        #print "set z axis to log scale"
+        # print "set z axis to log scale"
         canvas.SetLogz()
 
     if npads == 1:
@@ -325,7 +326,7 @@ def DrawHistos(myhistos, mylabels, xmin, xmax, xlabel, ymin, ymax, ylabel, outpu
         pad2.SetBottomMargin(0.13/padsize2)
         pad2.SetLeftMargin(0.15 * (600.0)/W)
         pad2.SetGridy(1)
-        pad2.SetTicks(1,1)
+        pad2.SetTicks(1, 1)
         pad1.Draw()
         pad2.Draw()
 
@@ -340,12 +341,12 @@ def DrawHistos(myhistos, mylabels, xmin, xmax, xlabel, ymin, ymax, ylabel, outpu
         pad2.SetBottomMargin(0.02/padsize2)
         pad2.SetLeftMargin(0.15 * (600.0)/W)
         pad2.SetGridy(1)
-        pad2.SetTicks(1,1)
+        pad2.SetTicks(1, 1)
         pad3.SetTopMargin(0.01/padsize3)
         pad3.SetBottomMargin(0.13/padsize3)
         pad3.SetLeftMargin(0.15 * (600.0)/W)
         pad3.SetGridy(1)
-        pad3.SetTicks(1,1)
+        pad3.SetTicks(1, 1)
         pad1.Draw()
         pad2.Draw()
         pad3.Draw()
@@ -353,7 +354,7 @@ def DrawHistos(myhistos, mylabels, xmin, xmax, xlabel, ymin, ymax, ylabel, outpu
     if npads > 1:
         pad1.cd()
         pad1.SetGrid(setGridx, setGridy)
-        pad1.SetTicks(1,1)
+        pad1.SetTicks(1, 1)
         if dology:
             pad1.SetLogy()
         if dologx:
@@ -364,7 +365,7 @@ def DrawHistos(myhistos, mylabels, xmin, xmax, xlabel, ymin, ymax, ylabel, outpu
     h1.SetMinimum(ymin)
     h1.SetMaximum(ymax)
 
-    #print "xmin : %f xmax : %f"%(xmin, xmax)
+    # print "xmin : %f xmax : %f"%(xmin, xmax)
 
     h1.GetXaxis().SetNdivisions(6, 5, 0)
 
@@ -387,7 +388,7 @@ def DrawHistos(myhistos, mylabels, xmin, xmax, xlabel, ymin, ymax, ylabel, outpu
     x1_l = 0.92
     y1_l = 0.88
 
-    #dx_l = 0.20
+    # dx_l = 0.20
     dy_l = 0.22*0.66/padsize1
     dx_l = 0.35*0.66/padsize1
     x0_l = x1_l-dx_l
@@ -419,7 +420,7 @@ def DrawHistos(myhistos, mylabels, xmin, xmax, xlabel, ymin, ymax, ylabel, outpu
 
     myhistos_clone = []
     for ihisto in myhistos:
-        # clone the histogram for plotting, 
+        # clone the histogram for plotting,
         # so the original histogram is unchanged
         ihcolone = ihisto.Clone("%s_Clone" % ihisto.GetName())
         # ihcolone.SetDirectory(0)
@@ -437,7 +438,7 @@ def DrawHistos(myhistos, mylabels, xmin, xmax, xlabel, ymin, ymax, ylabel, outpu
         tmp = [legendoptions for i in range(len(myhistos_clone))]
         legendoptions = tmp
 
-    #print(("legend options ", legendoptions))
+    # print(("legend options ", legendoptions))
 
     ileg = 0
     for idx in range(0, len(myhistos_clone)):
@@ -456,7 +457,7 @@ def DrawHistos(myhistos, mylabels, xmin, xmax, xlabel, ymin, ymax, ylabel, outpu
             myhistos_clone[idx].SetMarkerStyle(markerstyles[idx])
         if isinstance(myhistos_clone[idx], ROOT.TH1):
             myhistos_clone[idx].SetLineWidth(3)
-        #myhistos_clone[idx].GetXaxis().SetRangeUser(xmin, xmax)
+        # myhistos_clone[idx].GetXaxis().SetRangeUser(xmin, xmax)
         if donormalize:
             Normalize(myhistos_clone[idx])
         if idx >= len(drawoptions):
@@ -469,7 +470,8 @@ def DrawHistos(myhistos, mylabels, xmin, xmax, xlabel, ymin, ymax, ylabel, outpu
         if isinstance(myhistos_clone[idx], ROOT.THStack):
             drawoptions[idx] = 'HIST'
             legendoptions[idx] = "F"
-        myhistos_clone[idx].Draw(" ".join(filter(None,[drawoptions[idx], "same"])))
+        myhistos_clone[idx].Draw(
+            " ".join(filter(None, [drawoptions[idx], "same"])))
 
         if ileg < len(mylabels):
             # number of labels might be different from number of histograms.
@@ -485,11 +487,12 @@ def DrawHistos(myhistos, mylabels, xmin, xmax, xlabel, ymin, ymax, ylabel, outpu
                     mylabels[ileg]), legendoptions[idx])
                 ileg += 1
 
-    #print("draw options ", drawoptions)
-    #print("legend options ", legendoptions)
+    # print("draw options ", drawoptions)
+    # print("legend options ", legendoptions)
 
     if redrawihist >= 0:
-        myhistos_clone[redrawihist].Draw(" ".join(filter(None,[drawoptions[redrawihist], "same"])))
+        myhistos_clone[redrawihist].Draw(
+            " ".join(filter(None, [drawoptions[redrawihist], "same"])))
 
     iPosX = 0
     plotCMS = True
@@ -497,8 +500,8 @@ def DrawHistos(myhistos, mylabels, xmin, xmax, xlabel, ymin, ymax, ylabel, outpu
         # do not draw CMS, only lumi info and extraText
         plotCMS = False
         CMS_lumi.cmsText = ""
-        #CMS_lumi.extraText = ""
-        #iPosX = 11
+        # CMS_lumi.extraText = ""
+        # iPosX = 11
     if not is5TeV:
         iPeriod = 4
     else:
@@ -507,26 +510,26 @@ def DrawHistos(myhistos, mylabels, xmin, xmax, xlabel, ymin, ymax, ylabel, outpu
         iPeriod = 0
     if showratio or showpull:
         if not noLumi:
-            CMS_lumi.CMS_lumi(pad1, iPeriod, iPosX, plotCMS = plotCMS)
+            CMS_lumi.CMS_lumi(pad1, iPeriod, iPosX, plotCMS=plotCMS)
         pad1.Update()
         pad1.RedrawAxis()
-        #frame = pad1.GetFrame()
-        #frame.Draw()
+        # frame = pad1.GetFrame()
+        # frame.Draw()
         if len(mylabels):
             legend.Draw()
         pad1.Update()
 
     else:
         if not noLumi:
-            CMS_lumi.CMS_lumi(canvas, iPeriod, iPosX, plotCMS = plotCMS)
+            CMS_lumi.CMS_lumi(canvas, iPeriod, iPosX, plotCMS=plotCMS)
         canvas.cd()
         canvas.Update()
         canvas.RedrawAxis()
         canvas.RedrawAxis("G")
-        #frame = canvas.GetFrame()
-        #frame.Draw()
+        # frame = canvas.GetFrame()
+        # frame.Draw()
         if len(mylabels):
-            #print("draw legend", len(mylabels))
+            # print("draw legend", len(mylabels))
             legend.Draw()
         canvas.Update()
 
@@ -542,7 +545,7 @@ def DrawHistos(myhistos, mylabels, xmin, xmax, xlabel, ymin, ymax, ylabel, outpu
     if showratio:
         hratios = {}
         for idx in range(0, len(myhistos_clone)):
-            if doratios != None and doratios[idx]==False:
+            if doratios != None and doratios[idx] == False:
                 continue
             if idx == ratiobase:
                 continue
@@ -564,7 +567,7 @@ def DrawHistos(myhistos, mylabels, xmin, xmax, xlabel, ymin, ymax, ylabel, outpu
                 if idx == ratiobase:
                     continue
                 hpull = myhistos_clone[idx].Clone("hpullsnew_%s" % idx)
-                hpulls.append( hpull )
+                hpulls.append(hpull)
                 CalculateChi(hpull, hden, doNewman=doNewman,
                              doPearson=doPearson, ignoreHistError=ignoreHistError)
 
@@ -604,13 +607,13 @@ def DrawHistos(myhistos, mylabels, xmin, xmax, xlabel, ymin, ymax, ylabel, outpu
         if showratio:
             if hratiopanel:
                 print("draw hratiopanel")
-                #hratiopanel.SetFillColor(15)
+                # hratiopanel.SetFillColor(15)
                 hratiopanel.SetFillColorAlpha(15, 0.5)
                 hratiopanel.SetLineColor(2)
                 hratiopanel.SetMarkerSize(0)
                 hratiopanel.Draw("E2 same")
-                #hratiopanel.Draw("HIST same")
-                #for ibin in xrange(1, hratiopanel.GetNbinsX()+1):
+                # hratiopanel.Draw("HIST same")
+                # for ibin in xrange(1, hratiopanel.GetNbinsX()+1):
                 #    print("bin content ", hratiopanel.GetBinContent(ibin), " error ", hratiopanel.GetBinError(ibin))
                 h2.Draw("same")
             idx = 0
@@ -645,7 +648,7 @@ def DrawHistos(myhistos, mylabels, xmin, xmax, xlabel, ymin, ymax, ylabel, outpu
         h3.GetYaxis().SetTitleOffset(1.35*(padsize3+0.35*padsize2)*(600.0/W))
         h3.GetYaxis().SetNdivisions(5)
         h3.GetYaxis().CenterTitle()
-        #h3.GetYaxis().SetTitle("#frac{Obs. - Exp.}{Err}")
+        # h3.GetYaxis().SetTitle("#frac{Obs. - Exp.}{Err}")
         h3.GetYaxis().SetTitle("Pull")
 
         h3.SetMaximum(ypullmax)
@@ -664,17 +667,17 @@ def DrawHistos(myhistos, mylabels, xmin, xmax, xlabel, ymin, ymax, ylabel, outpu
 
     if "/" not in outputname:
         # path not included; by default put to plots/outputname
-        outputname = "plots/" + outputname
-    
+        outputname = outdir + "/" + outputname
+
     dirpath = outputname.rpartition('/')[0]
     if not os.path.exists(dirpath):
         print(f"Make the directory {dirpath}")
         os.makedirs(dirpath)
-    
+
     print("save plot to %s.pdf" % outputname)
-    #canvas.Print("%s.C"%outputname)
+    # canvas.Print("%s.C"%outputname)
     canvas.Print("%s.pdf" % outputname)
-    #canvas.Print("%s.png" % outputname)
-    #canvas.Print("%s.root" % outputname)
-    #print("function runs fine")
+    # canvas.Print("%s.png" % outputname)
+    # canvas.Print("%s.root" % outputname)
+    # print("function runs fine")
     return hratios if showratio else None

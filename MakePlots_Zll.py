@@ -40,6 +40,10 @@ def main():
     print("is5TeV:", is5TeV)
     print("doTheoryNorm:", doTheoryNorm)
 
+    outdir = "plots/"
+    outdir += "5TeV/" if is5TeV else "13TeV/"
+    outdir += "Zmumu/" if doMuon else "Zee/"
+
     # ROOT.gROOT.ProcessLine('TFile* f_zpt = TFile::Open("data/zpt_ratio_amc2data.root")')
     # ROOT.gROOT.ProcessLine('TH1D* h_zpt_ratio  = (TH1D*)f_zpt->Get("hc")')
     if not is5TeV:
@@ -161,6 +165,8 @@ def main():
                                 DYSamp, TTbarSamp, WWSamp, WZSamp, ZZ2LSamp, ZZ4LSamp, ZXXSamp], is5TeV=True)
         sampMan.groupMCs(["WW", "WZ", "ZZ2L", "ZZ4L", "ZXX"],
                          "EWK", 216, "EWK")
+
+    sampMan.outdir = outdir
 
     sampMan.DefineAll("zpt", "Z.Pt()")
     sampMan.DefineAll("zmass", "ZMass")

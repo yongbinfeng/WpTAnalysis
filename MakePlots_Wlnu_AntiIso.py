@@ -43,6 +43,10 @@ def main():
     print("doWpT:", doWpT)
     print("is5TeV:", is5TeV)
 
+    outdir = "plots/"
+    outdir += "5TeV/" if is5TeV else "13TeV/"
+    outdir += "AntiWmunu/" if doMuon else "AntiWenu/"
+
     if not is5TeV:
         if doTest:
             input_antiiso_data = "inputs/awmunu_test/input_data.txt"
@@ -198,6 +202,8 @@ def main():
     label_plus = "W^{+}#rightarrow#mu^{+}#nu" if doMuon else "W^{+}#rightarrow e^{+}#nu"
     label_minus = "W^{-}#rightarrow#mu^{-}#bar{#nu}" if doMuon else "W^{-}#rightarrow e^{-}#bar{#nu}"
     legends = ["Data", label_plus, "t#bar{t}", "EWK"]
+
+    sampMan.outdir = outdir
 
     sampMan.DefineAll("Lep_pt", "lep.Pt()")
     sampMan.ApplyCutAll("Lep_pt > 25.0")

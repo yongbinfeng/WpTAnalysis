@@ -41,6 +41,10 @@ def main():
     print("is5TeV:", is5TeV)
     print("doTheoryNorm", doTheoryNorm)
 
+    outdir = "plots/"
+    outdir += "5TeV/" if is5TeV else "13TeV/"
+    outdir += "Wmunu/" if doMuon else "Wenu/"
+
     # ROOT.gROOT.ProcessLine('TFile* f_zpt = TFile::Open("results/zpt_weight.root")')
     # ROOT.gROOT.ProcessLine('TH1D* h_zpt_ratio  = (TH1D*)f_zpt->Get("h_zpt_ratio")')
     if not is5TeV:
@@ -210,6 +214,8 @@ def main():
         signalSampnames = [samp.name for samp in signalSamps]
     print(("signal sample names: ", signalSampnames))
     h_sigs = OrderedDict()
+
+    sampMan.outdir = outdir
 
     # define variables and weights
     sampMan.DefineAll("Lep_pt",  "lep.Pt()")
