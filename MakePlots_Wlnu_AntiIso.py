@@ -217,12 +217,13 @@ def main():
             isobins.append(f"iso{isobin}")
 
     else:
-        isoCuts = [0.10, 0.15, 0.20, 0.25, 0.30, 0.35, 0.40, 0.50, 0.65, 0.90]
+        isoCuts = [0.10, 0.125, 0.15, 0.17, 0.20, 0.225,
+                   0.25, 0.30, 0.35, 0.40, 0.50, 0.65, 0.90]
         isobins = []
         sampMan.DefineAll("isEB",   "fabs(Lep_eta) <= 1.4442")
         # sampMan.DefineAll("RelIso", "isEB ? (relIso + 0.0287 - 0.0478) : (relIso + 0.0445 - 0.0658)")
         sampMan.DefineAll("RelIso", "(pfCombIso/lep.Pt())")
-        for isobin in range(4, 13):
+        for isobin in range(4, 16):
             sampMan.DefineAll(
                 f"w_iso{isobin}", f"(RelIso > {isoCuts[isobin-4]} && RelIso < {isoCuts[isobin-3]})")
             isobins.append(f"iso{isobin}")
@@ -329,12 +330,24 @@ def main():
                     # for mT
                     outputname = "histo_wjetsAntiIso_mtcorr_" + strname
                     hstacked = THStack2TH1(sampMan.hsmcs[outputname])
+                    hdata = sampMan.hdatas[outputname]
                     for ibin in range(hstacked.GetNbinsX()+1):
                         # hstacked should always be above 0
-                        hstacked.SetBinContent(
-                            ibin, max(hstacked.GetBinContent(ibin), 0))
-                    sampMan.hdatas[outputname].Add(hstacked, -1.0)
-                    hmts_comp[strname] = sampMan.hdatas[outputname]
+                        val_mc = hstacked.GetBinContent(ibin)
+                        if val_mc < 0:
+                            hstacked.SetBinContent(ibin, 0)
+                            hstacked.SetBinError(ibin, 0)
+                        # subtract mc from data
+                        val_data = hdata.GetBinContent(ibin)
+                        hdata.SetBinContent(ibin, max(val_data - val_mc, 0))
+                        err_data = hdata.GetBinError(ibin)
+                        err_mc = hstacked.GetBinError(ibin)
+                        # apply 30% signal contamination unc
+                        err_mcunc = val_mc * 0.3
+                        hdata.SetBinError(ibin, np.sqrt(
+                            err_data**2 + err_mc**2 + err_mcunc**2))
+
+                    hmts_comp[strname] = hdata
                     hmts_comp[strname].SetName(outputname)
 
                     # for lepton eta with mT cuts
