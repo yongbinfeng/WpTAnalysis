@@ -512,7 +512,7 @@ def main():
                     val.SetMarkerColor(icolor)
                     icolor += 1
                 DrawHistos(hists, labels, xmin, xmax, "m_{T} [GeV]", 0., 0.24, "A.U.", "Comparison_mTShape_wjets_{}_mT_1_{}_{}".format(
-                    chg, wpt, lepeta), dology=False, addOverflow=True, addUnderflow=True, donormalize=True, is5TeV=is5TeV, legendPos=[0.30, 0.92, 0.90, 0.72], legendNCols=4, legendoptions="LE", drawoptions="LE")
+                    chg, wpt, lepeta), dology=False, addOverflow=True, addUnderflow=True, donormalize=True, is5TeV=is5TeV, legendPos=[0.30, 0.92, 0.90, 0.72], legendNCols=4, legendoptions="LE", drawoptions="LE", outdir=outdir)
 
     #
     # merge the signal MC histograms in different samples
