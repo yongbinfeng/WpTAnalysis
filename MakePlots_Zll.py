@@ -177,12 +177,16 @@ def main():
     sampMan.DefineMC("u1_corr", "pU1")
     sampMan.DefineMC("u2_corr", "pU2")
     sampMan.DefineMC("met_corr", "metVars[1]")
-    sampMan.DefineMC("met_phi_corr", "metVarsPhi[1]")
-    # for data, no corrections applied
-    DataSamp.Define("u1_corr", "u1")
-    DataSamp.Define("u2_corr", "u2")
-    DataSamp.Define("met_corr", "met")
-    DataSamp.Define("met_phi_corr", "metPhi")
+    sampMan.DefineMC("met_phi_corr", "TVector2::Phi_mpi_pi(metVarsPhi[1])")
+    # for data, only apply XY and lepton momentum corrections
+    DataSamp.Define("u1_corr", "pU1")
+    DataSamp.Define("u2_corr", "pU2")
+    DataSamp.Define("met_corr", "metVars[1]")
+    DataSamp.Define("met_phi_corr", "TVector2::Phi_mpi_pi(metVarsPhi[1])")
+   
+    # 3 is without any correction (XY, lepton momentum, recoil corr) 
+    sampMan.DefineAll("met_org", "metVars[3]")
+    sampMan.DefineAll("met_phi_org", "TVector2::Phi_mpi_pi(metVarsPhi[3])")
 
     sampMan.DefineAll("nPV", "npv")
 
@@ -340,9 +344,9 @@ def main():
     sampMan.cacheDraw("SubleadLep_eta", "histo_subleadLep_etaPrefDown_" + lepname, eta_bins, DrawConfig(xmin=-2.6, xmax=2.6,
                       xlabel='#eta (Subleading {leplabel})'.format(leplabel=leplabel), ymax=1e7, ylabel='Events / 1', yrmin=0.81, yrmax=1.19), weightname="weight_7")
 
-    sampMan.cacheDraw("met", "histo_zjets_pfmet_pt" + lepname,
+    sampMan.cacheDraw("met_org", "histo_zjets_pfmet_pt" + lepname,
                       met_pt_bins, DrawConfig(xmin=0, xmax=100, xlabel='PF MET [GeV]'))
-    sampMan.cacheDraw("metPhi", "histo_zjets_pfmet_phi" + lepname, 30, phimin,
+    sampMan.cacheDraw("met_phi_org", "histo_zjets_pfmet_phi" + lepname, 30, phimin,
                       phimax, DrawConfig(xmin=phimin, xmax=phimax, xlabel='PF MET #phi'))
 
     sampMan.cacheDraw("met_corr", "histo_zjets_pfmet_pt_corr_" + lepname,
