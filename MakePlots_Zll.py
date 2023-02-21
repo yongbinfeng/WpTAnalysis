@@ -174,15 +174,14 @@ def main():
     sampMan.DefineAll("zeta",  "Z.Rapidity()")
     sampMan.DefineAll("zphi", "Z.Phi()")
 
-    sampMan.DefineMC("u1_corr", "pU1")
-    sampMan.DefineMC("u2_corr", "pU2")
-    sampMan.DefineMC("met_corr", "metVars[1]")
-    sampMan.DefineMC("met_phi_corr", "TVector2::Phi_mpi_pi(metVarsPhi[1])")
-    # for data, only apply XY and lepton momentum corrections
-    DataSamp.Define("u1_corr", "pU1")
-    DataSamp.Define("u2_corr", "pU2")
-    DataSamp.Define("met_corr", "metVars[1]")
-    DataSamp.Define("met_phi_corr", "TVector2::Phi_mpi_pi(metVarsPhi[1])")
+    # u1 direction needs to be flipped
+    sampMan.DefineAll("u1_corr", "-pU1")
+    sampMan.DefineAll("u1P_corr", "-pU1 - zpt")
+    sampMan.DefineAll("u2_corr", "pU2")
+    sampMan.DefineAll("met_corr", "metVars[1]")
+    sampMan.DefineAll("met_phi_corr", "TVector2::Phi_mpi_pi(metVarsPhi[1])")
+    sampMan.DefineAll("u1_uncorr", "-u1")
+    sampMan.DefineAll("u1P_uncorr", "-u1 - zpt")
    
     # 3 is without any correction (XY, lepton momentum, recoil corr) 
     sampMan.DefineAll("met_org", "metVars[3]")
@@ -269,7 +268,7 @@ def main():
     u1_bins = np.array([-20.0, -16, -12, -10, -8, -6, -4, -2, 0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22,
                        24, 26, 28, 30, 32, 34, 36, 38, 40, 42, 44, 46, 48, 50, 53, 56, 59, 64, 68, 72, 76, 80, 85, 90, 100])
     u2_bins = np.array([-40, -35, -30, -25., -22., -20, -18, -16, -14, -12, -
-                       10, -8, -6, -4, -2, 0, 2, 4, 6, 8, 10, 12, 16, 18, 20, 22, 25, 30, 35, 40])
+                       10, -8, -6, -4, -2, 0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 25, 30, 35, 40])
     # u_bins = np.array([0., 2., 4., 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32, 34, 36, 38, 40, 43, 46, 49, 52, 56, 60, 64, 68, 72, 76, 80, 85, 90, 95, 100, 105, 110, 115, 120, 130, 140, 150])
     phimin = -ROOT.TMath.Pi()
     phimax = ROOT.TMath.Pi()
@@ -347,20 +346,21 @@ def main():
     sampMan.cacheDraw("met_org", "histo_zjets_pfmet_pt" + lepname,
                       met_pt_bins, DrawConfig(xmin=0, xmax=100, xlabel='PF MET [GeV]'))
     sampMan.cacheDraw("met_phi_org", "histo_zjets_pfmet_phi" + lepname, 30, phimin,
-                      phimax, DrawConfig(xmin=phimin, xmax=phimax, xlabel='PF MET #phi'))
+                      phimax, DrawConfig(xmin=phimin, xmax=phimax, xlabel='PF MET #phi', ymax=1e8))
 
     sampMan.cacheDraw("met_corr", "histo_zjets_pfmet_pt_corr_" + lepname,
                       met_pt_bins, DrawConfig(xmin=0, xmax=100, xlabel='Corrected PF MET [GeV]'))
     sampMan.cacheDraw("met_phi_corr", "histo_zjets_pfmet_phi_corr_" + lepname, 30, phimin,
-                      phimax, DrawConfig(xmin=phimin, xmax=phimax, xlabel='Corrected PF MET #phi'))
+                      phimax, DrawConfig(xmin=phimin, xmax=phimax, xlabel='Corrected PF MET #phi', ymax=1e8))
 
-    sampMan.cacheDraw("u1_corr", "histo_zjets_pfmet_u1_corr_" + lepname, u1_bins,
-                      DrawConfig(xmin=-20.0, xmax=50.0, xlabel='Corrected u_{#parallel} [GeV]'))
+    sampMan.cacheDraw("u1_corr", "histo_zjets_pfmet_u1_corr_" + lepname, u1_bins, DrawConfig(xmin=-20.0, xmax=50.0, xlabel='Corrected u_{#parallel} [GeV]'))
+    sampMan.cacheDraw("u1P_corr", "histo_zjets_pfmet_u1P_corr_" + lepname, u2_bins, DrawConfig(xmin=-40.0, xmax=40.0, xlabel='Corrected u_{#parallel} + '+ 'p^{{{leplabel}{leplabel}}}'.format(leplabel=leplabel) + '_{T} [GeV]'))
     sampMan.cacheDraw("u2_corr", "histo_zjets_pfmet_u2_corr_" + lepname, u2_bins,
                       DrawConfig(xmin=-40.0, xmax=40.0, xlabel='Corrected u_{#perp } [GeV]'))
 
-    sampMan.cacheDraw("u1", "histo_zjets_pfmet_u1_" + lepname, u1_bins,
+    sampMan.cacheDraw("u1_uncorr", "histo_zjets_pfmet_u1_" + lepname, u1_bins,
                       DrawConfig(xmin=-20.0, xmax=50.0, xlabel='u_{#parallel} [GeV]'))
+    sampMan.cacheDraw("u1P_uncorr", "histo_zjets_pfmet_u1P_" + lepname, u2_bins, DrawConfig(xmin=-40.0, xmax=40.0, xlabel='u_{#parallel} + ' + 'p^{{{leplabel}{leplabel}}}'.format(leplabel=leplabel) + '_{T} [GeV]'))
     sampMan.cacheDraw("u2", "histo_zjets_pfmet_u2_" + lepname, u2_bins,
                       DrawConfig(xmin=-40.0, xmax=40.0, xlabel='u_{#perp } [GeV]'))
 

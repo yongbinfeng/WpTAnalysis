@@ -34,6 +34,8 @@ def main():
     doWpT = args.doWpT
     is5TeV = args.is5TeV
     doTheoryNorm = args.doTheoryNorm
+    
+    reweightZpt = True
 
     print("doMuon: ", doMuon)
     print("doTest:", doTest)
@@ -131,11 +133,11 @@ def main():
         # wjetsnorm = 1.06
         wjetsnorm = 1.0
         Wl0Samp = Sample(input_wl0, isMC=True, name="wl0",
-                         isWSR=True, additionalnorm=wjetsnorm, reweightZpt=True)
+                         isWSR=True, additionalnorm=wjetsnorm, reweightZpt=reweightZpt)
         Wl1Samp = Sample(input_wl1, isMC=True, name="wl1",
-                         isWSR=True, additionalnorm=wjetsnorm, reweightZpt=True)
+                         isWSR=True, additionalnorm=wjetsnorm, reweightZpt=reweightZpt)
         Wl2Samp = Sample(input_wl2, isMC=True, name="wl2",
-                         isWSR=True, additionalnorm=wjetsnorm, reweightZpt=True)
+                         isWSR=True, additionalnorm=wjetsnorm, reweightZpt=reweightZpt)
         # ttbar
         TTbarSamp = Sample(input_ttbar, isMC=True,
                            name="ttbar_dilepton", isWSR=True)
@@ -149,13 +151,13 @@ def main():
         ZZSamp = Sample(input_zz, isMC=True, name="ZZ", isWSR=True)
         # tau
         ZXXSamp = Sample(input_zxx, isMC=True, name="ZXX",
-                         isWSR=True, reweightZpt=True)
+                         isWSR=True, reweightZpt=reweightZpt)
         Wx0Samp = Sample(input_wx0, isMC=True, name="wx0",
-                         isWSR=True, reweightZpt=True)
+                         isWSR=True, reweightZpt=reweightZpt)
         Wx1Samp = Sample(input_wx1, isMC=True, name="wx1",
-                         isWSR=True, reweightZpt=True)
+                         isWSR=True, reweightZpt=reweightZpt)
         Wx2Samp = Sample(input_wx2, isMC=True, name="wx2",
-                         isWSR=True, reweightZpt=True)
+                         isWSR=True, reweightZpt=reweightZpt)
 
         if not doTest:
             sampMan = SampleManager(DataSamp, [Wl0Samp, Wl1Samp, Wl2Samp, TTbarSamp, TT1LepSamp,
@@ -164,8 +166,8 @@ def main():
             sampMan = SampleManager(DataSamp, [Wl1Samp, Wl2Samp])
         wxname = "wx"
         sampMan.groupMCs(["wx0", "wx1", "wx2"], wxname, 216, 'wx')
-        sampMan.groupMCs(["WW", "WZ", "ZZ"], 'vv', 216, 'vv')
-        sampMan.groupMCs(['ZXX'], 'zxx', 216, 'zxx')
+        sampMan.groupMCs(["WW", "WZ", "ZZ"], 'vv', 75, 'vv')
+        sampMan.groupMCs(['ZXX'], 'zxx', 84, 'zxx')
         sampMan.groupMCs(["ttbar_dilepton", "ttbar_1lepton",
                          "ttbar_0lepton"], "ttbar", 96, "t#bar{t}")
         label = "W#rightarrow#mu#nu" if doMuon else "W#rightarrow e#nu"
@@ -184,7 +186,7 @@ def main():
         # W -> munu
         wjetsnorm = 1.0
         WlSamp = Sample(input_wl, isMC=True, name=signame, color=92,
-                        legend="W#rightarrow#mu#nu", isWSR=True, additionalnorm=wjetsnorm, is5TeV=True, reweightZpt=True)
+                        legend="W#rightarrow#mu#nu", isWSR=True, additionalnorm=wjetsnorm, is5TeV=True, reweightZpt=reweightZpt)
         # ttbar
         TTbarSamp = Sample(input_ttbar, isMC=True, name="ttbar",
                            color=86, legend="t#bar{t}", isWSR=True, is5TeV=True)
@@ -199,9 +201,9 @@ def main():
                           isWSR=True, is5TeV=True)
         # tau
         ZXXSamp = Sample(input_zxx, isMC=True, name="ZXX",
-                         isWSR=True, is5TeV=True, reweightZpt=True)
+                         isWSR=True, is5TeV=True, reweightZpt=reweightZpt)
         WxSamp = Sample(input_wx, isMC=True, name="wx",
-                        color=216, legend="wx", isWSR=True, is5TeV=True, reweightZpt=True)
+                        color=216, legend="wx", isWSR=True, is5TeV=True, reweightZpt=reweightZpt)
 
         sampMan = SampleManager(DataSamp, [
                                 WlSamp, TTbarSamp, WWSamp, WZSamp, ZZ2LSamp, ZZ4LSamp, ZXXSamp, WxSamp], is5TeV=True)
@@ -226,14 +228,18 @@ def main():
         sampMan.DefineMC("met_{}_pt".format(str(i)),
                          "metVars[{}]".format(str(i)))
         sampMan.DefineMC("met_{}_phi".format(str(i)),
-                         "metVarsPhi[{}]".format(str(i)))
+                         "TVector2::Phi_mpi_pi(metVarsPhi[{}])".format(str(i)))
         # for data, always use the uncorrected
         DataSamp.Define("met_{}_pt".format(str(i)),    "metVars[0]")
-        DataSamp.Define("met_{}_phi".format(str(i)),   "metVarsPhi[0]")
+        DataSamp.Define("met_{}_phi".format(str(i)),   "TVector2::Phi_mpi_pi(metVarsPhi[0])")
 
         # mT
         sampMan.DefineAll("mT_{}".format(str(
             i)), "TMath::Sqrt(2 * Lep_pt * met_{}_pt * (1- TMath::Cos(Lep_phi - met_{}_phi)))".format(str(i), str(i)))
+        
+    # raw MET
+    sampMan.DefineAll("met_org_pt", "metVars[16]")
+    sampMan.DefineAll("met_org_phi", "TVector2::Phi_mpi_pi(metVarsPhi[16])")
 
     # deltaPhi
     sampMan.DefineAll("deltaPhi", "TVector2::Phi_0_2pi(lep.Phi() - met_1_phi)")
@@ -382,7 +388,7 @@ def main():
     met_pt_bins = np.array([0., 2.0, 4., 6, 8, 10, 12, 14, 16, 18, 20, 22,
                            24, 26, 28, 30, 33, 36, 39, 42, 45, 48, 51, 55, 60, 65, 70, 75, 80])
     mt_bins = np.concatenate(
-        (np.linspace(40, 90, 51), np.linspace(92, 100, 5), np.linspace(104, 120, 5)))
+        (np.linspace(0, 36, 11), np.linspace(40, 90, 51), np.linspace(92, 100, 5), np.linspace(104, 120, 5)))
     phimin = -ROOT.TMath.Pi()
     phimax = ROOT.TMath.Pi()
     dphi_bins = np.concatenate((np.linspace(0, 1, 3), np.linspace(1.2, 2.4, 7), np.linspace(
@@ -402,23 +408,37 @@ def main():
                       ylabel='Events / 1', dology=False, ymax=9e5), weightname="weight_0_WpT_bin0_lepEta_bin0")
     # lepton pt
     sampMan.cacheDraw("Lep_pt", "histo_Lep_pt_"+lepname, pt_bins, DrawConfig(xmin=20, xmax=70,
-                      xlabel='p_{T}(#mu) [GeV]', dology=False, ymax=1.05e5), weightname="weight_0_WpT_bin0_lepEta_bin0")
+                      xlabel='p_{T}(\\ell) [GeV]', dology=False, ymax=1.05e5), weightname="weight_0_WpT_bin0_lepEta_bin0")
     sampMan.cacheDraw("Lep_eta", "histo_Lep_eta_"+lepname, eta_bins, DrawConfig(xmin=-2.6, xmax=2.6,
-                      xlabel='#eta (#mu) [GeV]', ylabel='Events / 1', dology=False, ymax=6e5), weightname="weight_0_WpT_bin0_lepEta_bin0")
+                      xlabel='#eta (\\ell) [GeV]', ylabel='Events / 1', dology=False, ymax=6e5), weightname="weight_0_WpT_bin0_lepEta_bin0")
+    sampMan.cacheDraw("Lep_phi", "histo_Lep_phi_"+lepname, 30, phimin, phimax, DrawConfig(xmin=phimin, xmax=phimax,xlabel='#phi (l) [GeV]', ylabel='Events / 1', dology=False, ymax=1e6), weightname="weight_0_WpT_bin0_lepEta_bin0")  
     sampMan.cacheDraw("Lep_pt", "histo_Lep_pt_"+lepname+"plus", pt_bins, DrawConfig(xmin=20, xmax=70,
-                      xlabel='p_{T}(#mu) [GeV]', dology=False, ymax=6.05e4), weightname="weight_"+lepname+"plus_0_WpT_bin0_lepEta_bin0")
+                      xlabel='p_{T}(\\ell) [GeV]', dology=False, ymax=6.05e4), weightname="weight_"+lepname+"plus_0_WpT_bin0_lepEta_bin0")
     sampMan.cacheDraw("Lep_pt", "histo_Lep_pt_"+lepname+"minus", pt_bins, DrawConfig(xmin=20, xmax=70,
-                      xlabel='p_{T}(#mu) [GeV]', dology=False, ymax=5.05e4), weightname="weight_"+lepname+"minus_0_WpT_bin0_lepEta_bin0")
+                      xlabel='p_{T}(\\ell) [GeV]', dology=False, ymax=5.05e4), weightname="weight_"+lepname+"minus_0_WpT_bin0_lepEta_bin0")
 
     # met and raw_met
     sampMan.cacheDraw("met_1_pt", "histo_wjets_"+lepname+"_pfmet_pt", met_pt_bins, DrawConfig(xmin=0,
                       xmax=80, xlabel='PF MET [GeV]', dology=False, ymax=8e4), weightname="weight_0_WpT_bin0_lepEta_bin0")
     sampMan.cacheDraw("met_1_phi", "histo_wjets_"+lepname+"_pfmet_phi", 30, phimin, phimax, DrawConfig(xmin=phimin,
                       xmax=phimax, xlabel='PF MET #phi', dology=False, ymax=6e5), weightname="weight_0_WpT_bin0_lepEta_bin0")
+    sampMan.cacheDraw("met_1_pt", "histo_wjets_"+lepname+"plus_pfmet_pt", met_pt_bins, DrawConfig(xmin=0,
+                      xmax=80, xlabel='PF MET [GeV]', dology=False, ymax=5e4), weightname="weight_"+lepname+"plus_0_WpT_bin0_lepEta_bin0")
+    sampMan.cacheDraw("met_1_pt", "histo_wjets_"+lepname+"minus_pfmet_pt", met_pt_bins, DrawConfig(xmin=0,
+                      xmax=80, xlabel='PF MET [GeV]', dology=False, ymax=5e4), weightname="weight_"+lepname+"minus_0_WpT_bin0_lepEta_bin0")
+    sampMan.cacheDraw("met_1_phi", "histo_wjets_"+lepname+"plus_pfmet_phi", 30, phimin, phimax, DrawConfig(xmin=phimin,
+                      xmax=phimax, xlabel='PF MET #phi', dology=False, ymax=4e5), weightname="weight_"+lepname+"plus_0_WpT_bin0_lepEta_bin0")
+    sampMan.cacheDraw("met_1_phi", "histo_wjets_"+lepname+"minus_pfmet_phi", 30, phimin, phimax, DrawConfig(xmin=phimin,
+                      xmax=phimax, xlabel='PF MET #phi', dology=False, ymax=4e5), weightname="weight_"+lepname+"minus_0_WpT_bin0_lepEta_bin0")
+    # raw MET without XY or recoil corrections
+    sampMan.cacheDraw("met_org_pt", "histo_wjets_"+lepname+"_rawmet_pt", met_pt_bins, DrawConfig(xmin=0,
+                      xmax=80, xlabel='Raw MET [GeV]', dology=False, ymax=8e4), weightname="weight_0_WpT_bin0_lepEta_bin0")
+    sampMan.cacheDraw("met_org_phi", "histo_wjets_"+lepname+"_rawmet_phi", 30, phimin, phimax, DrawConfig(xmin=phimin,
+                      xmax=phimax, xlabel='Raw MET #phi', dology=False, ymax=6e5), weightname="weight_0_WpT_bin0_lepEta_bin0")
 
     # deltaPhi
-    sampMan.cacheDraw("deltaPhi", "histo_wjets_"+lepname+"_deltaphi",      dphi_bins,  DrawConfig(xmin=0., xmax=2 *
-                      phimax, xlabel='#Delta #phi(#mu, MET)', dology=False, ymax=2e6), weightname="weight_0_WpT_bin0_lepEta_bin0")
+    sampMan.cacheDraw("deltaPhi", "histo_wjets_"+lepname+"_deltaphi", dphi_bins,  DrawConfig(xmin=0, xmax=
+                      2*phimax, xlabel='#Delta #phi(#mu, MET)', dology=False, ymax=2e6), weightname="weight_0_WpT_bin0_lepEta_bin0")
 
     # mt
     sampMan.cacheDraw("mtCorr", "histo_wjets_"+lepname+"_mtcorr",      mt_bins, DrawConfig(xmin=0, xmax=120,
@@ -437,6 +457,8 @@ def main():
                       xlabel="p^{W}_{T} [GeV]", dology=True, ymax=1e6, ymin=1e1), weightname="weight_"+lepname+"minus_0_WpT_bin0_lepEta_bin0")
 
     ymaxs = {lepname+"plus": 4e4, lepname+"minus": 3.5e4}
+    if is5TeV:
+        ymaxs = {lepname+"plus": 3e4, lepname+"minus": 2.5e4}
     nbins = 12
     xmin = 0
     xmax = 120
@@ -450,7 +472,7 @@ def main():
             for wpt in wptbins:
                 for lepeta in etabins:
                     sampMan.cacheDraw("mT_{}".format(str(i)), "histo_wjets_{}_mT_{}_{}_{}".format(chg, str(i), wpt, lepeta),  mass_bins, DrawConfig(
-                        xmin=xmin, xmax=xmax, xlabel="m_{T} [GeV]", dology=False, ymax=ymaxs[chg], donormalizebin=False, addOverflow=False, addUnderflow=False), weightname="weight_{}_0_{}_{}".format(chg, wpt, lepeta))
+                        xmin=xmin, xmax=xmax, xlabel="m_{T} [GeV]", dology=False, ymax=ymaxs[chg]*5.0, donormalizebin=False, addOverflow=False, addUnderflow=False), weightname="weight_{}_0_{}_{}".format(chg, wpt, lepeta))
 
                     # for signal MC, draw the histogram in different truth WpT bins
                     for wpttruth in wpttruthbins:
@@ -467,7 +489,7 @@ def main():
             for wpt in wptbins:
                 for lepeta in etabins:
                     sampMan.cacheDraw("mT_1", f"histo_wjets_{chg}_mtcorr_weight_{i}_{wpt}_{lepeta}", mass_bins, DrawConfig(
-                        xmin=xmin, xmax=xmax, xlabel="m_{T} [GeV]", dology=False, ymax=ymaxs[chg], donormalizebin=False, addOverflow=False, addUnderflow=False), weightname=f"weight_{chg}_{i}_{wpt}_{lepeta}")
+                        xmin=xmin, xmax=xmax, xlabel="m_{T} [GeV]", dology=False, ymax=ymaxs[chg] * 5.0, donormalizebin=False, addOverflow=False, addUnderflow=False), weightname=f"weight_{chg}_{i}_{wpt}_{lepeta}")
 
                     # for signal MC, draw the histogram in different truth WpT bins
                     for wpttruth in wpttruthbins:
@@ -484,7 +506,7 @@ def main():
             for lepeta in etabins:
                 for var in theoryVariations.values():
                     sampMan.cacheDraw("mT_1", f"histo_wjets_{chg}_mtcorr_weight_{var}_{wpt}_{lepeta}", mass_bins, DrawConfig(
-                        xmin=xmin, xmax=xmax, xlabel="m_{T} [GeV]", dology=False, ymax=ymaxs[chg], donormalizebin=False, addOverflow=False, addUnderflow=False), weightname=f"weight_{chg}_{var}_{wpt}_{lepeta}")
+                        xmin=xmin, xmax=xmax, xlabel="m_{T} [GeV]", dology=False, ymax=ymaxs[chg] * 5.0, donormalizebin=False, addOverflow=False, addUnderflow=False), weightname=f"weight_{chg}_{var}_{wpt}_{lepeta}")
 
     # Draw all these histograms
     sampMan.launchDraw()
