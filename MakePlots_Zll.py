@@ -191,13 +191,17 @@ def main():
 
     sampMan.DefineAll("m1pt",  "lep1.Pt()")
     sampMan.DefineAll("m1eta", "lep1.Eta()")
+    sampMan.DefineAll("m1phi", "lep1.Phi()")
     sampMan.DefineAll("m2pt",  "lep2.Pt()")
     sampMan.DefineAll("m2eta", "lep2.Eta()")
+    sampMan.DefineAll("m2phi", "lep2.Phi()")
 
-    sampMan.DefineAll("LeadMuon_pt",     "(m1pt > m2pt ? m1pt : m2pt)")
-    sampMan.DefineAll("LeadMuon_eta",    "(m1pt > m2pt ? m1eta : m2eta)")
+    sampMan.DefineAll("LeadLep_pt",     "(m1pt > m2pt ? m1pt : m2pt)")
+    sampMan.DefineAll("LeadLep_eta",    "(m1pt > m2pt ? m1eta : m2eta)")
+    sampMan.DefineAll("LeadLep_phi",    "(m1pt > m2pt ? m1phi : m2phi)")
     sampMan.DefineAll("SubleadLep_pt",  "(m1pt > m2pt ? m2pt : m1pt)")
     sampMan.DefineAll("SubleadLep_eta", "(m1pt > m2pt ? m2eta : m1eta)")
+    sampMan.DefineAll("SubleadLep_phi", "(m1pt > m2pt ? m2phi : m1phi)")
 
     # DYSamp.Define("u_pt_corr_central", "TMath::Sqrt(u1_corr_central*u1_corr_central + u2_corr_central*u2_corr_central)")
     # sampMan.DefineAll("u1_corr_central",     "u1"  , excludes=['DY'])
@@ -323,15 +327,18 @@ def main():
     sampMan.cacheDraw("zy",    "histo_zjets_zrapidityWoMuonPrefire_" + lepname, eta_bins, DrawConfig(xmin=-2.5, xmax=2.5,
                       xlabel='y_{{{leplabel}{leplabel}}}'.format(leplabel=leplabel), ymax=1e7, ylabel='Events / 1', yrmin=0.81, yrmax=1.19), weightname="weight_noMuon")
 
-    sampMan.cacheDraw("LeadMuon_pt", "histo_leadLep_pt_" + lepname, pt_bins, DrawConfig(
+    sampMan.cacheDraw("LeadLep_pt", "histo_leadLep_pt_" + lepname, pt_bins, DrawConfig(
         xmin=20, xmax=70, xlabel='p_{{T}}(Leading {leplabel}) [GeV]'.format(leplabel=leplabel)))
     # leading lepton eta with prefiring variations
-    sampMan.cacheDraw("LeadMuon_eta", "histo_leadLep_eta_" + lepname, eta_bins, DrawConfig(xmin=-2.6, xmax=2.6,
+    sampMan.cacheDraw("LeadLep_eta", "histo_leadLep_eta_" + lepname, eta_bins, DrawConfig(xmin=-2.6, xmax=2.6,
                       xlabel='#eta (Leading {leplabel})'.format(leplabel=leplabel), ymax=1e7, ylabel='Events / 1', yrmin=0.81, yrmax=1.19))
-    sampMan.cacheDraw("LeadMuon_eta", "histo_leadLep_etaPrefUp_" + lepname, eta_bins, DrawConfig(xmin=-2.6, xmax=2.6,
+    sampMan.cacheDraw("LeadLep_eta", "histo_leadLep_etaPrefUp_" + lepname, eta_bins, DrawConfig(xmin=-2.6, xmax=2.6,
                       xlabel='#eta (Leading {leplabel})'.format(leplabel=leplabel), ymax=1e7, ylabel='Events / 1', yrmin=0.81, yrmax=1.19), weightname="weight_6")
-    sampMan.cacheDraw("LeadMuon_eta", "histo_leadLep_etaPrefDown_" + lepname, eta_bins, DrawConfig(xmin=-2.6, xmax=2.6,
+    sampMan.cacheDraw("LeadLep_eta", "histo_leadLep_etaPrefDown_" + lepname, eta_bins, DrawConfig(xmin=-2.6, xmax=2.6,
                       xlabel='#eta (Leading {leplabel})'.format(leplabel=leplabel), ymax=1e7, ylabel='Events / 1', yrmin=0.81, yrmax=1.19), weightname="weight_7")
+    # phi
+    yphimax = 3.8e4 if doMuon else 2e4
+    sampMan.cacheDraw("LeadLep_phi", "histo_leadLep_phi_" + lepname, 60, phimin, phimax, DrawConfig(xmin=phimin, xmax=phimax, xlabel='#phi (Leading {leplabel})'.format(leplabel=leplabel), ymax=yphimax, ylabel='Events / 1', yrmin=0.81, yrmax=1.19, dology=False))
 
     sampMan.cacheDraw("SubleadLep_pt", "histo_subleadLep_pt_" + lepname, pt_bins, DrawConfig(
         xmin=20, xmax=70, xlabel='p_{{T}}(Subleading {leplabel}) [GeV]'.format(leplabel=leplabel)))
@@ -342,6 +349,8 @@ def main():
                       xlabel='#eta (Subleading {leplabel})'.format(leplabel=leplabel), ymax=1e7, ylabel='Events / 1', yrmin=0.81, yrmax=1.19), weightname="weight_6")
     sampMan.cacheDraw("SubleadLep_eta", "histo_subleadLep_etaPrefDown_" + lepname, eta_bins, DrawConfig(xmin=-2.6, xmax=2.6,
                       xlabel='#eta (Subleading {leplabel})'.format(leplabel=leplabel), ymax=1e7, ylabel='Events / 1', yrmin=0.81, yrmax=1.19), weightname="weight_7")
+    # phi
+    sampMan.cacheDraw("SubleadLep_phi", "histo_subleadLep_phi_" + lepname, 60, phimin, phimax, DrawConfig(xmin=phimin, xmax=phimax, xlabel='#phi (Subleading {leplabel})'.format(leplabel=leplabel), ymax=yphimax, ylabel='Events / 1', yrmin=0.81, yrmax=1.19, dology=False))
 
     sampMan.cacheDraw("met_org", "histo_zjets_pfmet_pt" + lepname,
                       met_pt_bins, DrawConfig(xmin=0, xmax=100, xlabel='PF MET [GeV]'))

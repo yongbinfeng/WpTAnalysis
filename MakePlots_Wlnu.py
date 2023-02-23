@@ -172,7 +172,7 @@ def main():
                          "ttbar_0lepton"], "ttbar", 96, "t#bar{t}")
         label = "W#rightarrow#mu#nu" if doMuon else "W#rightarrow e#nu"
         sampMan.groupMCs(['wl0', 'wl1', 'wl2'], signame,
-                         92, "W#rightarrow#mu#nu")
+                         92, label)
 
         # for the signal samples
         if not doTest:
@@ -185,8 +185,9 @@ def main():
         # for the 5TeV files
         # W -> munu
         wjetsnorm = 1.0
+        label = "W#rightarrow#mu#nu" if doMuon else "W#rightarrow e#nu"
         WlSamp = Sample(input_wl, isMC=True, name=signame, color=92,
-                        legend="W#rightarrow#mu#nu", isWSR=True, additionalnorm=wjetsnorm, is5TeV=True, reweightZpt=reweightZpt)
+                        legend=label, isWSR=True, additionalnorm=wjetsnorm, is5TeV=True, reweightZpt=reweightZpt)
         # ttbar
         TTbarSamp = Sample(input_ttbar, isMC=True, name="ttbar",
                            color=86, legend="t#bar{t}", isWSR=True, is5TeV=True)
@@ -408,15 +409,21 @@ def main():
                       ylabel='Events / 1', dology=False, ymax=9e5), weightname="weight_0_WpT_bin0_lepEta_bin0")
     # lepton pt
     sampMan.cacheDraw("Lep_pt", "histo_Lep_pt_"+lepname, pt_bins, DrawConfig(xmin=20, xmax=70,
-                      xlabel='p_{T}(\\ell) [GeV]', dology=False, ymax=1.05e5), weightname="weight_0_WpT_bin0_lepEta_bin0")
+                      xlabel='p_{T}(l) [GeV]', dology=False, ymax=1.05e5), weightname="weight_0_WpT_bin0_lepEta_bin0")
     sampMan.cacheDraw("Lep_eta", "histo_Lep_eta_"+lepname, eta_bins, DrawConfig(xmin=-2.6, xmax=2.6,
-                      xlabel='#eta (\\ell) [GeV]', ylabel='Events / 1', dology=False, ymax=6e5), weightname="weight_0_WpT_bin0_lepEta_bin0")
-    sampMan.cacheDraw("Lep_phi", "histo_Lep_phi_"+lepname, 30, phimin, phimax, DrawConfig(xmin=phimin, xmax=phimax,xlabel='#phi (l) [GeV]', ylabel='Events / 1', dology=False, ymax=1e6), weightname="weight_0_WpT_bin0_lepEta_bin0")  
+                      xlabel='#eta (l) [GeV]', ylabel='Events / 1', dology=False, ymax=6e5), weightname="weight_0_WpT_bin0_lepEta_bin0")
+    sampMan.cacheDraw("Lep_phi", "histo_Lep_phi_"+lepname, 30, phimin, phimax, DrawConfig(xmin=phimin, xmax=phimax,xlabel='#phi (l) [GeV]', ylabel='Events / 1', dology=False, ymax=5e5), weightname="weight_0_WpT_bin0_lepEta_bin0")  
     sampMan.cacheDraw("Lep_pt", "histo_Lep_pt_"+lepname+"plus", pt_bins, DrawConfig(xmin=20, xmax=70,
-                      xlabel='p_{T}(\\ell) [GeV]', dology=False, ymax=6.05e4), weightname="weight_"+lepname+"plus_0_WpT_bin0_lepEta_bin0")
+                      xlabel='p_{T}(l) [GeV]', dology=False, ymax=6.05e4), weightname="weight_"+lepname+"plus_0_WpT_bin0_lepEta_bin0")
+    sampMan.cacheDraw("Lep_eta", "histo_Lep_eta_"+lepname+"plus", eta_bins, DrawConfig(xmin=-2.6, xmax=2.6,
+                      xlabel='#eta (l) [GeV]', ylabel='Events / 1', dology=False, ymax=3.5e4), weightname="weight_"+lepname+"plus_0_WpT_bin0_lepEta_bin0")
+    sampMan.cacheDraw("Lep_phi", "histo_Lep_phi_"+lepname+"plus", 30, phimin, phimax, DrawConfig(xmin=phimin, xmax=phimax,xlabel='#phi (l) [GeV]', ylabel='Events / 1', dology=False, ymax=3e4), weightname="weight_"+lepname+"plus_0_WpT_bin0_lepEta_bin0")
     sampMan.cacheDraw("Lep_pt", "histo_Lep_pt_"+lepname+"minus", pt_bins, DrawConfig(xmin=20, xmax=70,
-                      xlabel='p_{T}(\\ell) [GeV]', dology=False, ymax=5.05e4), weightname="weight_"+lepname+"minus_0_WpT_bin0_lepEta_bin0")
-
+                      xlabel='p_{T}(l) [GeV]', dology=False, ymax=5.05e4), weightname="weight_"+lepname+"minus_0_WpT_bin0_lepEta_bin0")
+    sampMan.cacheDraw("Lep_eta", "histo_Lep_eta_"+lepname+"minus", eta_bins, DrawConfig(xmin=-2.6, xmax=2.6,
+                      xlabel='#eta (l) [GeV]', ylabel='Events / 1', dology=False, ymax=3e4), weightname="weight_"+lepname+"minus_0_WpT_bin0_lepEta_bin0")
+    sampMan.cacheDraw("Lep_phi", "histo_Lep_phi_"+lepname+"minus", 30, phimin, phimax, DrawConfig(xmin=phimin, xmax=phimax,xlabel='#phi (l) [GeV]', ylabel='Events / 1', dology=False, ymax=3e4), weightname="weight_"+lepname+"minus_0_WpT_bin0_lepEta_bin0")
+    
     # met and raw_met
     sampMan.cacheDraw("met_1_pt", "histo_wjets_"+lepname+"_pfmet_pt", met_pt_bins, DrawConfig(xmin=0,
                       xmax=80, xlabel='PF MET [GeV]', dology=False, ymax=8e4), weightname="weight_0_WpT_bin0_lepEta_bin0")
@@ -459,9 +466,8 @@ def main():
     ymaxs = {lepname+"plus": 4e4, lepname+"minus": 3.5e4}
     if is5TeV:
         ymaxs = {lepname+"plus": 3e4, lepname+"minus": 2.5e4}
-    nbins = 12
     xmin = 0
-    xmax = 120
+    xmax = 140
 
     #
     # templates and variations for combine

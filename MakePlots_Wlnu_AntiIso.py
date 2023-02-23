@@ -209,6 +209,7 @@ def main():
     sampMan.ApplyCutAll("Lep_pt > 25.0")
     sampMan.DefineAll("Lep_eta", "lep.Eta()")
     sampMan.ApplyCutAll("fabs(Lep_eta) < 2.4")
+    sampMan.DefineAll("Lep_phi", "lep.Phi()")
 
     # muon and electron isolation distributions are different
     # more coarse binning for electrons to make sure enough statistics
@@ -277,6 +278,14 @@ def main():
         etabins = ["lepEta_bin0"]
     else:
         etabins = ["lepEta_bin0", "lepEta_bin1", "lepEta_bin2"]
+        
+    # Draw some the basic kinematic distributions
+    phimax = ROOT.TMath.Pi()
+    phimin = -phimax
+    sampMan.cacheDraw("Lep_pt", "histo_wjets_lep_pt", 100, 0, 200, DrawConfig(xmin=0, xmax=200, xlabel="Lepton p_{T} [GeV]", ylabel="Events / 2 GeV", dology=True, ymax=1e7, donormalizebin=False, addOverflow=True, addUnderflow=True, showratio=False, legendPos=[0.94, 0.88, 0.70, 0.70]))
+    sampMan.cacheDraw("Lep_eta", "histo_wjets_lep_eta", 52, -2.6, 2.6, DrawConfig(xmin=-2.6, xmax=2.6, xlabel="Lepton #eta", ylabel="Events / 0.1", dology=True, ymax=1e7, donormalizebin=False, addOverflow=True, addUnderflow=True, showratio=False, legendPos=[0.94, 0.88, 0.70, 0.70]))
+    yphimax = 1.2e5 if doMuon else 1e5
+    sampMan.cacheDraw("Lep_phi", "histo_wjets_lep_phi", 64, phimin, phimax, DrawConfig(xmin=phimin, xmax=phimax, xlabel="Lepton #phi", ylabel="Events / 1.0", dology=False, ymax=yphimax, donormalizebin=True, addOverflow=True, addUnderflow=True, showratio=False, legendPos=[0.94, 0.88, 0.70, 0.70]))
 
     # draw the lepton isolation distribution
     nbins = 50
