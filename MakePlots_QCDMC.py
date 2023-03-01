@@ -20,8 +20,8 @@ ROOT.gROOT.SetBatch(True)
 ROOT.ROOT.EnableImplicitMT(10)
 
 def main():
-    doReading = False
-    doFit = True
+    doReading = True
+    doFit = False
     if doReading:
         input_data = "inputs/QCDMC/inputs_qcdmc.txt"
     
@@ -50,6 +50,9 @@ def main():
     
         sampMan.DefineAll("relIso", "Muon_pfRelIso04_all[0]")
         sampMan.DefineAll("mtCorr", "sqrt(2*Muon_pt[0]*MET_pt*(1-cos(MET_phi-Muon_phi[0])))")
+        sampMan.DefineAll("Lep_pt", "Muon_pt[0]")
+        sampMan.DefineAll("Lep_eta", "Muon_eta[0]")
+        sampMan.DefineAll("met_pt", "MET_pt")
     
         isoCuts = [0.0, 0.001, 0.05, 0.10, 0.15, 0.20, 0.25, 0.30, 0.35, 0.40, 0.45, 0.50,
                        0.55, 0.60, 0.65, 0.70, 0.75, 0.80, 0.85, 0.90, 0.95]
@@ -76,23 +79,43 @@ def main():
         nbins = 12
         xmin = 0
         xmax = 140
-        idx = 0
-    
         mass_bins = np.array([0, 5.0, 10.0, 15.0, 20.0, 25.0, 30.0, 35.0, 40.0, 45.0, 50.0, 55.0, 60.0, 65.0,
                              70.0, 75.0, 80.0, 85.0, 90.0, 95.0, 100.0, 105.0, 110.0, 115.0, 120.0, 125.0, 130.0, 135.0, 140.])
     
-        for iso in isobins:
-            for wpt in wptbins:
-                for lepeta in etabins:
-                    for chg in chgbins:
+        for wpt in wptbins:
+            for lepeta in etabins:
+                for chg in chgbins:
+                    idx = 0
+                    for iso in isobins:
                         strname = "weight_{}_{}_{}_{}".format(
                             chg, iso, wpt, lepeta)
 
                         sampMan.DefineAll(
                             strname, "w_{} * {} * {} * {}".format(iso, wpt, lepeta, chg))
+                        
+                        if iso == "isosig":
+                            lheader = "I < 0.15"
+                        elif iso == "isoAnti1":
+                            lheader = "0.20 < I < 0.60"
+                        elif iso == "isoAnti2":
+                            lheader = "0.30 < I < 0.40"
+                        elif iso == "isoAnti3":
+                            lheader = "0.40 < I < 0.50"
+                        else:
+                            lheader = f"{isoCuts[idx]} < I < {isoCuts[idx + 1]}"
+                        idx += 1
 
                         outputname = "histo_wjetsAntiIso_mtcorr_" + strname 
-                        sampMan.cacheDraw("mtCorr", outputname, mass_bins, DrawConfig(xmin=xmin, xmax=xmax, xlabel="m_{T} [GeV]", ylabel=f"Events / {(xmax-xmin)/nbins:.0f} GeV", dology=True, ymax=6e5, donormalizebin=False, addOverflow=True, addUnderflow=True, showratio=False, lheader=f"{isoCuts[idx]} < I < {isoCuts[idx + 1]}", legendPos=[0.94, 0.88, 0.70, 0.68]), weightname=strname)
+                        sampMan.cacheDraw("mtCorr", outputname, mass_bins, DrawConfig(xmin=xmin, xmax=xmax, xlabel="m_{T} [GeV]", ylabel=f"Events / {(xmax-xmin)/nbins:.0f} GeV", dology=True, ymax=6e5, donormalizebin=False, addOverflow=True, addUnderflow=True, showratio=False, lheader=lheader, legendPos=[0.94, 0.88, 0.70, 0.68]), weightname=strname)
+                        
+                        outputname = "histo_wjetsAntiIso_Lep_pt_" + strname
+                        sampMan.cacheDraw("Lep_pt", outputname, 50, 20, 70, DrawConfig(xmin=20, xmax=70, xlabel="Lepton p_{T} [GeV]", ylabel="Events / 1 GeV", dology=True, ymax=1e5, donormalizebin=False, addOverflow=True, addUnderflow=True, showratio=False, lheader=lheader, legendPos=[0.94, 0.88, 0.70, 0.68]), weightname=strname)
+                        
+                        outputname = "histo_wjetsAntiIso_Lep_eta_" + strname
+                        sampMan.cacheDraw("Lep_eta", outputname, 50, -2.5, 2.5, DrawConfig(xmin=-2.5, xmax=2.5, xlabel="Lepton #eta", ylabel="Events / 0.1", dology=True, ymax=1e5, donormalizebin=False, addOverflow=True, addUnderflow=True, showratio=False, lheader=lheader, legendPos=[0.94, 0.88, 0.70, 0.68]), weightname=strname)
+                        
+                        outputname = "histo_wjetsAntiIso_met_pt_" + strname
+                        sampMan.cacheDraw("met_pt", outputname, 50, 0, 100, DrawConfig(xmin=0, xmax=100, xlabel="MET [GeV]", ylabel="Events / 2 GeV", dology=True, ymax=1e5, donormalizebin=False, addOverflow=True, addUnderflow=True, showratio=False, lheader=lheader, legendPos=[0.94, 0.88, 0.70, 0.68]), weightname=strname)
     
         sampMan.launchDraw()
         
@@ -103,7 +126,10 @@ def main():
         for wpt in wptbins:
             for lepeta in etabins:
                 for chg in chgbins:
-                    histos = OrderedDict()
+                    histos_mt = OrderedDict()
+                    histos_leppt = OrderedDict()
+                    histos_lepeta = OrderedDict()
+                    histos_metpt = OrderedDict()
                     idx = 1
                     for iso in isobins:
                         strname = "weight_{}_{}_{}_{}".format(
@@ -114,15 +140,37 @@ def main():
                         hdata = sampMan.hdatas[outputname]
                         
                         if "isoAnti" in iso or "isosig" in iso:
-                            histos[iso] = hdata.Clone("histo_qcdAntiIso_mtcorr_" + strname + "_clone")
-                            histos[iso] = DoRebin(histos[iso], mass_bins_test[0])
-                            histos[iso].SetMarkerColor(idx)
-                            histos[iso].SetLineColor(idx)
-                            idx += 1
+                            histos_mt[iso] = hdata.Clone("histo_qcdAntiIso_mtcorr_" + strname + "_clone")
+                            histos_mt[iso] = DoRebin(histos_mt[iso], mass_bins_test[0])
+                            histos_mt[iso].SetMarkerColor(idx)
+                            histos_mt[iso].SetLineColor(idx)
                         hdata.SetName(outputname)
                         hdata.SetDirectory(outfile)
 
                         hdata.Write()
+                        
+                        outputname = "histo_wjetsAntiIso_Lep_pt_" + strname
+                        hdata = sampMan.hdatas[outputname]
+                        if "isoAnti" in iso or "isosig" in iso:
+                            histos_leppt[iso] = hdata.Clone("histo_qcdAntiIso_Lep_pt_" + strname + "_clone")
+                            histos_leppt[iso].SetMarkerColor(idx)
+                            histos_leppt[iso].SetLineColor(idx)
+                            
+                        outputname = "histo_wjetsAntiIso_Lep_eta_" + strname
+                        hdata = sampMan.hdatas[outputname]
+                        if "isoAnti" in iso or "isosig" in iso:
+                            histos_lepeta[iso] = hdata.Clone("histo_qcdAntiIso_Lep_eta_" + strname + "_clone")
+                            histos_lepeta[iso].SetMarkerColor(idx)
+                            histos_lepeta[iso].SetLineColor(idx)
+                        
+                        outputname = "histo_wjetsAntiIso_met_pt_" + strname
+                        hdata = sampMan.hdatas[outputname]
+                        if "isoAnti" in iso or "isosig" in iso:
+                            histos_metpt[iso] = hdata.Clone("histo_qcdAntiIso_met_pt_" + strname + "_clone")
+                            histos_metpt[iso].SetMarkerColor(idx)
+                            histos_metpt[iso].SetLineColor(idx)
+                            
+                            idx += 1
                     
                     channelLabels = {
                         "muplus":  "W^{+}#rightarrow #mu^{+}#nu",
@@ -137,9 +185,15 @@ def main():
                     labels["isoAnti2"] = "0.30 < Iso < 0.40"
                     labels["isoAnti3"] = "0.40 < Iso < 0.50"
                     
-                    legends = [labels[isobin] for isobin in list(histos.keys())]
+                    legends = [labels[isobin] for isobin in list(histos_mt.keys())]
                         
-                    DrawHistos(list(histos.values()), legends, 0, 140, "m_{T} [GeV]", 0., 0.3, "A.U.", "QCDShapeCompare_" + chg, dology=False, nMaxDigits=3, legendPos=[0.60, 0.60, 0.88, 0.85], lheader=channelLabels[chg], noCMS = True, donormalize = True, addOverflow = True, showratio = True, yrmin = 0.96, yrmax = 1.04, outdir=outdir)
+                    DrawHistos(list(histos_mt.values()), legends, 0, 140, "m_{T} [GeV]", 0., 0.3, "A.U.", "QCDShapeCompare_mT_" + chg, dology=False, nMaxDigits=3, legendPos=[0.60, 0.60, 0.88, 0.85], lheader=channelLabels[chg], noCMS = True, donormalize = True, addOverflow = True, showratio = True, yrmin = 0.96, yrmax = 1.04, outdir=outdir)
+                    
+                    DrawHistos(list(histos_leppt.values()), legends, 20, 70, "Lepton p_{T} [GeV]", 0., 0.21, "A.U.", "QCDShapeCompare_lepPt_" + chg, dology=False, nMaxDigits=3, legendPos=[0.60, 0.60, 0.88, 0.85], lheader=channelLabels[chg], noCMS = True, donormalize = True, addOverflow = True, showratio = True, yrmin = 0.7, yrmax = 1.3, outdir=outdir)
+                    
+                    DrawHistos(list(histos_lepeta.values()), legends, -2.5, 2.5, "Lepton #eta", 0., 0.06, "A.U.", "QCDShapeCompare_lepEta_" + chg, dology=False, nMaxDigits=3, legendPos=[0.60, 0.60, 0.88, 0.85], lheader=channelLabels[chg], noCMS = True, donormalize = True, addOverflow = True, showratio = True, yrmin = 0.5, yrmax = 1.5, outdir=outdir)
+                    
+                    DrawHistos(list(histos_metpt.values()), legends, 0, 100, "MET [GeV]", 0., 0.1, "A.U.", "QCDShapeCompare_metpt_" + chg, dology=False, nMaxDigits=3, legendPos=[0.60, 0.60, 0.88, 0.85], lheader=channelLabels[chg], noCMS = True, donormalize = True, addOverflow = True, showratio = True, yrmin = 0.81, yrmax = 1.19, outdir=outdir)
     
     
         outfile.Write()
