@@ -13,7 +13,7 @@ from modules.SampleManager import DrawConfig
 
 ROOT.gROOT.SetBatch(True)
 
-def MakeDataMCPlot(ifilename: str, channel: str, bins: np.array, suffix: str, showpull: bool = False, is5TeV: bool = False, startbin: int = 1, outdir: str = "plots", doPostfit = True):
+def MakeDataMCPlot(ifilename: str, channel: str, bins: np.array, suffix: str, showpull: bool = False, is5TeV: bool = False, startbin: int = 1, outdir: str = "plots", doPostfit = True, mTCut = 40.0):
     """
     compare the unrolled pre/post-fit of data and templates
     """
@@ -162,6 +162,14 @@ def MakeDataMCPlot(ifilename: str, channel: str, bins: np.array, suffix: str, sh
     nevts['ttbar'] = httbar.Integral()
     nevts['qcd'] = hqcd.Integral()
 
+    nevts_withCut = OrderedDict()
+    binmin = hdata.FindBin(mTCut)
+    nevts_withCut['data'] = hdata.Integral(binmin, hdata.GetNbinsX()+1)
+    nevts_withCut['sig'] = hsig.Integral(binmin, hsig.GetNbinsX()+1)
+    nevts_withCut['ewk'] = hewk.Integral(binmin, hewk.GetNbinsX()+1)
+    nevts_withCut['ttbar'] = httbar.Integral(binmin, httbar.GetNbinsX()+1)
+    nevts_withCut['qcd'] = hqcd.Integral(binmin, hqcd.GetNbinsX()+1)
+
     hdata.SetMarkerStyle(20)
     hdata.SetMarkerSize(1)
     hdata.SetMarkerColor(1)
@@ -203,7 +211,7 @@ def MakeDataMCPlot(ifilename: str, channel: str, bins: np.array, suffix: str, sh
     drawconfigs = DrawConfig(xmin = bins.min(), xmax = bins.max(), xlabel = xlabel, ymin = 0, ymax = ymaxs[channel] / (int(nbins/36)+1), ylabel = "Events / GeV", outputname = outdir + "/" + outputname, dology=False, addOverflow=False, addUnderflow=False, yrmin=yrmin, yrmax=yrmax, yrlabel = "Data / Pred")
     DrawHistos( [hdata, hs_gmc], ["Data", siglabels[channel], "EWK", "t#bar{t}", "QCD"], drawconfigs.xmin, drawconfigs.xmax, drawconfigs.xlabel, drawconfigs.ymin, drawconfigs.ymax, drawconfigs.ylabel, drawconfigs.outputname, dology=drawconfigs.dology, dologx=drawconfigs.dologx, showratio=drawconfigs.showratio, yrmax = drawconfigs.yrmax, yrmin = drawconfigs.yrmin, yrlabel = drawconfigs.yrlabel, donormalize=drawconfigs.donormalize, ratiobase=drawconfigs.ratiobase, legendPos = drawconfigs.legendPos, redrawihist = drawconfigs.redrawihist, extraText = drawconfigs.extraText, noCMS = drawconfigs.noCMS, addOverflow = drawconfigs.addOverflow, addUnderflow = drawconfigs.addUnderflow, nMaxDigits = drawconfigs.nMaxDigits, hratiopanel=hratio, drawoptions=['PE', 'HIST same'], showpull=showpull, hpulls=[hpull], W_ref = 600 * int(nbins/36+1), is5TeV = is5TeV) 
 
-    return nevts
+    return nevts, nevts_withCut
 
 def GetPOIValue(ifilename, poiname = ""):
     """
