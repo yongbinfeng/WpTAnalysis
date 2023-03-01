@@ -1,10 +1,10 @@
 {
-  "QCD_muminus_lepEta_bin0_WpT_bin0_13TeV": 2.3874294757843018,
-  "QCD_muplus_lepEta_bin0_WpT_bin0_13TeV": 2.348092794418335,
-  "QCD_eminus_lepEta_bin0_WpT_bin0_13TeV": 8.288481712341309,
-  "QCD_eplus_lepEta_bin0_WpT_bin0_13TeV": 8.411417961120605,
-  "QCD_muminus_lepEta_bin0_WpT_bin0_5TeV": 2.765691041946411,
-  "QCD_muplus_lepEta_bin0_WpT_bin0_5TeV": 2.7695438861846924,
-  "QCD_eminus_lepEta_bin0_WpT_bin0_5TeV": 9.910082817077637,
-  "QCD_eplus_lepEta_bin0_WpT_bin0_5TeV": 10.239100456237793
+  "QCD_muminus_lepEta_bin0_WpT_bin0_13TeV": 4.668402876481344,
+  "QCD_muplus_lepEta_bin0_WpT_bin0_13TeV": 4.832532998931612,
+  "QCD_eminus_lepEta_bin0_WpT_bin0_13TeV": 18.086438087154015,
+  "QCD_eplus_lepEta_bin0_WpT_bin0_13TeV": 17.913871742642026,
+  "QCD_muminus_lepEta_bin0_WpT_bin0_5TeV": 4.709423878654084,
+  "QCD_muplus_lepEta_bin0_WpT_bin0_5TeV": 4.998109325919158,
+  "QCD_eminus_lepEta_bin0_WpT_bin0_5TeV": 21.023607131179617,
+  "QCD_eplus_lepEta_bin0_WpT_bin0_5TeV": 21.007837035611356
 }

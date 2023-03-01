@@ -3,6 +3,7 @@ import os,sys
 import numpy as np
 from CMSPLOTS.myFunction import DrawHistos
 import json
+import math
 
 ROOT.gROOT.SetBatch(True)
 
@@ -11,18 +12,12 @@ def ExpltOneBin(isocenters, bincontents, binerrors, isoSR, mTmin, mTmax, suffix=
     extrapolate the QCD shape from a set of control regions (isocenters) to the signal region (isoSR),
     using linear extrapolation and the 2nd order polynomial function
     """
-    fitmax = 0.95 if isMuon else 0.65
+    fitmax = 0.85 if isMuon else 0.65
+    fitmin = 0.15 if isMuon else 0.15
     graph = ROOT.TGraphErrors(len(bincontents), np.array(isocenters), np.array(bincontents), np.zeros(len(bincontents)), np.array(binerrors))
-    #f1 = ROOT.TF1("pol1_"+suffix, "[0]*(x-{}) + [1]".format(str(isoSR)), -0.1, fitmax)
-    f1 = ROOT.TF1("pol2_"+suffix, "[0]*(x-{isoSR})*(x-{isoSR}) + [2]*(x-{isoSR}) + [1]".format(isoSR=str(isoSR)), -0.1, fitmax)
-    # fit range
-    #fitmin = 0.205
-    if isMuon: 
-        fitmin = 0.205
-    else:
-        fitmin = 0.165
-    #fitmax = 0.70
-    fitmax = fitmax
+    f1 = ROOT.TF1("pol1_"+suffix, "[0]*(x-{}) + [1]".format(str(isoSR)), -0.1, fitmax)
+    #f1 = ROOT.TF1("pol2_"+suffix, "[0]*(x-{isoSR})*(x-{isoSR}) + [2]*(x-{isoSR}) + [1]".format(isoSR=str(isoSR)), -0.1, fitmax)
+    #f1 = ROOT.TF1("pol0_"+suffix, "[1]", -0.1, fitmax)
 
     graph.Fit(f1, "R", "", fitmin, fitmax)
     #graph.Fit(f2, "R", "", fitmin, fitmax)
@@ -98,7 +93,7 @@ def ExpltOneBin(isocenters, bincontents, binerrors, isoSR, mTmin, mTmax, suffix=
     return (val_pol1_par1, err_pol1_par1), (val_pol1_par0, err_pol1_par0), (val_scaled_pol1_par1, err_scaled_pol1_par1)
 
 
-def ExtrapolateQCD(fname, oname, channels, wptbin, etabins, fname_scaled=None, is5TeV=False, rebinned = False, qcdnorms = {}):
+def ExtrapolateQCD(fname, oname, channels, wptbin, etabins, fname_scaled=None, is5TeV=False, rebinned = False, qcdnorms = {}, doTest = False):
     """
     run the QCd extrapolation in all mT bins,
     save the statistical and systematic variations for HComb, and
@@ -115,6 +110,8 @@ def ExtrapolateQCD(fname, oname, channels, wptbin, etabins, fname_scaled=None, i
         "eplus":   "W^{+}#rightarrow e^{+}#nu",
         "eminus":  "W^{-}#rightarrow e^{-}#bar{#nu}",
     }
+    
+    print(f"read QCD histograms from {fname}")
 
     fqcd = ROOT.TFile.Open(fname)
     if fname_scaled:
@@ -139,17 +136,26 @@ def ExtrapolateQCD(fname, oname, channels, wptbin, etabins, fname_scaled=None, i
             if channel.startswith("mu"):
                 isMuon = 1
                 # muon channel
-                isomin = 5
-                isomax = 20
-                isocuts = [0.20, 0.25, 0.30, 0.35, 0.40, 0.45, 0.50, 0.55, 0.60, 0.65, 0.70, 0.75, 0.80, 0.85, 0.90, 0.95]
-                isocenters = [0.225, 0.275, 0.325, 0.375, 0.425, 0.475, 0.525, 0.575, 0.625, 0.675, 0.725, 0.775, 0.825, 0.875, 0.925]
+                isomin = 4
+                isomax = 17
+                isocuts = [0.15, 0.20, 0.25, 0.30, 0.35, 0.40, 0.45, 0.50, 0.55, 0.60, 0.65, 0.70, 0.75, 0.80, 0.85, 0.90, 0.95]
+                isocenters = [0.175, 0.225, 0.275, 0.325, 0.375, 0.425, 0.475, 0.525, 0.575, 0.625, 0.675, 0.725, 0.775, 0.825, 0.875, 0.925]
                 #isoSR = 0.025 # average isolation value in the signal region
                 isoSR = 0.084 # average isolation value in the signal region
+                if doTest:
+                    # test closure
+                    isomin = 0
+                    isocuts = [0.0, 0.0001, 0.05, 0.10, 0.15, 0.20, 0.25, 0.30, 0.35, 0.40, 0.45, 0.50, 0.55, 0.60, 0.65, 0.70, 0.75, 0.80, 0.85, 0.90, 0.95]
+                    isocenters = [0., 0.025, 0.075, 0.125, 0.175, 0.225, 0.275, 0.325, 0.375, 0.425, 0.475, 0.525, 0.575, 0.625, 0.675, 0.725, 0.775, 0.825, 0.875, 0.925]
+                    
             else:
-                isomin = 5
-                isomax = 11
-                isocuts = [0.15, 0.20, 0.25, 0.30, 0.35, 0.40, 0.50, 0.65, 0.90]
-                isocenters = [0.173, 0.223, 0.273, 0.323, 0.373, 0.441, 0.556, 0.724]
+                isomin = 6
+                isomax = 13
+                #isocuts = [0.15, 0.20, 0.25, 0.30, 0.35, 0.40, 0.50, 0.65, 0.90]
+                isocuts = [0.15, 0.17, 0.20, 0.225, 0.25, 0.30, 0.35, 0.40, 0.50, 0.65, 0.90]
+
+                #isocenters = [0.173, 0.223, 0.273, 0.323, 0.373, 0.441, 0.556, 0.724]
+                isocenters = [0.160, 0.184, 0.212, 0.237, 0.273, 0.322, 0.373, 0.440, 0.558, 0.721]
                 if etabin == "lepEta_bin0":
                     isoSR = 0.044
                 elif etabin == "lepEta_bin1":
@@ -184,18 +190,19 @@ def ExtrapolateQCD(fname, oname, channels, wptbin, etabins, fname_scaled=None, i
 
             href = histos_norm[isomin]
             #counts = href.Integral()
-            counts = href.GetBinContent(1)
+            counts = 1.0
+            #counts = href.GetBinContent(1)
             for iso in range(isomin, isomax):
-                #histos_norm[iso].Scale(counts / (histos_norm[iso].Integral() + 1e-6))
-                histos_norm[iso].Scale(counts / (histos_norm[iso].GetBinContent(1) + 1e-6))
+                histos_norm[iso].Scale(counts / (histos_norm[iso].Integral() + 1e-6))
+                #histos_norm[iso].Scale(counts / (histos_norm[iso].GetBinContent(1) + 1e-6))
                 if fname_scaled:
-                    #histos_scaled_norm[iso].Scale(counts / (histos_scaled_norm[iso].Integral() + 1e-6))
-                    histos_scaled_norm[iso].Scale(counts / (histos_scaled_norm[iso].GetBinContent(1) + 1e-6))
+                    histos_scaled_norm[iso].Scale(counts / (histos_scaled_norm[iso].Integral() + 1e-6))
+                    #histos_scaled_norm[iso].Scale(counts / (histos_scaled_norm[iso].GetBinContent(1) + 1e-6))
 
             # some histograms to save the trend of function parameter variation as a function of mT
             # mostly for plotting purpose
-            h_pol1_par1 = href.Clone("h_pol1_par1_{}_{}_{}".format(channel, etabin, wptbin)) # interception
             h_pol1_par0 = href.Clone("h_pol1_par0_{}_{}_{}".format(channel, etabin, wptbin)) # slope
+            h_pol1_par1 = href.Clone("h_pol1_par1_{}_{}_{}".format(channel, etabin, wptbin)) # interception
             #h_pol2_par2 = href.Clone("h_pol2_par2_{}_{}_{}".format(channel, etabin, wptbin)) # interception
             h_scaled_pol1_par1 = href.Clone("h_scaled_pol1_par1_{}_{}_{}".format(channel, etabin, wptbin)) # interception for the scaled templates
 
@@ -231,7 +238,7 @@ def ExtrapolateQCD(fname, oname, channels, wptbin, etabins, fname_scaled=None, i
                 extraText = channelLabels[channel]
                 #results_pol1_par1, results_pol1_par0, results_pol2_par2, results_scaled_pol1_par1 = ExpltOneBin(isocenters, bincontents, binerrors, isoSR, mTmin, mTmax, suffix=suffix, extraText=extraText, bincontents_scaled = bincontents_scaled, binerrors_scaled = binerrors_scaled)
                 results_pol1_par1, results_pol1_par0, results_scaled_pol1_par1 = ExpltOneBin(isocenters, bincontents, binerrors, isoSR, mTmin, mTmax, suffix=suffix, extraText=extraText, bincontents_scaled = bincontents_scaled, binerrors_scaled = binerrors_scaled, showScaled=False, isMuon = isMuon, is5TeV=is5TeV)
-
+                
                 hnew.SetBinContent(ibin, max(results_pol1_par1[0], 0))
                 hnew.SetBinError(ibin, 0.)
                 #hnew_pol2.SetBinContent(ibin, max(results_pol2_par2[0], 0))
@@ -257,6 +264,7 @@ def ExtrapolateQCD(fname, oname, channels, wptbin, etabins, fname_scaled=None, i
             hnew_downs = []
             for ibin in range(1, histos_norm[isomin].GetNbinsX()+1):
                 val = max(vals_pol1_par1[ibin-1][0], 0.)
+                #val = href.GetBinContent(ibin)
                 err = vals_pol1_par1[ibin-1][1]
                 hnew_up   = hnew.Clone("h_QCD_Extrapolated_"+channel+"_"+etabin+"_"+wptbin+"_bin{}shape_{}Up".format(str(ibin), sqrtS))
                 hnew_down = hnew.Clone("h_QCD_Extrapolated_"+channel+"_"+etabin+"_"+wptbin+"_bin{}shape_{}Down".format(str(ibin), sqrtS))
@@ -296,13 +304,13 @@ def ExtrapolateQCD(fname, oname, channels, wptbin, etabins, fname_scaled=None, i
             isobin = iso_to_show - isomin
             h_todraws = [h_pol1_par1, histos_norm[iso_to_show]]
             #labels = ["Pol1 Extrapolation", "Pol2 Extrapolation"]
-            labels = ["Extrapolated", f"{isocuts[isobin]} < I < {isocuts[isobin]}"]
+            labels = ["Extrapolated", f"{isocuts[isobin]} < I < {isocuts[isobin+1]}"]
             if fname_scaled:
                 h_scaled_pol1_par1.SetLineColor(30)
                 h_scaled_pol1_par1.SetMarkerColor(30)
                 h_todraws.append(h_scaled_pol1_par1)
                 labels.append("With Scaled MC")
-            DrawHistos( h_todraws, labels, 0, 120, "m_{T} [GeV]", 0., 0.3, "A.U.", "QCDShapeCompare_"+channel+"_"+etabin+"_"+wptbin, dology=False, nMaxDigits=3, legendPos=[0.60, 0.65, 0.88, 0.83], lheader=extraText, is5TeV = is5TeV, noCMS = True, donormalize = True, addOverflow = True, showratio = True, yrmin = 0.81, yrmax = 1.19)
+            DrawHistos( h_todraws, labels, 0, 140, "m_{T} [GeV]", 0., 0.3, "A.U.", "QCDShapeCompare_"+channel+"_"+etabin+"_"+wptbin+ "_" + sqrtS, dology=False, nMaxDigits=3, legendPos=[0.60, 0.65, 0.88, 0.83], lheader=extraText, is5TeV = is5TeV, noCMS = True, donormalize = True, addOverflow = True, showratio = True, yrmin = 0.81, yrmax = 1.19)
 
             # 
             # draw the original (normalized) mT distribution in different anti-isolated regions
@@ -324,7 +332,7 @@ def ExtrapolateQCD(fname, oname, channels, wptbin, etabins, fname_scaled=None, i
                 h_todraws.append(hmt)
 
                 labels.append(f"{isocuts[idx]} < I < {isocuts[idx+1]}")
-            DrawHistos( h_todraws, labels, 0, 120, "m_{T} [GeV]", 0., 0.3, "A.U.", "mTShape_QCD_"+suffix, dology=False, nMaxDigits=3, legendPos=[0.65, 0.50, 0.88, 0.85], lheader=extraText, noCMS = True, donormalize=True, drawashist=True, showratio=True, yrmin=0.81, addOverflow = True, yrmax=1.39, is5TeV = is5TeV)
+            DrawHistos( h_todraws, labels, 0, 140, "m_{T} [GeV]", 0., 0.3, "A.U.", "mTShape_QCD_"+suffix, dology=False, nMaxDigits=3, legendPos=[0.65, 0.50, 0.88, 0.85], lheader=extraText, noCMS = True, donormalize=True, drawashist=True, showratio=True, yrmin=0.81, addOverflow = True, yrmax=1.39, is5TeV = is5TeV)
 
             norm = 1.0
             if qcdnorms:   
@@ -339,6 +347,110 @@ def ExtrapolateQCD(fname, oname, channels, wptbin, etabins, fname_scaled=None, i
             #for h in h_todraws + [h_pol1_par0]:
             #    h.SetDirectory(ofile)
             #    h.Write()
+            for hnew_up in hnew_ups:
+                hnew_up.Scale(norm)
+                hnew_up.SetDirectory(ofile)
+                hnew_up.Write()
+            for hnew_down in hnew_downs:
+                hnew_down.Scale(norm)
+                hnew_down.SetDirectory(ofile)
+                hnew_down.Write()
+
+    ofile.Close()
+    
+def InclusiveQCD(fname, oname, channels, wptbin, etabins, fname_scaled=None, is5TeV=False, rebinned = False, qcdnorms = {}):
+    """
+    test using directly the template from the anti-isolated region
+    """
+    etaLabels = {
+        "lepEta_bin0": "Full Eta", 
+        "lepEta_bin1": "Barrel", 
+        "lepEta_bin2": "Endcap"
+    }
+    channelLabels = {
+        "muplus":  "W^{+}#rightarrow #mu^{+}#nu",
+        "muminus": "W^{-}#rightarrow #mu^{-}#bar{#nu}",
+        "eplus":   "W^{+}#rightarrow e^{+}#nu",
+        "eminus":  "W^{-}#rightarrow e^{-}#bar{#nu}",
+    }
+    
+    print(f"read QCD histograms from {fname}")
+
+    fqcd = ROOT.TFile.Open(fname)
+
+    sqrtS = "5TeV" if is5TeV else "13TeV"
+
+    outdir = oname.rpartition('/')[0]
+    if not os.path.exists(outdir):
+        os.makedirs(outdir)
+    ofile = ROOT.TFile.Open(oname, "recreate")
+  
+    if isinstance(channels, str):
+        channels = [channels]
+
+    for channel in channels:
+        for etabin in etabins:
+            # hard code some isolation parameters
+            if channel.startswith("mu"):
+                isogroups = [[7,8,9,10,11], [12,13,14,15,16]]
+            else:
+                isogroups = [[6,7,8,9],[10,11,12,13]]
+
+            # read the histograms
+            histos_norm = {}
+            isobin = 0
+            for isogroup in isogroups:
+                h_norm = None
+                for iso in isogroup:
+                    prefix = "histo_wjetsAntiIso_mtcorr_weight_"
+                    if rebinned:
+                        prefix = "Rebinned_" + prefix
+                    hname = prefix + channel + "_iso" + str(iso) + "_" + wptbin + "_" + etabin
+                    print("hname: ", hname)
+                    h = fqcd.Get(hname)
+                    if not h_norm:
+                        h_norm = h.Clone(hname+"_Cloned")
+                    else:
+                        h_norm.Add(h)
+                histos_norm[isobin] = h_norm
+                isobin += 1
+
+            href = histos_norm[0]
+            counts = href.Integral()
+            #counts = href.GetBinContent(1)
+            for iso in histos_norm.keys():
+                histos_norm[iso].Scale(counts / (histos_norm[iso].Integral() + 1e-6))
+                #histos_norm[iso].Scale(counts / (histos_norm[iso].GetBinContent(1) + 1e-6))
+
+            # save the extrapolated shape for HComb
+            hnew = href.Clone("h_QCD_Extrapolated_" + channel + "_" + etabin + "_" + wptbin)
+
+            # set the bin-by-bin shape variation (stat.) for HComb
+            hnew_ups = []
+            hnew_downs = []
+            for ibin in range(1, histos_norm[0].GetNbinsX()+1):
+                val = href.GetBinContent(ibin)
+                err = math.sqrt((href.GetBinContent(ibin) - histos_norm[1].GetBinContent(ibin))**2 + href.GetBinError(ibin)**2)
+                hnew_up   = hnew.Clone("h_QCD_Extrapolated_"+channel+"_"+etabin+"_"+wptbin+"_bin{}shape_{}Up".format(str(ibin), sqrtS))
+                hnew_down = hnew.Clone("h_QCD_Extrapolated_"+channel+"_"+etabin+"_"+wptbin+"_bin{}shape_{}Down".format(str(ibin), sqrtS))
+                hnew_up.SetBinContent(ibin, val+err)
+                hnew_up.SetBinError(ibin, 0.)
+                hnew_down.SetBinContent(ibin, max(val-err, 0.))
+                hnew_down.SetBinError(ibin, 0.)
+
+                hnew_ups.append(hnew_up)
+                hnew_downs.append(hnew_down)
+
+            norm = 1.0
+            if qcdnorms:   
+                norm = GetQCDNorm(qcdnorms, channel, is5TeV)
+
+            #
+            # write the variations to the output
+            #
+            hnew.Scale(norm)
+            hnew.SetDirectory(ofile)
+            hnew.Write()
             for hnew_up in hnew_ups:
                 hnew_up.Scale(norm)
                 hnew_up.SetDirectory(ofile)
