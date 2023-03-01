@@ -143,8 +143,8 @@ def main():
                            name="ttbar_dilepton", isWSR=True)
         TT1LepSamp = Sample(input_ttbar_1lep, isMC=True,
                             name="ttbar_1lepton", isWSR=True)
-        TT0LepSamp = Sample(input_ttbar_0lep, isMC=True,
-                            name="ttbar_0lepton", isWSR=True)
+        #TT0LepSamp = Sample(input_ttbar_0lep, isMC=True,
+        #                    name="ttbar_0lepton", isWSR=True)
         # dibosons
         WWSamp = Sample(input_ww, isMC=True, name="WW", isWSR=True)
         WZSamp = Sample(input_wz, isMC=True, name="WZ", isWSR=True)
@@ -160,16 +160,17 @@ def main():
                          isWSR=True, reweightZpt=reweightZpt)
 
         if not doTest:
+            #sampMan = SampleManager(DataSamp, [Wl0Samp, Wl1Samp, Wl2Samp, TTbarSamp, TT1LepSamp,
+            #                        TT0LepSamp, WWSamp, WZSamp, ZZSamp, ZXXSamp, Wx0Samp, Wx1Samp, Wx2Samp])
             sampMan = SampleManager(DataSamp, [Wl0Samp, Wl1Samp, Wl2Samp, TTbarSamp, TT1LepSamp,
-                                    TT0LepSamp, WWSamp, WZSamp, ZZSamp, ZXXSamp, Wx0Samp, Wx1Samp, Wx2Samp])
+                                    WWSamp, WZSamp, ZZSamp, ZXXSamp, Wx0Samp, Wx1Samp, Wx2Samp]) 
         else:
             sampMan = SampleManager(DataSamp, [Wl1Samp, Wl2Samp])
         wxname = "wx"
         sampMan.groupMCs(["wx0", "wx1", "wx2"], wxname, 216, 'wx')
         sampMan.groupMCs(["WW", "WZ", "ZZ"], 'vv', 75, 'vv')
         sampMan.groupMCs(['ZXX'], 'zxx', 84, 'zxx')
-        sampMan.groupMCs(["ttbar_dilepton", "ttbar_1lepton",
-                         "ttbar_0lepton"], "ttbar", 96, "t#bar{t}")
+        sampMan.groupMCs(["ttbar_dilepton", "ttbar_1lepton"], "ttbar", 96, "t#bar{t}")
         label = "W#rightarrow#mu#nu" if doMuon else "W#rightarrow e#nu"
         sampMan.groupMCs(['wl0', 'wl1', 'wl2'], signame,
                          92, label)
@@ -219,6 +220,8 @@ def main():
     h_sigs = OrderedDict()
 
     sampMan.outdir = outdir
+
+    #sampMan.ApplyCutAll("relIso > 0.05")
 
     # define variables and weights
     sampMan.DefineAll("Lep_pt",  "lep.Pt()")
