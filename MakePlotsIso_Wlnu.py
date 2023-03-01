@@ -215,6 +215,8 @@ def main():
         sampMan = SampleManager(DataSamp, [Wl0Samp, Wl1Samp, Wl2Samp, TTbarSamp, TT1LepSamp,
                                            TT0LepSamp, WWSamp, WZSamp, ZZSamp, ZXXSamp, Wx0Samp, Wx1Samp, Wx2Samp, Wl0AisoSamp, Wl1AisoSamp, Wl2AisoSamp, TTbarAisoSamp, TT1LepAisoSamp,
                                            TT0LepAisoSamp, WWAisoSamp, WZAisoSamp, ZZAisoSamp, ZXXAisoSamp, Wx0AisoSamp, Wx1AisoSamp, Wx2AisoSamp])
+        
+        #sampMan = SampleManager(DataSamp, [TTbarSamp, TT1LepSamp])
         sampMan.groupMCs(["wx0", "wx1", "wx2", "wx0_aiso",
                          "wx1_aiso", "wx2_aiso"], "wx", 216, 'wx')
         sampMan.groupMCs(['ZXX', 'ZXX_aiso'], 'zxx', 216, 'zxx')
@@ -299,13 +301,13 @@ def main():
     # muon and electron isolation distributions are different
     # more coarse binning for electrons to make sure enough statistics
     if doMuon:
-        isoCuts = [0.0, 0.15, 0.20, 0.25, 0.30, 0.35, 0.40, 0.45, 0.50,
+        isoCuts = [0.0,0.001, 0.05, 0.10, 0.15, 0.20, 0.25, 0.30, 0.35, 0.40, 0.45, 0.50,
                    0.55, 0.60, 0.65, 0.70, 0.75, 0.80, 0.85, 0.90, 0.95]
         isobins = []
         sampMan.DefineAll("RelIso", "relIso")
-        for isobin in range(3, 20):
+        for isobin in range(0, 20):
             sampMan.DefineAll(
-                f"w_iso{isobin}", f"(relIso > {isoCuts[isobin-3]} && relIso < {isoCuts[isobin-2]})")
+                f"w_iso{isobin}", f"(relIso >= {isoCuts[isobin]} && relIso < {isoCuts[isobin+1]})")
             isobins.append(f"iso{isobin}")
 
     else:
@@ -362,6 +364,15 @@ def main():
     else:
         etabins = ["lepEta_bin0", "lepEta_bin1", "lepEta_bin2"]
     etabins = ["lepEta_bin0"]
+    
+    # do the fine binning first; then rebin in the processHists
+    mass_bins = np.array(
+        [0., 10., 20., 30., 40., 50., 60., 70., 80., 90., 120.])
+    mtbins = []
+    for imt in range(len(mass_bins)-1):
+        sampMan.DefineAll(
+            f"mt{imt}", f"mtCorr >= {mass_bins[imt]} && mtCorr < {mass_bins[imt+1]}")
+        mtbins.append(f"mt{imt}")
 
     # draw the lepton isolation distribution
     nbins = 50
@@ -372,22 +383,33 @@ def main():
         for lepeta in etabins:
             strname = f"weight_{wpt}_{lepeta}"
             sampMan.DefineAll(strname, f"weight_WoVpt * {wpt} * {lepeta}")
-            sampMan.cacheDraw("RelIso", f"histo_wjets_{lepname}_RelIso_{lepeta}_{wpt}", 100, 0, 0.72, DrawConfig(xmin=xmin, xmax=xmax, xlabel="Relative Isolation", ylabel=f"Events / {(xmax-xmin)/nbins:.2f}",
-                              dology=True, ymax=ymax, donormalizebin=False, addOverflow=True, addUnderflow=True, showratio=False, legendPos=[0.94, 0.88, 0.70, 0.68]), weightname=strname)
-
-    # do the fine binning first; then rebin in the processHists
-    mass_bins = np.array(
-        [0., 10., 20., 30., 40., 50., 60., 70., 80., 90., 120.])
-    mtbins = []
-    for imt in range(len(mass_bins)-1):
-        sampMan.DefineAll(
-            f"mt{imt}", f"mtCorr >= {mass_bins[imt]} && mtCorr < {mass_bins[imt+1]}")
-        mtbins.append(f"mt{imt}")
+            sampMan.cacheDraw("RelIso", f"histo_wjets_{lepname}_RelIso_{lepeta}_{wpt}", 100, 0, 0.72, DrawConfig(xmin=xmin, xmax=xmax, xlabel="Relative Isolation", ylabel=f"Events / {(xmax-xmin)/nbins:.2f}", dology=True, ymax=ymax, donormalizebin=False, addOverflow=True, addUnderflow=True, showratio=True, legendPos=[0.94, 0.88, 0.70, 0.68]), weightname=strname)
+            
+            sampMan.cacheDraw("Lep_pt", f"histo_wjets_{lepname}_Lep_pt_{lepeta}_{wpt}", 50, 20, 70, DrawConfig(xmin=20, xmax=70, xlabel="Lepton p_{T} [GeV]", ylabel=f"Events / GeV", dology=True, ymax=ymax, donormalizebin=False, addOverflow=True, addUnderflow=True, showratio=True, legendPos=[0.94, 0.88, 0.70, 0.68]), weightname=strname)
+            
+            sampMan.cacheDraw("Lep_eta", f"histo_wjets_{lepname}_Lep_eta_{lepeta}_{wpt}", 50, -2.5, 2.5, DrawConfig(xmin=-2.5, xmax=2.5, xlabel="Lepton #eta", ylabel=f"Events / {(2.5+2.5)/50:.2f}", dology=True, ymax=ymax, donormalizebin=False, addOverflow=True, addUnderflow=True, showratio=True, legendPos=[0.94, 0.88, 0.70, 0.68]), weightname=strname)
+            
+            sampMan.cacheDraw("met_pt", f"histo_wjets_{lepname}_met_pt_{lepeta}_{wpt}", 70, 0, 70, DrawConfig(xmin=0, xmax=70, xlabel="MET [GeV]", ylabel=f"Events / GeV", dology=True, ymax=ymax, donormalizebin=False, addOverflow=True, addUnderflow=True, showratio=True, legendPos=[0.94, 0.88, 0.70, 0.68]), weightname=strname)
+            
+            for mt in mtbins:
+                strname = f"weight_{wpt}_{lepeta}_{mt}"
+                sampMan.DefineAll(strname, f"weight_WoVpt * {wpt} * {lepeta} * {mt}")
+                sampMan.cacheDraw("RelIso", f"histo_wjets_{lepname}_RelIso_{lepeta}_{wpt}_{mt}", 100, 0, 0.72, DrawConfig(xmin=xmin, xmax=xmax, xlabel="Relative Isolation", ylabel=f"Events / {(xmax-xmin)/nbins:.2f}", dology=True, ymax=ymax, donormalizebin=False, addOverflow=True, addUnderflow=True, showratio=True, legendPos=[0.94, 0.88, 0.70, 0.68]), weightname=strname)
+                
+                sampMan.cacheDraw("Lep_pt", f"histo_wjets_{lepname}_Lep_pt_{lepeta}_{wpt}_{mt}", 50, 20, 70, DrawConfig(xmin=20, xmax=70, xlabel="Lepton pT", ylabel=f"Events / GeV", dology=True, ymax=ymax, donormalizebin=False, addOverflow=True, addUnderflow=True, showratio=True, legendPos=[0.94, 0.88, 0.70, 0.68]), weightname=strname)
+                
+                sampMan.cacheDraw("Lep_eta", f"histo_wjets_{lepname}_Lep_eta_{lepeta}_{wpt}_{mt}", 50, -2.5, 2.5, DrawConfig(xmin=-2.5, xmax=2.5, xlabel="Lepton eta", ylabel=f"Events / 0.1", dology=True, ymax=ymax, donormalizebin=False, addOverflow=True, addUnderflow=True, showratio=True, legendPos=[0.94, 0.88, 0.70, 0.68]), weightname=strname)
+                
+                sampMan.cacheDraw("met_pt", f"histo_wjets_{lepname}_met_pt_{lepeta}_{wpt}_{mt}", 70, 0, 70, DrawConfig(xmin=0, xmax=70, xlabel="MET", ylabel=f"Events / GeV", dology=True, ymax=ymax, donormalizebin=False, addOverflow=True, addUnderflow=True, showratio=True, legendPos=[0.94, 0.88, 0.70, 0.68]), weightname=strname)
+                
 
     nbins = 12
     xmin = 0
     xmax = 120
     idx = 0
+    # do the fine binning first; then rebin in the processHists
+    mass_bins = np.array([0, 5.0, 10.0, 15.0, 20.0, 25.0, 30.0, 35.0, 40.0, 45.0, 50.0, 55.0, 60.0, 65.0,
+                         70.0, 75.0, 80.0, 85.0, 90.0, 95.0, 100.0, 105.0, 110.0, 115.0, 120.0, 125.0, 130.0, 135.0, 140.])
     for iso in isobins:
         for wpt in wptbins:
             for lepeta in etabins:
@@ -397,23 +419,34 @@ def main():
 
                     sampMan.DefineAll(
                         strname, "w_{} * weight_WoVpt * {} * {} * {}".format(iso, wpt, lepeta, chg))
-                    legends[1] = label_plus if "plus" in chg else label_minus
+                   
+                    outputname = "histo_wjetsAntiIso_mtcorr_" + strname 
+                    sampMan.cacheDraw("mtCorr", outputname, mass_bins, DrawConfig(xmin=xmin, xmax=xmax, xlabel="m_{T} [GeV]", ylabel=f"Events / {(xmax-xmin)/nbins:.0f} GeV", dology=True, ymax=6e5, donormalizebin=False, addOverflow=True, addUnderflow=True, showratio=False, lheader=f"{isoCuts[idx]} < I < {isoCuts[idx + 1]}", legendPos=[0.94, 0.88, 0.70, 0.68]), weightname=strname)
 
-                    outputname = "histo_wjetsAntiIso_mtcorr_" + strname
                     # draw the isolation in different bins, in order to calculate the mean in each bin
-                    sampMan.cacheDraw("RelIso", f"histo_wjetsAntiIso_RelIso_{strname}", 100, isoCuts[idx], isoCuts[idx + 1], DrawConfig(
-                        xmin=xmin, xmax=xmax, xlabel="Relative Isolation", ylabel=f"Events / {(xmax-xmin)/nbins:.2f}", dology=True, ymax=ymax, donormalizebin=False, addOverflow=True, addUnderflow=True, showratio=False, legendPos=[0.94, 0.88, 0.70, 0.68]), weightname=strname)
+                    sampMan.cacheDraw("RelIso", f"histo_wjetsAntiIso_RelIso_{strname}", 100, isoCuts[idx], isoCuts[idx + 1], DrawConfig(xmin=isoCuts[idx], xmax=isoCuts[idx+1], xlabel="Relative Isolation", ylabel=f"Events / {(isoCuts[idx + 1]-isoCuts[idx])/100:.2f}", dology=True, ymax=ymax, donormalizebin=False, addOverflow=True, addUnderflow=True, showratio=False, legendPos=[0.94, 0.88, 0.70, 0.68]), weightname=strname)
+                    
+                    sampMan.cacheDraw("Lep_pt", f"histo_wjetsAntiIso_Lep_pt_{strname}", 50, 20, 70, DrawConfig(xmin=20, xmax=70, xlabel="Lepton pT", ylabel=f"Events / GeV", dology=True, ymax=ymax, donormalizebin=False, addOverflow=True, addUnderflow=True, showratio=False, legendPos=[0.94, 0.88, 0.70, 0.68]), weightname=strname)
+                    
+                    sampMan.cacheDraw("Lep_eta", f"histo_wjetsAntiIso_Lep_eta_{strname}", 50, -2.5, 2.5, DrawConfig(xmin=-2.5, xmax=2.5, xlabel="Lepton eta", ylabel=f"Events / 0.1", dology=True, ymax=ymax, donormalizebin=False, addOverflow=True, addUnderflow=True, showratio=False, legendPos=[0.94, 0.88, 0.70, 0.68]), weightname=strname)
+                    
+                    sampMan.cacheDraw("met_pt", f"histo_wjetsAntiIso_met_pt_{strname}", 70, 0, 70, DrawConfig(xmin=0, xmax=70, xlabel="MET", ylabel=f"Events / GeV", dology=True, ymax=ymax, donormalizebin=False, addOverflow=True, addUnderflow=True, showratio=False, legendPos=[0.94, 0.88, 0.70, 0.68]), weightname=strname)
+
 
                     for mt in mtbins:
                         strname = "weight_{}_{}_{}_{}_{}".format(
                             chg, iso, wpt, lepeta, mt)
                         sampMan.DefineAll(
                             strname, "w_{} * weight_WoVpt * {} * {} * {} * {}".format(iso, wpt, lepeta, chg, mt))
-                        legends[1] = label_plus if "plus" in chg else label_minus
 
                         outputname = "histo_wjetsAntiIso_mtcorr_" + strname
-                        sampMan.cacheDraw("RelIso", f"histo_wjetsAntiIso_RelIso_{strname}", 100, isoCuts[idx], isoCuts[idx + 1], DrawConfig(
-                            xmin=isoCuts[idx], xmax=isoCuts[idx+1], xlabel="Relative Isolation", ylabel=f"Events / {(isoCuts[idx+1]-isoCuts[idx])/100:.2f}", dology=True, ymax=ymax, donormalizebin=False, addOverflow=True, addUnderflow=True, showratio=False, legendPos=[0.94, 0.88, 0.70, 0.68]), weightname=strname)
+                        sampMan.cacheDraw("RelIso", f"histo_wjetsAntiIso_RelIso_{strname}", 100, isoCuts[idx], isoCuts[idx + 1], DrawConfig(xmin=isoCuts[idx], xmax=isoCuts[idx+1], xlabel="Relative Isolation", ylabel=f"Events / {(isoCuts[idx+1]-isoCuts[idx])/100:.2f}", dology=True, ymax=ymax, donormalizebin=False, addOverflow=True, addUnderflow=True, showratio=True, legendPos=[0.94, 0.88, 0.70, 0.68]), weightname=strname)
+                        
+                        sampMan.cacheDraw("Lep_pt", f"histo_wjetsAntiIso_Lep_pt_{strname}", 50, 20, 70, DrawConfig(xmin=20, xmax=70, xlabel="Lepton pT", ylabel=f"Events / GeV", dology=True, ymax=ymax, donormalizebin=False, addOverflow=True, addUnderflow=True, showratio=True, legendPos=[0.94, 0.88, 0.70, 0.68]), weightname=strname)
+                        
+                        sampMan.cacheDraw("Lep_eta", f"histo_wjetsAntiIso_Lep_eta_{strname}", 50, -2.5, 2.5, DrawConfig(xmin=-2.5, xmax=2.5, xlabel="Lepton eta", ylabel=f"Events / 0.1", dology=True, ymax=ymax, donormalizebin=False, addOverflow=True, addUnderflow=True, showratio=True, legendPos=[0.94, 0.88, 0.70, 0.68]), weightname=strname)
+                        
+                        sampMan.cacheDraw("met_pt", f"histo_wjetsAntiIso_met_pt_{strname}", 70, 0, 70, DrawConfig(xmin=0, xmax=70, xlabel="MET", ylabel=f"Events / GeV", dology=True, ymax=ymax, donormalizebin=False, addOverflow=True, addUnderflow=True, showratio=True, legendPos=[0.94, 0.88, 0.70, 0.68]), weightname=strname)
 
         idx += 1
 
@@ -421,6 +454,34 @@ def main():
 
     hIsos = OrderedDict()
     hIsos_mt = OrderedDict()
+    
+    hleppts = OrderedDict()
+    hleppts_mt = OrderedDict()
+    hlepetas = OrderedDict()
+    hlepetas_mt = OrderedDict()
+    hmetpts = OrderedDict()
+    hmetpts_mt = OrderedDict()
+    
+    def getHisto(name):
+        hdata = sampMan.hdatas[name]
+        hstacked = THStack2TH1(sampMan.hsmc[name])
+        for ibin in range(hstacked.GetNbinsX()+1):
+            hstacked.SetBinContent(ibin, max(hstacked.GetBinContent(ibin), 0))
+        hdata.Add(hstacked, -1.0)
+        hdata.SetName(name)
+        return hdata
+    
+    def dumpHistos(hlist, outputname, doPrint = False):
+        outfile = ROOT.TFile.Open("root/outputname", "recreate")
+        if not isinstance(hlist, list):
+            hlist = [hlist]
+        for hs in hlist:
+            for isobin, h in hs.items():
+                if doPrint:
+                    print(f"{isobin} mean: {h.GetMean():.3f}")
+                h.SetDirectory(outfile)
+                h.Write()
+        outfile.Close()
 
     # hetas_mtCut_comp = OrderedDict()
     for iso in isobins:
@@ -432,15 +493,16 @@ def main():
 
                     # for isolation
                     outputname = f"histo_wjetsAntiIso_RelIso_{strname}"
-                    hIsos[strname] = sampMan.hdatas[outputname]
-                    hstacked = THStack2TH1(sampMan.hsmcs[outputname])
-                    for ibin in range(hstacked.GetNbinsX()+1):
-                        # hstacked should always be above 0
-                        hstacked.SetBinContent(
-                            ibin, max(hstacked.GetBinContent(ibin), 0))
-                    sampMan.hdatas[outputname].Add(hstacked, -1.0)
-                    hIsos[strname] = sampMan.hdatas[outputname]
-                    hIsos[strname].SetName(outputname)
+                    hIsos[strname] = getHisto(outputname)
+                    
+                    outputname = f"histo_wjetsAntiIso_Lep_pt_{strname}"
+                    hleppts[strname] = getHisto(outputname)
+                    
+                    outputname = f"histo_wjetsAntiIso_Lep_eta_{strname}"
+                    hlepetas[strname] = getHisto(outputname)
+                    
+                    outputname = f"histo_wjetsAntiIso_met_pt_{strname}"
+                    hmetpts[strname] = getHisto(outputname)
 
                     for mt in mtbins:
                         strname = "weight_{}_{}_{}_{}_{}".format(
@@ -448,14 +510,17 @@ def main():
 
                         # for isolation
                         outputname = f"histo_wjetsAntiIso_RelIso_{strname}"
-                        hIsos_mt[strname] = sampMan.hdatas[outputname]
-                        hstacked = THStack2TH1(sampMan.hsmcs[outputname])
-                        for ibin in range(hstacked.GetNbinsX()+1):
-                            # hstacked should always be above 0
-                            hstacked.SetBinContent(
-                                ibin, max(hstacked.GetBinContent(ibin), 0))
-                        sampMan.hdatas[outputname].Add(hstacked, -1.0)
-                        hIsos_mt[strname].SetName(outputname)
+                        hIsos_mt[strname] = getHisto(outputname)
+                        
+                        outputname = f"histo_wjetsAntiIso_Lep_pt_{strname}"
+                        hleppts_mt[strname] = getHisto(outputname)
+                        
+                        outputname = f"histo_wjetsAntiIso_Lep_eta_{strname}"
+                        hlepetas_mt[strname] = getHisto(outputname)
+                        
+                        outputname = f"histo_wjetsAntiIso_met_pt_{strname}"
+                        hmetpts_mt[strname] = getHisto(outputname)
+                        
 
     postfix = lepname + "nu"
     sqrtS = "5TeV" if is5TeV else "13TeV"
@@ -463,18 +528,100 @@ def main():
 
     sampMan.dumpCounts()
 
-    outfile = ROOT.TFile.Open("root/output_qcdIsoMean_"+postfix, "recreate")
-    for isobin, h in hIsos.items():
-        print(f"{isobin} mean: {h.GetMean():.3f}")
-        h.SetDirectory(outfile)
-        h.Write()
+    dumpHistos([hIsos, hIsos_mt], f"output_qcdIsoMean_{postfix}", doPrint=True)
+    dumpHistos([hleppts, hleppts_mt], f"output_qcdLepPtMean_{postfix}", doPrint=False)
+    dumpHistos([hlepetas, hlepetas_mt], f"output_qcdLepEtaMean_{postfix}", doPrint=False)
+    dumpHistos([hmetpts, hmetpts_mt], f"output_qcdMetPtMean_{postfix}", doPrint=False)
+    
+    
+    hmts_comp = OrderedDict()
+    # hetas_mtCut_comp = OrderedDict()
+    for iso in isobins:
+        for wpt in wptbins:
+            for lepeta in etabins:
+                for chg in chgbins:
+                    strname = "weight_{}_{}_{}_{}".format(
+                        chg, iso, wpt, lepeta)
 
-    for isobin, h in hIsos_mt.items():
-        print(f"{isobin} mean: {h.GetMean():.3f}")
-        h.SetDirectory(outfile)
-        h.Write()
+                    # for mT
+                    outputname = "histo_wjetsAntiIso_mtcorr_" + strname
+                    hstacked = THStack2TH1(sampMan.hsmcs[outputname])
+                    hdata = sampMan.hdatas[outputname]
+                    for ibin in range(hstacked.GetNbinsX()+1):
+                        # hstacked should always be above 0
+                        val_mc = hstacked.GetBinContent(ibin)
+                        if val_mc < 0:
+                            hstacked.SetBinContent(ibin, 0)
+                            hstacked.SetBinError(ibin, 0)
+                        # subtract mc from data
+                        val_data = hdata.GetBinContent(ibin)
+                        hdata.SetBinContent(ibin, max(val_data - val_mc, 0))
+                        err_data = hdata.GetBinError(ibin)
+                        err_mc = hstacked.GetBinError(ibin)
+                        # apply 30% signal contamination unc
+                        err_mcunc = val_mc * 0.3
+                        hdata.SetBinError(ibin, np.sqrt(
+                            err_data**2 + err_mc**2 + err_mcunc**2))
+
+                    hmts_comp[strname] = hdata
+                    hmts_comp[strname].SetName(outputname)
+
+    postfix = lepname + "nu"
+    sqrtS = "5TeV" if is5TeV else "13TeV"
+    postfix += f"_{sqrtS}.root"
+    outfile = ROOT.TFile.Open("root/output_qcdshape_backup_"+postfix, "recreate")
+
+    for wpt in wptbins:
+        # odir = outfile.mkdir(wpt)
+        # outfile.cd(wpt)
+        for iso in isobins:
+            # skip the last iso bin as it is used for the uncertaintiy of the previous iso bin
+            for lepeta in etabins:
+                for chg in chgbins:
+                    i = int(iso[3:])
+                    if iso == isobins[-1]:
+                        # a bit cheating,
+                        # for the last bin, use the previous bin shape as the shape variation
+                        iso_next = "iso" + str(i-1)
+                    else:
+                        iso_next = "iso" + str(i+1)
+                    strname = "weight_{}_{}_{}_{}".format(
+                        chg, iso, wpt, lepeta)
+                    strname_next = "weight_{}_{}_{}_{}".format(
+                        chg, iso_next, wpt, lepeta)
+
+                    outputname = "histo_wjetsAntiIso_mtcorr_" + strname
+
+                    hcenter = hmts_comp[strname]
+                    # shape uncertaintis are using the shape difference from the neighboring bins
+                    # used in the original qcd background predictions
+                    hup = hmts_comp[strname_next].Clone(outputname+"_shapeUp")
+                    hdown = hmts_comp[strname_next].Clone(
+                        outputname+"_shapeDown")
+
+                    hup.Scale(hcenter.Integral() / (hup.Integral()+1e-6))
+
+                    for ibin in range(1, hcenter.GetNbinsX()+1):
+                        center = hcenter.GetBinContent(ibin)
+                        up = hup.GetBinContent(ibin)
+                        hdown.SetBinContent(ibin, max(2*center - up, 0))
+
+                        hcenter.SetBinContent(ibin, max(center, 0))
+                        hup.SetBinContent(ibin, max(up, 0))
+
+                    # hcenter.SetDirectory(odir)
+                    hcenter.SetDirectory(outfile)
+                    hcenter.Write()
+                    # hup.SetDirectory(odir)
+                    hup.SetDirectory(outfile)
+                    hup.Write()
+                    # hdown.SetDirectory(odir)
+                    hdown.SetDirectory(outfile)
+                    hdown.Write()
 
     outfile.Close()
+
+    sampMan.dumpCounts()
 
     print("Program end...")
 
