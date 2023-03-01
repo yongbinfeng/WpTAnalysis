@@ -215,7 +215,7 @@ def MakeWJetsCards(fname_mc, fname_qcd, channel, wptbin, etabin, doWpT = False, 
                     xsecUnc = "1.10"
                 )
     # Z bkg
-    sname = "zxx9" if not is5TeV else "zxx6"
+    sname = "zxx8" if not is5TeV else "zxx6"
     zxx = Process(name = f"zxx_{sqrtS}", fname = fname_mc,
                   hname = prefix + "histo_wjets_{}_mT_1_{}_{}_grouped_{}".format(channel, wptbin, etabin, sname),
                   hsys  = prefix + "histo_wjets_{}_mT_1_{}_{}_grouped_{}_".format(channel, wptbin, etabin, sname),
@@ -237,7 +237,7 @@ def MakeWJetsCards(fname_mc, fname_qcd, channel, wptbin, etabin, doWpT = False, 
                    xsecUnc = "1.10"
                 )
     # VV bkg
-    sname = "vv6" if not is5TeV else "vv2"
+    sname = "vv5" if not is5TeV else "vv2"
     vv = Process(name = f"VV_{sqrtS}", fname = fname_mc,
                  hname = prefix + "histo_wjets_{}_mT_1_{}_{}_grouped_{}".format(channel, wptbin, etabin, sname),
                  hsys  = prefix + "histo_wjets_{}_mT_1_{}_{}_grouped_{}_".format(channel, wptbin, etabin, sname),
@@ -274,7 +274,7 @@ def MakeWJetsCards(fname_mc, fname_qcd, channel, wptbin, etabin, doWpT = False, 
         if proc.isMC:
             nuis_uncor_lumi[proc.name] = GetLumiUnc(False, is5TeV)
             nuis_cor_lumi[proc.name]   = GetLumiUnc(True, is5TeV)
-    nuisgroups["lumi"] = [nuis_uncor_lumi, nuis_cor_lumi]
+    #nuisgroups["lumi"] = [nuis_uncor_lumi, nuis_cor_lumi]
 
     nuisgroups["mcsec"] = []
     for proc in processes:
@@ -296,18 +296,20 @@ def MakeWJetsCards(fname_mc, fname_qcd, channel, wptbin, etabin, doWpT = False, 
     nuis_SysWeight2 = Nuisance(name = lepname + "_SysWeight2_" + sqrtS, type = "shape")
     nuis_SysWeight3 = Nuisance(name = lepname + "_SysWeight3_" + sqrtS, type = "shape")
     nuis_SysWeight4 = Nuisance(name = lepname + "_SysWeight4_" + sqrtS, type = "shape")
-    #nuis_Sysweight5 = Nuisance(name = channel + "_SysWeight5", type = "shape")
+    nuis_Sysweight5 = Nuisance(name = channel + "_SysWeight5_" + sqrtS, type = "shape")
     nuis_SysWeight8 = Nuisance(name = "SysWeight8_" + sqrtS, type = "shape")
     nuis_SysWeight10 = Nuisance(name = "SysWeight10_" + sqrtS, type = "shape")
     nuisgroups["effsys"] = [nuis_SysWeight1, nuis_SysWeight2, nuis_SysWeight3, nuis_SysWeight4]
     nuisgroups["prefire"] = [nuis_SysWeight8, nuis_SysWeight10]
-    #nuisgroups["sfsys"].append(nuis_Sysweight5)
+    #nuisgroups["effstat"] = [nuis_Sysweight5]
     for proc in processes:
         if not proc.isQCD:
             # all the samples except the QCD apply the corrections
             # so they should be affected by sf systematics
             for sysweight in nuisgroups["effsys"] + nuisgroups["prefire"]:
                 sysweight[proc.name] = 1.0
+            #for sysweight in nuisgroups["effstat"]:
+            #    sysweight[proc.name] = 1.0
 
     nuis_effstat = Nuisance(name = "effstat_" + channel + "_" + sqrtS, type = "lnN")
     for proc in processes:
@@ -322,6 +324,7 @@ def MakeWJetsCards(fname_mc, fname_qcd, channel, wptbin, etabin, doWpT = False, 
     # 6-15 are corrections with different statistical uncertainties
     nuisgroups["recoil"] = []
     recoil_indices = ["2", "3", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"]
+    recoil_indices = ["2", "3", "6"]
     for iuvar in recoil_indices:
         nuis_SysRecoil = Nuisance(name = lepname + "_SysRecoil" + iuvar + "_" + sqrtS, type = "shape")
         for proc in processes:
@@ -342,7 +345,7 @@ def MakeWJetsCards(fname_mc, fname_qcd, channel, wptbin, etabin, doWpT = False, 
                 nuis_QCDStat[proc.name] = 1.0
         nuisgroups["qcdbkg"].append(nuis_QCDStat)
 
-    if True:
+    if False:
         nuis_QCDMCCont = Nuisance(name = prefix + f"_ScaledMCshape_{sqrtS}", type = "shape")
         for proc in processes:
             if proc.isQCD:
@@ -480,7 +483,7 @@ def MakeZJetsCards(fname, channel, rebinned = False, is5TeV = False, outdir = "c
         if proc.isMC:
             nuis_uncor_lumi[proc.name] = GetLumiUnc(False, is5TeV)
             nuis_cor_lumi[proc.name]   = GetLumiUnc(True, is5TeV)
-    nuisgroups["lumi"] = [nuis_uncor_lumi, nuis_cor_lumi]
+    #nuisgroups["lumi"] = [nuis_uncor_lumi, nuis_cor_lumi]
 
     nuisgroups["mcsec"] = []
     for proc in processes:
@@ -502,16 +505,21 @@ def MakeZJetsCards(fname, channel, rebinned = False, is5TeV = False, outdir = "c
     nuis_SysWeight2 = Nuisance(name = lepname + "_SysWeight2_" + sqrtS, type = "shape")
     nuis_SysWeight3 = Nuisance(name = lepname + "_SysWeight3_" + sqrtS, type = "shape")
     nuis_SysWeight4 = Nuisance(name = lepname + "_SysWeight4_" + sqrtS, type = "shape")
+    #nuis_SysWeight5p = Nuisance(name = lepname + "plus_SysWeight5_" + sqrtS, type = "shape")
+    #nuis_SysWeight5m = Nuisance(name = lepname + "minus_SysWeight5_" + sqrtS, type = "shape")
     nuis_SysWeight8 = Nuisance(name = "SysWeight8_" + sqrtS, type = "shape")
     nuis_SysWeight10 = Nuisance(name = "SysWeight10_" + sqrtS, type = "shape")
     nuisgroups["effsys"] = [nuis_SysWeight1, nuis_SysWeight2, nuis_SysWeight3, nuis_SysWeight4]
     nuisgroups["prefire"] = [nuis_SysWeight8, nuis_SysWeight10]
+    #nuisgroups["effstat"] = [nuis_SysWeight5p, nuis_SysWeight5m]
     for proc in processes:
         if not proc.isQCD:
             # all the samples except the QCD apply the corrections
             # so they should be affected by sf systematics
             for sysweight in nuisgroups["effsys"] + nuisgroups["prefire"]:
                 sysweight[proc.name] = 1.0
+            #for sysweight in nuisgroups["effstat"]:
+            #    sysweight[proc.name] = 1.0
 
     nuis_effstat_plus = Nuisance(name = "effstat_" + lepname + "plus_" + sqrtS, type = "lnN")
     nuis_effstat_minus = Nuisance(name = "effstat_" + lepname + "minus_" + sqrtS, type = "lnN")
