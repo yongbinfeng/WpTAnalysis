@@ -481,7 +481,11 @@ def main():
         """
         return both data and merged mc
         """
-        return sampMan.hdatas2D[outputname], sampMan.hmcs2D[outputname]
+        hdata = sampMan.hdatas2D[name]
+        hmc = sampMan.hmcs2D[name]
+        hdata.SetName(name + "_Data")
+        hmc.SetName(name + "_MC")
+        return hdata, hmc
     
     def dumpHistos(hlist, outputname, doPrint = False):
         outfile = ROOT.TFile.Open(f"root/{outputname}", "recreate")
