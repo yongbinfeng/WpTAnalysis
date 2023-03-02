@@ -9,6 +9,7 @@ import argparse
 from CMSPLOTS.myFunction import THStack2TH1
 
 from modules.SampleManager import DrawConfig, Sample, SampleManager
+from modules.Binnings import mass_bins_test
 
 ROOT.gROOT.SetBatch(True)
 ROOT.ROOT.EnableImplicitMT(10)
@@ -279,6 +280,13 @@ def main():
     else:
         etabins = ["lepEta_bin0", "lepEta_bin1", "lepEta_bin2"]
         
+    # coarse mt bins
+    mtbins = []
+    mass_bins_coarse = mass_bins_test[0]
+    for imt in range(len(mass_bins_coarse)-1):
+        sampMan.DefineAll(f"mt{imt}", f"mtCorr >= {mass_bins_coarse[imt]} && mtCorr < {mass_bins_coarse[imt+1]}")
+        mtbins.append(f"mt{imt}")
+        
     # Draw some the basic kinematic distributions
     phimax = ROOT.TMath.Pi()
     phimin = -phimax
@@ -302,6 +310,7 @@ def main():
     # do the fine binning first; then rebin in the processHists
     mass_bins = np.array([0, 5.0, 10.0, 15.0, 20.0, 25.0, 30.0, 35.0, 40.0, 45.0, 50.0, 55.0, 60.0, 65.0,
                          70.0, 75.0, 80.0, 85.0, 90.0, 95.0, 100.0, 105.0, 110.0, 115.0, 120.0, 125.0, 130.0, 135.0, 140.])
+    
     nbins = 12
     xmin = 0
     xmax = 120
@@ -326,6 +335,13 @@ def main():
                     # draw the isolation in different bins, in order to calculate the mean in each bin
                     sampMan.cacheDraw("RelIso", f"histo_wjetsAntiIso_RelIso_{strname}", 100, isoCuts[idx], isoCuts[idx + 1], DrawConfig(
                         xmin=isoCuts[idx], xmax=isoCuts[idx+1], xlabel="Relative Isolation", ylabel=f"Events / {(isoCuts[idx + 1]-isoCuts[idx])/100:.2f}", dology=True, ymax=ymax, donormalizebin=False, addOverflow=True, addUnderflow=True, showratio=False, legendPos=[0.94, 0.88, 0.70, 0.68]), weightname=strname)
+                    
+                    # draw the 2d pt vs lepton distributions in different mt bins
+                    for mt in mtbins:
+                        strname = "weight_{}_{}_{}_{}_{}".format(chg, iso, wpt, lepeta, mt) 
+                        sampMan.DefineAll(strname, "w_{} * weight_WoVpt * {} * {} * {} * {}".format(iso, wpt, lepeta, chg, mt))
+                        outputname = "histo_wjetsAntiIso_pt_vs_eta_" + strname
+                        sampMan.cacheDraw2D("Lep_pt", "Lep_eta", f"histo_wjetsAntiIso_pt_vs_eta_{strname}", 5, 20, 60, 8, -2.4, 2.4, DrawConfig(xmin=20, xmax=60, ymin=-2.4, ymax=2.4, xlabel="Lepton p_{T} [GeV]", ylabel="Lepton #eta", zlabel="Events / 10 GeV", dology=False, donormalizebin=False, addOverflow=True, addUnderflow=True, showratio=False, legendPos=[0.94, 0.88, 0.70, 0.68]), weightname=strname)
 
         idx += 1
 
@@ -333,6 +349,8 @@ def main():
 
     hmts_comp = OrderedDict()
     hIsos = OrderedDict()
+    hpt_vs_etas_data = OrderedDict()
+    hpt_vs_etas_mc = OrderedDict()
 
     # hetas_mtCut_comp = OrderedDict()
     for iso in isobins:
@@ -365,17 +383,6 @@ def main():
                     hmts_comp[strname] = hdata
                     hmts_comp[strname].SetName(outputname)
 
-                    # for lepton eta with mT cuts
-                    # strname += "_mtCut"
-                    # outputname = "histo_wjetsAntiIso_lepEta_" + strname
-                    # hstacked = THStack2TH1(sampMan.hsmcs[outputname])
-                    # for ibin in xrange(hstacked.GetNbinsX()+1):
-                    #    # hstacked should always be above 0
-                    #    hstacked.SetBinContent(ibin, max(hstacked.GetBinContent(ibin), 0))
-                    # sampMan.hdatas[outputname].Add( hstacked, -1.0 )
-                    # hetas_mtCut_comp[strname] = sampMan.hdatas[outputname]
-                    # hetas_mtCut_comp[strname].SetName(outputname)
-
                     # for isolation
                     outputname = f"histo_wjetsAntiIso_RelIso_{strname}"
                     hstacked = THStack2TH1(sampMan.hsmcs[outputname])
@@ -386,6 +393,13 @@ def main():
                     sampMan.hdatas[outputname].Add(hstacked, -1.0)
                     hIsos[strname] = sampMan.hdatas[outputname]
                     hIsos[strname].SetName(outputname)
+                    
+                    # for 2D histograms
+                    for mt in mtbins:
+                        strname = "weight_{}_{}_{}_{}_{}".format(chg, iso, wpt, lepeta, mt)
+                        outputname = f"histo_wjetsAntiIso_pt_vs_eta_{strname}"
+                        hpt_vs_etas_data[strname] = sampMan.hdatas2D[outputname]
+                        hpt_vs_etas_mc[strname] = sampMan.hmcs2D[outputname]
 
     postfix = lepname + "nu"
     if applyScaling:
@@ -449,6 +463,16 @@ def main():
     outfile = ROOT.TFile.Open("root/output_qcdIso_"+postfix, "recreate")
     for isobin, h in hIsos.items():
         print(f"{isobin} mean: {h.GetMean():.3f}")
+        h.SetDirectory(outfile)
+        h.Write()
+    outfile.Close()
+    
+    # save the 2D histograms for FR calculation
+    outfile = ROOT.TFile.Open("root/output_qcdshape_2D_"+postfix, "recreate")
+    for k, h in hpt_vs_etas_data.items():
+        h.SetDirectory(outfile)
+        h.Write()
+    for k, h in hpt_vs_etas_mc.items():
         h.SetDirectory(outfile)
         h.Write()
     outfile.Close()

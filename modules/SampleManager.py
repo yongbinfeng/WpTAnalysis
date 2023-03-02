@@ -42,6 +42,7 @@ class DrawConfig(object):
 
         self.dologx = kwargs.get('dologx', False)
         self.dology = kwargs.get('dology', True)
+        self.dologz = kwargs.get('dologz', False)
         self.donormalize = kwargs.get('donormalize', False)
         self.donormalizebin = kwargs.get('donormalizebin', True)
 
@@ -64,10 +65,12 @@ class DrawConfig(object):
         self.redrawihist = kwargs.get('redrawihist', 0)
         self.extraText = kwargs.get('extraText', None)
         self.noCMS = kwargs.get('noCMS', True)
+        self.drawoptions = kwargs.get('drawoptions', [])
 
         self.nMaxDigits = kwargs.get('nMaxDigits', 3)
 
         self.outputname = kwargs.get('outputname', 'test')
+        self.savepdf = kwargs.get('savepdf', True)
 
 
 class Sample(object):
@@ -340,6 +343,7 @@ class SampleManager(object):
         self.data = data
         self.mcs = mcs
         self.to_draw = OrderedDict()
+        self.to_draw2D = OrderedDict()
         self.initGroups()
 
         self.is5TeV = is5TeV
@@ -360,6 +364,10 @@ class SampleManager(object):
         self.hsmcs = {}
         self.hratios = {}
         self.hmcs = {}
+        
+        self.hdatas2D = {}
+        self.hmcs2D = {}
+        self.hsubtracted2D = {}
 
         # count the number of events in data and MC
         self.counts = []
@@ -436,6 +444,20 @@ class SampleManager(object):
             if mc.name == mcname:
                 return mc
         raise Exception('can not find the mcname {}'.format(mcname))
+    
+    def cacheDraw2D(self, varname1, varname2, hname, nbins1, xmin1, xmax1, nbins2, xmin2, xmax2, drawconfigs, weightname="weight_WVpt"):
+        """ 
+        cache the var to be drawn.
+        But do not launch the action by the 'lazy action' in RDataFrame
+        """
+        h_data = self.data.rdf.Histo2D(
+            (hname+"_data", hname, nbins1, xmin1, xmax1, nbins2, xmin2, xmax2), varname1, varname2, weightname)
+        h_mcs = []
+        for imc in range(len(self.mcs)):
+            mc = self.mcs[imc]
+            h_mcs.append(mc.rdf.Histo2D(
+                (hname+"_mc{}".format(imc), hname, nbins1, xmin1, xmax1, nbins2, xmin2, xmax2), varname1, varname2, weightname))
+        self.to_draw2D[hname] = (h_data, h_mcs, drawconfigs)
 
     def cacheDraw(self, *args, **kwds):
         if len(args) == 6:
@@ -478,7 +500,7 @@ class SampleManager(object):
 
         self.to_draw[hname] = (h_data, h_mcs, drawconfigs)
 
-    def _DrawPlot(self, h_data, h_mcs, drawconfigs, hname):
+    def _DrawPlot(self, h_data, h_mcs, drawconfigs, hname, is2D=False):
         legends = []
 
         h_data.Scale(1.0)
@@ -538,31 +560,51 @@ class SampleManager(object):
             print("Renormalize group for {}, with {} data, {} MC and weight {}".format(
                 group_to_renormalize, ndata, nmc, weight))
             hgroupedmcs[group_to_renormalize].Scale(weight)
-
-        hsname = "hs_" + drawconfigs.outputname
-        hs_gmc = ROOT.THStack(hsname, hsname)
-        n_mcs = len(hgroupedmcs)
-        for h_gmc in reversed(list(hgroupedmcs.values())):
-            # if drawconfigs.donormalizebin:
-            #    h_gmc.Scale(1.0, "width")
-            hs_gmc.Add(h_gmc)
-
+            
         if not drawconfigs.legends:
             drawconfigs.legends = legends
-
         if drawconfigs.outputname == "test":
             # change default outputname to the histo name
             drawconfigs.outputname = hname
 
-        self.hdatas[drawconfigs.outputname] = h_data
-        self.hsmcs[drawconfigs.outputname] = hs_gmc
-        self.hmcs[drawconfigs.outputname] = hmcs
-        if n_mcs > 0:
-            h_to_draw = [h_data, hs_gmc]
+        if not is2D:
+            hsname = "hs_" + drawconfigs.outputname
+            hs_gmc = ROOT.THStack(hsname, hsname)
+            n_mcs = len(hgroupedmcs)
+            for h_gmc in reversed(list(hgroupedmcs.values())):
+                # if drawconfigs.donormalizebin:
+                #    h_gmc.Scale(1.0, "width")
+                hs_gmc.Add(h_gmc)
+
+            self.hdatas[drawconfigs.outputname] = h_data
+            self.hsmcs[drawconfigs.outputname] = hs_gmc
+            self.hmcs[drawconfigs.outputname] = hmcs
+            if n_mcs > 0:
+                h_to_draw = [h_data, hs_gmc]
+            else:
+                h_to_draw = [h_data]
         else:
-            h_to_draw = [h_data]
-        self.hratios[drawconfigs.outputname] = DrawHistos(h_to_draw, drawconfigs.legends, drawconfigs.xmin, drawconfigs.xmax, drawconfigs.xlabel, drawconfigs.ymin, drawconfigs.ymax, drawconfigs.ylabel, drawconfigs.outputname, dology=drawconfigs.dology, dologx=drawconfigs.dologx, showratio=drawconfigs.showratio, yrmax=drawconfigs.yrmax, yrmin=drawconfigs.yrmin, yrlabel=drawconfigs.yrlabel,
-                                                          donormalize=drawconfigs.donormalize, ratiobase=drawconfigs.ratiobase, legendPos=drawconfigs.legendPos, redrawihist=drawconfigs.redrawihist, extraText=drawconfigs.extraText, noCMS=drawconfigs.noCMS, addOverflow=drawconfigs.addOverflow, addUnderflow=drawconfigs.addUnderflow, nMaxDigits=drawconfigs.nMaxDigits, is5TeV=self.is5TeV, lheader=drawconfigs.lheader, outdir=self.outdir)
+            # subtract MC from data for 2D plot
+            h_MC = None
+            h_subtract = h_data.Clone(h_data.GetName() + "_DataForPlotting")
+            for h_gmc in reversed(list(hgroupedmcs.values())):
+                if h_MC is None:
+                    h_MC = h_gmc.Clone(h_gmc.GetName() + "_AllMCCombined")
+                else:
+                    h_MC.Add(h_gmc)
+            h_subtract.Add(h_MC, -1)
+            
+            self.hdatas2D[drawconfigs.outputname] = h_data
+            self.hmcs2D[drawconfigs.outputname] = h_MC
+            self.hsubtracted2D[drawconfigs.outputname] = h_subtract
+            
+            h_to_draw = [h_subtract]
+            drawconfigs.legends = []
+            drawconfigs.drawoptions = ["colz,text"]
+            drawconfigs.dologz = True
+            
+        self.hratios[drawconfigs.outputname] = DrawHistos(h_to_draw, drawconfigs.legends, drawconfigs.xmin, drawconfigs.xmax, drawconfigs.xlabel, drawconfigs.ymin, drawconfigs.ymax, drawconfigs.ylabel, drawconfigs.outputname, dology=drawconfigs.dology, dologx=drawconfigs.dologx, showratio=drawconfigs.showratio, yrmax=drawconfigs.yrmax, yrmin=drawconfigs.yrmin, yrlabel=drawconfigs.yrlabel, donormalize=drawconfigs.donormalize, ratiobase=drawconfigs.ratiobase, legendPos=drawconfigs.legendPos, redrawihist=drawconfigs.redrawihist, extraText=drawconfigs.extraText, noCMS=drawconfigs.noCMS, addOverflow=drawconfigs.addOverflow, addUnderflow=drawconfigs.addUnderflow, nMaxDigits=drawconfigs.nMaxDigits, is5TeV=self.is5TeV, lheader=drawconfigs.lheader, outdir=self.outdir, drawoptions = drawconfigs.drawoptions, dologz = drawconfigs.dologz, doth2=is2D, savepdf=drawconfigs.savepdf)
+            
 
     def launchDraw(self):
         """
@@ -571,6 +613,8 @@ class SampleManager(object):
         print("starting drawing")
         for hname, plotinfo in self.to_draw.items():
             self._DrawPlot(plotinfo[0], plotinfo[1], plotinfo[2], hname)
+        for hname, plotinfo in self.to_draw2D.items():
+            self._DrawPlot(plotinfo[0], plotinfo[1], plotinfo[2], hname, is2D=True)
         self.to_draw.clear()
         print("finished drawing..")
 

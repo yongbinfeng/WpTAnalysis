@@ -245,7 +245,7 @@ def Ratio2Diff(hratio, inpercent=True):
         hratio.Scale(100.0)
 
 
-def DrawHistos(myhistos, mylabels, xmin, xmax, xlabel, ymin, ymax, ylabel, outputname, dology=True, showratio=False, dologx=False, lheader=None, donormalize=False, binomialratio=False, yrmax=2.0, yrmin=0.0, yrlabel=None, MCOnly=False, leftlegend=False, mycolors=[], legendPos=[], legendNCols=1, linestyles=[], markerstyles=[], showpull=False, doNewman=False, doPearson=False, ignoreHistError=False, ypullmin=-3.99, ypullmax=3.99, drawashist=False, padsize=(2, 0.9, 1.1), setGridx=False, setGridy=False, drawoptions=[], legendoptions=[], ratiooptions=[], dologz=False, doth2=False, ratiobase=0, redrawihist=-1, extraText=None, noCMS=False, noLumi=False, nMaxDigits=None, addOverflow=False, addUnderflow=False, plotdiff=False, hratiopanel=None, doratios=None, hpulls=None, W_ref=600, is5TeV=False, outdir="plots"):
+def DrawHistos(myhistos, mylabels, xmin, xmax, xlabel, ymin, ymax, ylabel, outputname, dology=True, showratio=False, dologx=False, lheader=None, donormalize=False, binomialratio=False, yrmax=2.0, yrmin=0.0, yrlabel=None, MCOnly=False, leftlegend=False, mycolors=[], legendPos=[], legendNCols=1, linestyles=[], markerstyles=[], showpull=False, doNewman=False, doPearson=False, ignoreHistError=False, ypullmin=-3.99, ypullmax=3.99, drawashist=False, padsize=(2, 0.9, 1.1), setGridx=False, setGridy=False, drawoptions=[], legendoptions=[], ratiooptions=[], dologz=False, doth2=False, ratiobase=0, redrawihist=-1, extraText=None, noCMS=False, noLumi=False, nMaxDigits=None, addOverflow=False, addUnderflow=False, plotdiff=False, hratiopanel=None, doratios=None, hpulls=None, W_ref=600, is5TeV=False, outdir="plots", savepdf=True):
     """
     draw histograms with the CMS tdr style
     """
@@ -291,7 +291,7 @@ def DrawHistos(myhistos, mylabels, xmin, xmax, xlabel, ymin, ymax, ylabel, outpu
         canvas.SetTicks(1, 1)
         padsize1 = 1.0
         if doth2:
-            canvas.SetRightMargin(0.10)
+            canvas.SetRightMargin(0.12)
         padsize2 = 0.
         padsize3 = 0.
         canvas.cd()
@@ -674,10 +674,10 @@ def DrawHistos(myhistos, mylabels, xmin, xmax, xlabel, ymin, ymax, ylabel, outpu
         print(f"Make the directory {dirpath}")
         os.makedirs(dirpath)
 
-    print("save plot to %s.pdf" % outputname)
-    # canvas.Print("%s.C"%outputname)
-    canvas.Print("%s.pdf" % outputname)
-    # canvas.Print("%s.png" % outputname)
-    # canvas.Print("%s.root" % outputname)
-    # print("function runs fine")
+    if savepdf:
+        print("save plot to %s.pdf" % outputname)
+        # canvas.Print("%s.C"%outputname)
+        canvas.Print("%s.pdf" % outputname)
+        # canvas.Print("%s.png" % outputname)
+        # canvas.Print("%s.root" % outputname)
     return hratios if showratio else None
