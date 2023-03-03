@@ -391,7 +391,7 @@ def main():
             
             sampMan.cacheDraw("met_pt", f"histo_wjets_{lepname}_met_pt_{strname}", 70, 0, 70, DrawConfig(xmin=0, xmax=70, xlabel="MET [GeV]", ylabel=f"Events / GeV", dology=True, ymax=ymax, donormalizebin=False, addOverflow=True, addUnderflow=True, showratio=True, legendPos=[0.94, 0.88, 0.70, 0.68]), weightname=strname)
             
-            sampMan.cacheDraw2D("Lep_pt", "Lep_eta", f"histo_wjets_{lepname}_pt_vs_eta_{strname}", 5, 20, 60, 8, -2.4, 2.4, DrawConfig(xmin=20, xmax=60, ymin=-2.4, ymax=2.4, xlabel="Lepton p_{T} [GeV]", ylabel="Lepton #eta", zlabel="Events / 10 GeV", dology=False, donormalizebin=False, addOverflow=True, addUnderflow=True, showratio=False, legendPos=[0.94, 0.88, 0.70, 0.68]), weightname=strname)
+            sampMan.cacheDraw2D("Lep_pt", "Lep_eta", f"histo_wjets_{lepname}_pt_vs_eta_{strname}", 9, 25, 70, 8, -2.4, 2.4, DrawConfig(xmin=25, xmax=70, ymin=-2.4, ymax=2.4, xlabel="Lepton p_{T} [GeV]", ylabel="Lepton #eta", zlabel="Events / 10 GeV", dology=False, donormalizebin=False, addOverflow=True, addUnderflow=True, showratio=False, legendPos=[0.94, 0.88, 0.70, 0.68]), weightname=strname)
             
             for mt in mtbins:
                 strname = f"weight_{wpt}_{lepeta}_{mt}"
@@ -405,7 +405,7 @@ def main():
                 
                 sampMan.cacheDraw("met_pt", f"histo_wjets_{lepname}_met_pt_{strname}", 70, 0, 70, DrawConfig(xmin=0, xmax=70, xlabel="MET", ylabel=f"Events / GeV", dology=True, ymax=ymax, donormalizebin=False, addOverflow=True, addUnderflow=True, showratio=True, legendPos=[0.94, 0.88, 0.70, 0.68]), weightname=strname)
                 
-                sampMan.cacheDraw2D("Lep_pt", "Lep_eta", f"histo_wjets_{lepname}_pt_vs_eta_{strname}", 5, 20, 60, 8, -2.4, 2.4, DrawConfig(xmin=20, xmax=60, ymin=-2.4, ymax=2.4, xlabel="Lepton p_{T} [GeV]", ylabel="Lepton #eta", zlabel="Events / 10 GeV", dology=False, donormalizebin=False, addOverflow=True, addUnderflow=True, showratio=False, legendPos=[0.94, 0.88, 0.70, 0.68]), weightname=strname)
+                sampMan.cacheDraw2D("Lep_pt", "Lep_eta", f"histo_wjets_{lepname}_pt_vs_eta_{strname}", 9, 25, 70, 8, -2.4, 2.4, DrawConfig(xmin=25, xmax=70, ymin=-2.4, ymax=2.4, xlabel="Lepton p_{T} [GeV]", ylabel="Lepton #eta", zlabel="Events / 10 GeV", dology=False, donormalizebin=False, addOverflow=True, addUnderflow=True, showratio=False, legendPos=[0.94, 0.88, 0.70, 0.68]), weightname=strname)
                 
 
     idx = 0
@@ -433,7 +433,7 @@ def main():
                     
                     sampMan.cacheDraw("met_pt", f"histo_wjets_{lepname}_met_pt_{strname}", 70, 0, 70, DrawConfig(xmin=0, xmax=70, xlabel="MET", ylabel=f"Events / GeV", dology=True, ymax=ymax, donormalizebin=False, addOverflow=True, addUnderflow=True, showratio=False, legendPos=[0.94, 0.88, 0.70, 0.68]), weightname=strname)
                     
-                    sampMan.cacheDraw2D("Lep_pt", "Lep_eta", f"histo_wjets_{lepname}_pt_vs_eta_{strname}", 5, 20, 60, 8, -2.4, 2.4, DrawConfig(xmin=20, xmax=60, ymin=-2.4, ymax=2.4, xlabel="Lepton p_{T} [GeV]", ylabel="Lepton #eta", zlabel="Events / 10 GeV", dology=False, donormalizebin=False, addOverflow=True, addUnderflow=True, showratio=False, legendPos=[0.94, 0.88, 0.70, 0.68]), weightname=strname)
+                    sampMan.cacheDraw2D("Lep_pt", "Lep_eta", f"histo_wjets_{lepname}_pt_vs_eta_{strname}", 9, 25, 70, 8, -2.4, 2.4, DrawConfig(xmin=25, xmax=70, ymin=-2.4, ymax=2.4, xlabel="Lepton p_{T} [GeV]", ylabel="Lepton #eta", zlabel="Events / 10 GeV", dology=False, donormalizebin=False, addOverflow=True, addUnderflow=True, showratio=False, legendPos=[0.94, 0.88, 0.70, 0.68]), weightname=strname)
 
                     for mt in mtbins:
                         strname = "weight_{}_{}_{}_{}_{}".format(chg, iso, wpt, lepeta, mt)
@@ -447,7 +447,7 @@ def main():
                         
                         sampMan.cacheDraw("met_pt", f"histo_wjets_{lepname}_met_pt_{strname}", 70, 0, 70, DrawConfig(xmin=0, xmax=70, xlabel="MET", ylabel=f"Events / GeV", dology=True, ymax=ymax, donormalizebin=False, addOverflow=True, addUnderflow=True, showratio=True, legendPos=[0.94, 0.88, 0.70, 0.68]), weightname=strname)
                         
-                        sampMan.cacheDraw2D("Lep_pt", "Lep_eta", f"histo_wjets_{lepname}_pt_vs_eta_{strname}", 5, 20, 60, 8, -2.4, 2.4, DrawConfig(xmin=20, xmax=60, ymin=-2.4, ymax=2.4, xlabel="Lepton p_{T} [GeV]", ylabel="Lepton #eta", zlabel="Events / 10 GeV", dology=False, donormalizebin=False, addOverflow=True, addUnderflow=True, showratio=False, legendPos=[0.94, 0.88, 0.70, 0.68]), weightname=strname)
+                        sampMan.cacheDraw2D("Lep_pt", "Lep_eta", f"histo_wjets_{lepname}_pt_vs_eta_{strname}", 9, 25, 70, 8, -2.4, 2.4, DrawConfig(xmin=25, xmax=70, ymin=-2.4, ymax=2.4, xlabel="Lepton p_{T} [GeV]", ylabel="Lepton #eta", zlabel="Events / 10 GeV", dology=False, donormalizebin=False, addOverflow=True, addUnderflow=True, showratio=False, legendPos=[0.94, 0.88, 0.70, 0.68]), weightname=strname)
                         
         idx += 1
 

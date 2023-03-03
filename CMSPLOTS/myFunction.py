@@ -245,7 +245,7 @@ def Ratio2Diff(hratio, inpercent=True):
         hratio.Scale(100.0)
 
 
-def DrawHistos(myhistos, mylabels, xmin, xmax, xlabel, ymin, ymax, ylabel, outputname, dology=True, showratio=False, dologx=False, lheader=None, donormalize=False, binomialratio=False, yrmax=2.0, yrmin=0.0, yrlabel=None, MCOnly=False, leftlegend=False, mycolors=[], legendPos=[], legendNCols=1, linestyles=[], markerstyles=[], showpull=False, doNewman=False, doPearson=False, ignoreHistError=False, ypullmin=-3.99, ypullmax=3.99, drawashist=False, padsize=(2, 0.9, 1.1), setGridx=False, setGridy=False, drawoptions=[], legendoptions=[], ratiooptions=[], dologz=False, doth2=False, ratiobase=0, redrawihist=-1, extraText=None, noCMS=False, noLumi=False, nMaxDigits=None, addOverflow=False, addUnderflow=False, plotdiff=False, hratiopanel=None, doratios=None, hpulls=None, W_ref=600, is5TeV=False, outdir="plots", savepdf=True):
+def DrawHistos(myhistos, mylabels, xmin, xmax, xlabel, ymin, ymax, ylabel, outputname, dology=True, showratio=False, dologx=False, lheader=None, donormalize=False, binomialratio=False, yrmax=2.0, yrmin=0.0, yrlabel=None, MCOnly=False, leftlegend=False, mycolors=[], legendPos=[], legendNCols=1, linestyles=[], markerstyles=[], showpull=False, doNewman=False, doPearson=False, ignoreHistError=False, ypullmin=-3.99, ypullmax=3.99, drawashist=False, padsize=(2, 0.9, 1.1), setGridx=False, setGridy=False, drawoptions=[], legendoptions=[], ratiooptions=[], dologz=False, doth2=False, ratiobase=0, redrawihist=-1, extraText=None, noCMS=False, noLumi=False, nMaxDigits=None, addOverflow=False, addUnderflow=False, plotdiff=False, hratiopanel=None, doratios=None, hpulls=None, W_ref=600, is5TeV=False, outdir="plots", savepdf=True,zmin=0,zmax=2):
     """
     draw histograms with the CMS tdr style
     """
@@ -253,6 +253,9 @@ def DrawHistos(myhistos, mylabels, xmin, xmax, xlabel, ymin, ymax, ylabel, outpu
     tdrstyle.setTDRStyle()
     # not sure why need this...
     ROOT.gStyle.SetErrorX(0.5)
+    
+    ROOT.gStyle.SetPalette(1)
+    ROOT.gStyle.SetPaintTextFormat(".3f")
 
     # change the CMS_lumi variables (see CMS_lumi.py)
     # used with iPeriod = 0, e.g. for simulation-only plots (default is an empty string)
@@ -267,6 +270,7 @@ def DrawHistos(myhistos, mylabels, xmin, xmax, xlabel, ymin, ymax, ylabel, outpu
         CMS_lumi.extraText = ""
 
     if nMaxDigits:
+        print(f"set the maximum number of digits {nMaxDigits}")
         ROOT.TGaxis.SetMaxDigits(nMaxDigits)
     else:
         # default val
@@ -360,15 +364,19 @@ def DrawHistos(myhistos, mylabels, xmin, xmax, xlabel, ymin, ymax, ylabel, outpu
         if dologx:
             pad1.SetLogx()
 
-    h1 = TH1F("h1" + outputname, "h1", 80, xmin, xmax)
-
-    h1.SetMinimum(ymin)
-    h1.SetMaximum(ymax)
+    if not doth2:
+        h1 = TH1F("h1" + outputname, "h1", 80, xmin, xmax)
+        h1.SetMinimum(ymin)
+        h1.SetMaximum(ymax)    
+    else:
+        h1 = ROOT.TH2F("h2" + outputname, "h2", 80, xmin, xmax, 80, ymin, ymax)
+        if zmin!=None and zmax!=None:
+            print(f"configuring z range to {zmin}, {zmax}")
+            h1.GetZaxis().SetRangeUser(zmin, zmax)
 
     # print "xmin : %f xmax : %f"%(xmin, xmax)
 
     h1.GetXaxis().SetNdivisions(6, 5, 0)
-
     h1.GetYaxis().SetNdivisions(6, 5, 0)
     h1.GetYaxis().SetTitle("%s" % ylabel)
     h1.GetYaxis().SetTitleSize(0.050/(padsize1+padsize3))
