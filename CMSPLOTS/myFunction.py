@@ -232,6 +232,30 @@ def AddOverflows(hinput, dolastbin=True):
         # do the AddOverflowsTH1 for all the histograms in THStack
         hlist = list(hinput.GetHists())
         list(map(AddOverflowsTH1, hlist, [dolastbin]*len(hlist)))
+        
+def IncludeOverflow2D(h2, doUnderflow=False):
+    """
+    this might not work for one th2 with only one bin in one direction
+    """
+    nbinsX = h2.GetNbinsX()
+    nbinsY = h2.GetNbinsY()
+    
+    for ix in range(1, nbinsX+1):
+        CombineOneBin2D(h2, ix, nbinsY, ix, nbinsY+1)
+    for iy in range(1, nbinsY+1):
+        CombineOneBin2D(h2, nbinsX, iy, nbinsX+1, iy)
+    # correct the corner
+    CombineOneBin2D(h2, nbinsX, nbinsY, nbinsX+1, nbinsY+1)
+        
+    if doUnderflow:
+        for ix in range(1, nbinsX+1):
+            CombineOneBin2D(h2, ix, 1, ix, 0)
+        for iy in range(1, nbinsY+1):
+            CombineOneBin2D(h2, 1, iy, 0, iy)
+        # correct the corner
+        CombineOneBin2D(h2, 1, 1, 0, 0)
+        CombineOneBin2D(h2, 1, nbinsY, 0, nbinsY+1)
+        CombineOneBin2D(h2, nbinsX, 1, nbinsX+1, 0)
 
 
 def Ratio2Diff(hratio, inpercent=True):
@@ -243,7 +267,76 @@ def Ratio2Diff(hratio, inpercent=True):
         hratio.SetBinContent(ibin, hratio.GetBinContent(ibin)-1.0)
     if inpercent:
         hratio.Scale(100.0)
+        
 
+def MultiplyH2(h1, h2):
+    assert h1.GetNbinsX() == h2.GetNbinsX(), "h1 and h2 have different number of bins in x"
+    assert h1.GetNbinsY() == h2.GetNbinsY(), "h1 and h2 have different number of bins in y"
+    
+    for ix in range(1, h1.GetNbinsX()+1):
+        for iy in range(1, h1.GetNbinsY()+1):
+            val1 = h1.GetBinContent(ix, iy)
+            val2 = h2.GetBinContent(ix, iy)
+            err1 = h1.GetBinError(ix, iy)
+            err2 = h2.GetBinError(ix, iy)
+            h1.SetBinContent(ix, iy, val1*val2)
+            h1.SetBinError(ix, iy, ROOT.TMath.Sqrt((val1*err2)**2 + (val2*err1)**2))
+    return h1
+
+def PositiveProtection2D(h2):
+    for ix in range(1, h2.GetNbinsX()+1):
+        for iy in range(1, h2.GetNbinsY()+1):
+            if h2.GetBinContent(ix, iy) < 0:
+                print("WARNING: negative bin content found, set to 0 for bin", ix, iy, h2.GetBinContent(ix, iy), " in histogram ", h2.GetName())
+                h2.SetBinContent(ix, iy, 0)
+                h2.SetBinError(ix, iy, 0)
+                
+def IntegralAndError2D(h2):
+    val = 0
+    err2 = 0
+    for ibinx in range(1, h2.GetNbinsX()+1):
+        for ibiny in range(1, h2.GetNbinsY()+1):
+            val += h2.GetBinContent(ibinx, ibiny)
+            err2 += h2.GetBinError(ibinx, ibiny)**2
+    return val, ROOT.TMath.Sqrt(err2)
+
+def CombineOneBin2D(h, ix, iy, jx, jy):
+    """
+    combine the j-th bin to i-th bin, and clean j-th bin
+    """
+    h.SetBinContent(ix, iy, h.GetBinContent(ix, iy) + h.GetBinContent(jx, jy))
+    h.SetBinError(ix, iy, ROOT.TMath.Sqrt(h.GetBinError(ix, iy)**2 + h.GetBinError(jx, jy)**2))
+    # clean the original bin so that there would not be double counting
+    h.SetBinContent(jx, jy, 0)
+    h.SetBinError(jx, jy, 0)
+    
+def GetRatioPanel(hs):
+    """
+    build the ratio error bars used for THStack
+    Assuming different histograms are uncorrelated
+    """
+    hlist = hs.GetHists()
+    hratio = None
+    for h in hlist:
+        if not hratio:
+            hratio = h.Clone(h.GetName() + "_ratio")
+        else:
+            hratio.Add(h)
+    hratio.Divide(hratio)
+    hratio.SetFillColor(15)
+    return hratio
+
+def LHistos2Hist(hs, hname):
+    """
+    combine a list of hists to one hist
+    """
+    h_added = None
+    for h in hs:
+        if not h_added:
+            h_added = h.Clone(hname)
+        else:
+            h_added.Add(h)
+    return h_added
 
 def DrawHistos(myhistos, mylabels, xmin, xmax, xlabel, ymin, ymax, ylabel, outputname, dology=True, showratio=False, dologx=False, lheader=None, donormalize=False, binomialratio=False, yrmax=2.0, yrmin=0.0, yrlabel=None, MCOnly=False, leftlegend=False, mycolors=[], legendPos=[], legendNCols=1, linestyles=[], markerstyles=[], showpull=False, doNewman=False, doPearson=False, ignoreHistError=False, ypullmin=-3.99, ypullmax=3.99, drawashist=False, padsize=(2, 0.9, 1.1), setGridx=False, setGridy=False, drawoptions=[], legendoptions=[], ratiooptions=[], dologz=False, doth2=False, ratiobase=0, redrawihist=-1, extraText=None, noCMS=False, noLumi=False, nMaxDigits=None, addOverflow=False, addUnderflow=False, plotdiff=False, hratiopanel=None, doratios=None, hpulls=None, W_ref=600, is5TeV=False, outdir="plots", savepdf=True,zmin=0,zmax=2):
     """

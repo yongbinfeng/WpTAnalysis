@@ -4,86 +4,59 @@ script to measure FR and carry out closure test
 import ROOT
 from collections import OrderedDict
 from modules.Binnings import mass_bins_test
-from CMSPLOTS.myFunction import DrawHistos
+from CMSPLOTS.myFunction import DrawHistos, MultiplyH2, PositiveProtection2D, IntegralAndError2D, CombineOneBin2D, GetRatioPanel, LHistos2Hist, IncludeOverflow2D
 
 ROOT.gROOT.SetBatch(True)
 
-def MultiplyH2(h1, h2):
-    assert h1.GetNbinsX() == h2.GetNbinsX(), "h1 and h2 have different number of bins in x"
-    assert h1.GetNbinsY() == h2.GetNbinsY(), "h1 and h2 have different number of bins in y"
-    
-    for ix in range(1, h1.GetNbinsX()+1):
-        for iy in range(1, h1.GetNbinsY()+1):
-            val1 = h1.GetBinContent(ix, iy)
-            val2 = h2.GetBinContent(ix, iy)
-            err1 = h1.GetBinError(ix, iy)
-            err2 = h2.GetBinError(ix, iy)
-            h1.SetBinContent(ix, iy, val1*val2)
-            h1.SetBinError(ix, iy, ROOT.TMath.Sqrt((val1*err2)**2 + (val2*err1)**2))
-    return h1
-
-def IntegralAndError(h2):
-    val = 0
-    err2 = 0
-    for ibinx in range(1, h2.GetNbinsX()+1):
-        for ibiny in range(1, h2.GetNbinsY()+1):
-            val += h2.GetBinContent(ibinx, ibiny)
-            err2 += h2.GetBinError(ibinx, ibiny)**2
-    return val, ROOT.TMath.Sqrt(err2)
-
-def CombineOneBin2D(h, ix, iy, jx, jy):
-    """
-    combien the j-th bin to i-th bin, and clean j-th bin
-    """
-    h.SetBinContent(ix, iy, h.GetBinContent(ix, iy) + h.GetBinContent(jx, jy))
-    h.SetBinError(ix, iy, ROOT.TMath.Sqrt(h.GetBinError(ix, iy)**2 + h.GetBinError(jx, jy)**2))
-    # clean the original bin so that there would not be double counting
-    h.SetBinContent(jx, jy, 0)
-    h.SetBinError(jx, jy, 0)
-    
-def GetRatioPanel(hs):
-    """
-    build the ratio error bars used for THStack
-    Assuming different histograms are uncorrelated
-    """
-    hlist = hs.GetHists()
-    hratio = None
-    for h in hlist:
-        if not hratio:
-            hratio = h.Clone(h.GetName() + "_ratio")
-        else:
-            hratio.Add(h)
-    hratio.Divide(hratio)
-    hratio.SetFillColor(15)
-    return hratio
-
-def IncludeOverflow(h2, doUnderflow=False):
-    """
-    this might not work for one th2 with only one bin in one direction
-    """
-    nbinsX = h2.GetNbinsX()
-    nbinsY = h2.GetNbinsY()
-    
-    for ix in range(1, nbinsX+1):
-        CombineOneBin2D(h2, ix, nbinsY, ix, nbinsY+1)
-    for iy in range(1, nbinsY+1):
-        CombineOneBin2D(h2, nbinsX, iy, nbinsX+1, iy)
-    # correct the corner
-    CombineOneBin2D(h2, nbinsX, nbinsY, nbinsX+1, nbinsY+1)
+def DrawDataMCStack(hdata, hmc, hpred, xmin = 0, xmax = 140, xlabel = "m_{T} GeV", outputname = "test", is5TeV = False):
+    hdata.SetLineColor(1)
+    hdata.SetMarkerColor(1)
+    hmc.SetLineColor(92)
+    hmc.SetFillColor(92)
+    hmc.SetMarkerColor(92)
+    hpred.SetLineColor(226)
+    hpred.SetMarkerColor(226)
+    hpred.SetFillColor(226)
+    hsmc = ROOT.THStack(f"hsmc_{outputname}", f"hsmc_{outputname}")
+    hsmc.Add(hpred)
+    hsmc.Add(hmc) 
+    ymax = hdata.GetMaximum() * 1.3
+    hratiopanel = GetRatioPanel(hsmc) 
+    DrawHistos([hdata, hsmc], ["Obs", "MC", "Pred QCD"], xmin, xmax, xlabel, 0., ymax, "Events / 0.1", f"{outdir}/{outputname}", dology=False, showratio=True, yrmin = 0.89, yrmax = 1.11, ratiobase=1, redrawihist=0, hratiopanel=hratiopanel, is5TeV=is5TeV)
         
-    if doUnderflow:
-        for ix in range(1, nbinsX+1):
-            CombineOneBin2D(h2, ix, 1, ix, 0)
-        for iy in range(1, nbinsY+1):
-            CombineOneBin2D(h2, 1, iy, 0, iy)
-        # correct the corner
-        CombineOneBin2D(h2, 1, 1, 0, 0)
-        CombineOneBin2D(h2, 1, nbinsY, 0, nbinsY+1)
-        CombineOneBin2D(h2, nbinsX, 1, nbinsX+1, 0)
+doPtVsEta = True
+is5TeV = False
+doElectron = True
 
-iname = "root/output_qcdLepPtVsEtaMean_munu_13TeV.root"
-outdir = "plots/13TeV/FRAndClosure/"
+doPtVsMet = not doPtVsEta
+lepname = "mu" if not doElectron else "e"
+sqrtS = "13TeV" if not is5TeV else "5TeV"
 
+if doPtVsEta:
+    iname = f"root/output_qcdLepPtVsEtaMean_{lepname}nu_{sqrtS}.root"
+    var1 = f"{lepname}_pt"
+    var2 = "eta"
+    x1label = "p_{T}^{l} [GeV]"
+    x1min = 25
+    x1max = 70
+    x2label = "#eta^{l}"
+    x2min = -2.4
+    x2max = 2.4  
+else:
+    iname = f"root/output_qcdLepPtVsMetMean_{lepname}nu_{sqrtS}.root"
+    var1 = f"{lepname}_pt"
+    var2 = "met"
+    x1label = "p_{T}^{l} [GeV]"
+    x1min = 25
+    x1max = 70
+    x2label = "p_{T}^{miss} [GeV]"
+    x2min = 0
+    x2max = 70
+    
+var2D = f"{var1}_vs_{var2}"
+outdir = f"plots/{sqrtS}/FRAndClosure/{var2D}/"
+
+# base mt for calculate FR
 basemt = "mt0"
 
 f = ROOT.TFile.Open(iname) 
@@ -95,14 +68,17 @@ for isobin in range(0, 20):
     isobins.append(f"iso{isobin}")
     
 isogroups = OrderedDict()
-isogroups["SR"] = ["iso0", "iso1", "iso2", "iso3"]
-isogroups["antiIso1"] = ["iso9", "iso10", "iso11", "iso12", "iso13", "iso14", "iso15"]
+if not doElectron:
+    isogroups["SR"] = ["iso0", "iso1", "iso2", "iso3"]
+    isogroups["antiIso1"] = ["iso9", "iso10", "iso11", "iso12", "iso13", "iso14", "iso15"]
+else:
+    isogroups["SR"] = ["iso3", "iso4"]
+    isogroups["antiIso1"] = ["iso7", "iso8", "iso9", "iso10"]
     
 etabins = ["lepEta_bin0"]
 
 wptbins = ["WpT_bin0"]
 
-lepname = "mu" 
 chgbins = [lepname+"plus", lepname + "minus"]
 
 mass_bins = mass_bins_test[0]
@@ -156,9 +132,10 @@ for wpt in wptbins:
                     hmc = None
                     for iso in isogroups[isogroup]:
                         strname = "weight_{}_{}_{}_{}_{}".format(chg, iso, wpt, lepeta, mt)
-                        hname = f"histo_wjets_{lepname}_pt_vs_eta_{strname}"
+                        hname = f"histo_wjets_{var2D}_{strname}"
                     
                         if not hdata:
+                            print("Getting " + hname + f"_{data_suffix}")
                             hdata = f.Get(hname + f"_{data_suffix}").Clone(hname+"_PureData")
                         else:
                             hdata.Add(f.Get(hname + f"_{data_suffix}"))
@@ -168,11 +145,12 @@ for wpt in wptbins:
                             hmc.Add(f.Get(hname + f"_{mc_suffix}"))
                             
                     # inlcude overflow and underflow bins 
-                    IncludeOverflow(hdata, True)
-                    IncludeOverflow(hmc, True)
+                    IncludeOverflow2D(hdata, True)
+                    IncludeOverflow2D(hmc, True)
                     
                     h = hdata.Clone(hname + f"_Subtracted")
                     h.Add(hmc, -1)
+                    PositiveProtection2D(h)
                     
                     histos_count[wpt][lepeta][chg][mt][isogroup] = h
                     histos_count_Data[wpt][lepeta][chg][mt][isogroup] = hdata
@@ -188,7 +166,14 @@ for wpt in wptbins:
                     
                     histos_FR[wpt][lepeta][chg][mt][isogroup] = hnum 
                     
-                    DrawHistos([hnum], [], 25, 70, "p^{l}_{T} [GeV]", -2.4, 2.4, "#eta ", f"{outdir}/histo_wjets_{lepname}_pt_vs_eta_FR_{chg}_{wpt}_{lepeta}_{mt}_{isogroup}", False, False, False, dologz=False, doth2=True, drawoptions="COLZ,text") 
+                    DrawHistos([hnum], [], x1min, x1max, x1label, x2min, x2max, x2label, f"{outdir}/histo_wjets_{var2D}_FR_{chg}_{wpt}_{lepeta}_{mt}_{isogroup}", False, False, False, dologz=False, doth2=True, drawoptions="COLZ,text", is5TeV=is5TeV) 
+                    
+            hdatas_lep_pt = []
+            hmcs_lep_pt = []
+            hpreds_lep_pt = []
+            hdatas_lep_eta = []
+            hmcs_lep_eta = []
+            hpreds_lep_eta = []
             
             for mt in mtbins:
                 hfr = histos_FR[wpt][lepeta][chg][basemt]["antiIso1"]
@@ -214,57 +199,52 @@ for wpt in wptbins:
                 hpred_lep_eta.SetLineColor(ROOT.kRed)
                 hpred_lep_eta.SetMarkerColor(ROOT.kRed)
                 
+                # compare predicted QCD with data-MC
                 ymax = max(hcounts_sr_eta.GetMaximum(), hpred_lep_eta.GetMaximum()) * 1.2
-                DrawHistos([hcounts_sr_eta, hpred_lep_eta], ["Obs", "Pred"], -2.4, 2.4, "#eta", 0., ymax, "Events / 0.1", f"{outdir}/histos_wjets_{lepname}_lep_eta_CT_{chg}_{wpt}_{lepeta}_{mt}", dology=False, showratio=True, yrmin = 0.8, yrmax = 1.2)
+                DrawHistos([hcounts_sr_eta, hpred_lep_eta], ["Obs", "Pred"], x2min, x2max, x2label, 0., ymax, "Events / 0.1", f"{outdir}/histos_wjets_{lepname}_lep_eta_CT_{chg}_{wpt}_{lepeta}_{mt}", dology=False, showratio=True, yrmin = 0.8, yrmax = 1.2, is5TeV = is5TeV)
                 
                 hcounts_sr_pt.SetLineColor(ROOT.kBlack)
                 hcounts_sr_pt.SetMarkerColor(ROOT.kBlack)
                 hpred_lep_pt.SetLineColor(ROOT.kRed)
                 hpred_lep_pt.SetMarkerColor(ROOT.kRed)
                 ymax = max(hcounts_sr_pt.GetMaximum(), hpred_lep_pt.GetMaximum()) * 1.2
-                DrawHistos([hcounts_sr_pt, hpred_lep_pt], ["Obs", "Pred"], 25, 70, "p^{l}_{T} [GeV]", 0, ymax, "Events / GeV", f"{outdir}/histos_wjets_{lepname}_lep_pt_CT_{chg}_{wpt}_{lepeta}_{mt}", dology=False, showratio=True, yrmin = 0.8, yrmax = 1.2)
+                DrawHistos([hcounts_sr_pt, hpred_lep_pt], ["Obs", "Pred"], x1min, x1max, x1label, 0, ymax, "Events / GeV", f"{outdir}/histos_wjets_{lepname}_lep_pt_CT_{chg}_{wpt}_{lepeta}_{mt}", dology=False, showratio=True, yrmin = 0.8, yrmax = 1.2, is5TeV = is5TeV)
                 
-                # make the stacked histograms so that the signal contribution can be visualized
+                # make the stacked histograms 
+                # so that the signal contribution can be visualized
                 hdata = histos_count_Data[wpt][lepeta][chg][mt]["SR"]
                 hmc = histos_count_MC[wpt][lepeta][chg][mt]["SR"]  
                 
                 hdata_lep_eta = hdata.ProjectionY(f"{hdata.GetName()}_Proj_lep_eta")
-                hdata_lep_eta.SetLineColor(1)
-                hdata_lep_eta.SetMarkerColor(1)
                 hmc_lep_eta = hmc.ProjectionY(f"{hmc.GetName()}_Proj_lep_eta")
-                hmc_lep_eta.SetLineColor(92)
-                hmc_lep_eta.SetFillColor(92)
-                hmc_lep_eta.SetMarkerColor(92)
-                hpred_lep_eta.SetLineColor(226)
-                hpred_lep_eta.SetMarkerColor(226)
-                hpred_lep_eta.SetFillColor(226)
-                hsmc_lep_eta = ROOT.THStack("hsmc_lep_eta", "hsmc_lep_eta")
-                hsmc_lep_eta.Add(hpred_lep_eta)
-                hsmc_lep_eta.Add(hmc_lep_eta)
-                ymax = hdata_lep_eta.GetMaximum() * 1.3
-                hratiopanel = GetRatioPanel(hsmc_lep_eta) 
-                DrawHistos([hdata_lep_eta, hsmc_lep_eta], ["Obs", "MC", "Pred QCD"], -2.4, 2.4, "#eta", 0., ymax, "Events / 0.1", f"{outdir}/histos_wjets_{lepname}_lep_eta_CT_{chg}_{wpt}_{lepeta}_{mt}_stacked", dology=False, showratio=True, yrmin = 0.8, yrmax = 1.2, ratiobase=1, redrawihist=0, hratiopanel=hratiopanel)
+                DrawDataMCStack(hdata_lep_eta, hmc_lep_eta, hpred_lep_eta, x2min, x2max, x2label, f"histos_wjets_{lepname}_lep_eta_CT_{chg}_{wpt}_{lepeta}_{mt}_stacked", is5TeV = is5TeV)
+                hdatas_lep_eta.append(hdata_lep_eta)
+                hmcs_lep_eta.append(hmc_lep_eta)
+                hpreds_lep_eta.append(hpred_lep_eta)
                 
                 hdata_lep_pt = hdata.ProjectionX(f"{hdata.GetName()}_Proj_lep_pt")
-                hdata_lep_pt.SetLineColor(1)
-                hdata_lep_pt.SetMarkerColor(1)
                 hmc_lep_pt = hmc.ProjectionX(f"{hmc.GetName()}_Proj_lep_pt")
-                hmc_lep_pt.SetLineColor(92)
-                hmc_lep_pt.SetFillColor(92)
-                hmc_lep_pt.SetMarkerColor(92)
-                hpred_lep_pt.SetLineColor(226)
-                hpred_lep_pt.SetMarkerColor(226)
-                hpred_lep_pt.SetFillColor(226)
-                hsmc_lep_pt = ROOT.THStack("hsmc_lep_pt", "hsmc_lep_pt")
-                hsmc_lep_pt.Add(hpred_lep_pt)
-                hsmc_lep_pt.Add(hmc_lep_pt)
-                ymax = hdata_lep_pt.GetMaximum() * 1.3
-                hratiopanel = GetRatioPanel(hsmc_lep_pt)
-                DrawHistos([hdata_lep_pt, hsmc_lep_pt], ["Obs", "MC", "Pred QCD"], 25, 70, "p^{l}_{T} [GeV]", 0, ymax, "Events / GeV", f"{outdir}/histos_wjets_{lepname}_lep_pt_CT_{chg}_{wpt}_{lepeta}_{mt}_stacked", dology=False, showratio=True, yrmin = 0.8, yrmax = 1.2, ratiobase=1, redrawihist=0, hratiopanel=hratiopanel)
-                
+                DrawDataMCStack(hdata_lep_pt, hmc_lep_pt, hpred_lep_pt, x1min, x1max, x1label, f"histos_wjets_{lepname}_lep_pt_CT_{chg}_{wpt}_{lepeta}_{mt}_stacked", is5TeV = is5TeV)
+                hdatas_lep_pt.append(hdata_lep_pt)
+                hmcs_lep_pt.append(hmc_lep_pt)
+                hpreds_lep_pt.append(hpred_lep_pt)
                 
                 # draw 2D closure ratio
-                DrawHistos([hratio], [], 25, 70, "p^{l}_{T} [GeV]", -2.4, 2.4, "#eta ", f"{outdir}/histo_wjets_{lepname}_pt_vs_eta_CT_{chg}_{wpt}_{lepeta}_{mt}", False, False, False, dologz=False, doth2=True, drawoptions="COLZ,text", zmin=0.5, zmax=1.2)
+                DrawHistos([hratio], [], x1min, x1max, x1label, x2min, x2max, x2label, f"{outdir}/histo_wjets_{var2D}_CT_{chg}_{wpt}_{lepeta}_{mt}", False, False, False, dologz=False, doth2=True, drawoptions="COLZ,text", zmin=0.5, zmax=1.2, is5TeV=is5TeV)
+                
+            # check lepton pt distribution
+            strname = f"{lepname}_lep_pt_{chg}_{wpt}_{lepeta}"
+            hdata_lep_pt = LHistos2Hist(hdatas_lep_pt, f"hdata_{strname}_Data")
+            hmc_lep_pt = LHistos2Hist(hmcs_lep_pt, f"hmc_{strname}_MC")
+            hpred_lep_pt = LHistos2Hist(hpreds_lep_pt, f"hqcd_{strname}_QCD")
+            DrawDataMCStack(hdata_lep_pt, hmc_lep_pt, hpred_lep_pt, x1min, x1max, x1label, f"histos_wjets_{lepname}_lep_pt_CT_{chg}_{wpt}_{lepeta}_stacked", is5TeV = is5TeV)
+            
+            # check lepton eta distribution
+            strname = f"{lepname}_lep_eta_{chg}_{wpt}_{lepeta}"
+            hdata_lep_eta = LHistos2Hist(hdatas_lep_eta, f"hdata_{strname}_Data")
+            hmc_lep_eta = LHistos2Hist(hmcs_lep_eta, f"hmc_{strname}_MC")
+            hpred_lep_eta = LHistos2Hist(hpreds_lep_eta, f"hqcd_{strname}_QCD")
+            DrawDataMCStack(hdata_lep_eta, hmc_lep_eta, hpred_lep_eta, x2min, x2max, x2label, f"histos_wjets_{lepname}_lep_eta_CT_{chg}_{wpt}_{lepeta}_stacked", is5TeV = is5TeV)
                 
             # check the mT distribution
             hdata_mt = ROOT.TH1D(f"hdata_{lepname}_mT_{chg}_{wpt}_{lepeta}_Data", f"hdata_{lepname}_mT_{chg}_{wpt}_{lepeta}_Data", len(mass_bins)-1, mass_bins) 
@@ -274,9 +254,9 @@ for wpt in wptbins:
             hpred_mt = ROOT.TH1D(f"hqcd_{lepname}_mT_{chg}_{wpt}_{lepeta}_QCD", f"hqcd_{lepname}_mT_{chg}_{wpt}_{lepeta}_QCD", len(mass_bins)-1, mass_bins)
             hpred_mt.Sumw2()
             for imt, mt in enumerate(mtbins):
-                val_data, err_data = IntegralAndError(histos_count_Data[wpt][lepeta][chg][mt]["SR"])
-                val_mc, err_mc = IntegralAndError(histos_count_MC[wpt][lepeta][chg][mt]["SR"])
-                val_pred, err_pred = IntegralAndError(histos_count_QCD[wpt][lepeta][chg][mt]["SR"])
+                val_data, err_data = IntegralAndError2D(histos_count_Data[wpt][lepeta][chg][mt]["SR"])
+                val_mc, err_mc = IntegralAndError2D(histos_count_MC[wpt][lepeta][chg][mt]["SR"])
+                val_pred, err_pred = IntegralAndError2D(histos_count_QCD[wpt][lepeta][chg][mt]["SR"])
                 hdata_mt.SetBinContent(imt + 1, val_data)
                 hdata_mt.SetBinError(imt + 1, err_data)
                 hmc_mt.SetBinContent(imt + 1, val_mc)
@@ -284,26 +264,13 @@ for wpt in wptbins:
                 hpred_mt.SetBinContent(imt + 1, val_pred)
                 hpred_mt.SetBinError(imt + 1, err_pred)
 
-            hdata_mt.SetLineColor(1)
-            hdata_mt.SetMarkerColor(1)
-            hmc_mt.SetLineColor(92)
-            hmc_mt.SetFillColor(92)
-            hmc_mt.SetMarkerColor(92)
-            hpred_mt.SetLineColor(226)
-            hpred_mt.SetMarkerColor(226)
-            hpred_mt.SetFillColor(226)
-            hsmc_mt = ROOT.THStack("hsmc_mt", "hsmc_mt")
-            hsmc_mt.Add(hpred_mt)
-            hsmc_mt.Add(hmc_mt) 
-            ymax = hdata_mt.GetMaximum() * 1.3
-            hratiopanel = GetRatioPanel(hsmc_mt) 
-            DrawHistos([hdata_mt, hsmc_mt], ["Obs", "MC", "Pred QCD"], 0, 140, "m_{T}", 0., ymax, "Events / 0.1", f"{outdir}/histos_wjets_{lepname}_mt_CT_{chg}_{wpt}_{lepeta}_stacked", dology=False, showratio=True, yrmin = 0.89, yrmax = 1.11, ratiobase=1, redrawihist=0, hratiopanel=hratiopanel)
+            DrawDataMCStack(hdata_mt, hmc_mt, hpred_mt, 0, 140, "m_{T}", f"histos_wjets_{lepname}_mt_CT_{chg}_{wpt}_{lepeta}_stacked", is5TeV = is5TeV)
             
             histos_ToSave.append(hdata_mt)
             histos_ToSave.append(hmc_mt)
             histos_ToSave.append(hpred_mt)
             
-ofile = ROOT.TFile.Open(f"{outdir}/histos_qcdFR.root", "RECREATE")
+ofile = ROOT.TFile.Open(f"{outdir}/histos_qcdFR_{lepname}_{sqrtS}.root", "RECREATE")
 for h in histos_ToSave:
     h.SetDirectory(ofile)
     h.Write()
