@@ -34,11 +34,36 @@ def main():
     doTest = args.doTest
     doWpT = args.doWpT
     is5TeV = args.is5TeV
+    
+    reweightZpt = True
 
     print("doMuon: ", doMuon)
     print("doTest:", doTest)
     print("doWpT:", doWpT)
     print("is5TeV:", is5TeV)
+    
+    if not is5TeV:
+        if doMuon:
+            ROOT.gROOT.ProcessLine(
+                'TFile* f_zpt = TFile::Open("data/output_Zpt_mumu_13TeV.root")')
+            ROOT.gROOT.ProcessLine(
+                'TH1D* h_zpt_ratio = (TH1D*)f_zpt->Get("histo_zjets_zpt_mumu_Ratio")')
+        else:
+            ROOT.gROOT.ProcessLine(
+                'TFile* f_zpt = TFile::Open("data/output_Zpt_ee_13TeV.root")')
+            ROOT.gROOT.ProcessLine(
+                'TH1D* h_zpt_ratio = (TH1D*)f_zpt->Get("histo_zjets_zpt_ee_Ratio")')
+    else:
+        if doMuon:
+            ROOT.gROOT.ProcessLine(
+                'TFile* f_zpt = TFile::Open("data/output_Zpt_mumu_5TeV.root")')
+            ROOT.gROOT.ProcessLine(
+                'TH1D* h_zpt_ratio = (TH1D*)f_zpt->Get("histo_zjets_zpt_mumu_Ratio")')
+        else:
+            ROOT.gROOT.ProcessLine(
+                'TFile* f_zpt = TFile::Open("data/output_Zpt_ee_5TeV.root")')
+            ROOT.gROOT.ProcessLine(
+                'TH1D* h_zpt_ratio = (TH1D*)f_zpt->Get("histo_zjets_zpt_ee_Ratio")')
 
     outdir = "plots/"
     outdir += "5TeV/" if is5TeV else "13TeV/"
@@ -124,6 +149,7 @@ def main():
             input_zz2l = "inputs_5TeV/wmunu/input_zz2l.txt"
             input_zz4l = "inputs_5TeV/wmunu/input_zz4l.txt"
             input_zxx = "inputs_5TeV/wmunu/input_zxx.txt"
+            input_zxx2 = "inputs_5TeV/wmunu/input_zxx2.txt"
             input_wx = "inputs_5TeV/wmunu/input_wx.txt"
         else:
             input_antiiso_data = "inputs_5TeV/awenu/input_data.txt"
@@ -189,11 +215,11 @@ def main():
         # wjetsnorm = 1.06
         wjetsnorm = 1.0
         Wl0Samp = Sample(input_wl0, isMC=True, name="wl0",
-                         isWSR=True, additionalnorm=wjetsnorm, reweightZpt=False)
+                         isWSR=True, additionalnorm=wjetsnorm, reweightZpt=reweightZpt)
         Wl1Samp = Sample(input_wl1, isMC=True, name="wl1",
-                         isWSR=True, additionalnorm=wjetsnorm, reweightZpt=False)
+                         isWSR=True, additionalnorm=wjetsnorm, reweightZpt=reweightZpt)
         Wl2Samp = Sample(input_wl2, isMC=True, name="wl2",
-                         isWSR=True, additionalnorm=wjetsnorm, reweightZpt=False)
+                         isWSR=True, additionalnorm=wjetsnorm, reweightZpt=reweightZpt)
         # ttbar
         TTbarSamp = Sample(input_ttbar, isMC=True,
                            name="ttbar_dilepton", isWSR=True)
@@ -207,13 +233,13 @@ def main():
         ZZSamp = Sample(input_zz, isMC=True, name="ZZ", isWSR=True)
         # tau
         ZXXSamp = Sample(input_zxx, isMC=True, name="ZXX",
-                         isWSR=True, reweightZpt=False)
+                         isWSR=True, reweightZpt=reweightZpt)
         Wx0Samp = Sample(input_wx0, isMC=True, name="wx0",
-                         isWSR=True, reweightZpt=False)
+                         isWSR=True, reweightZpt=reweightZpt)
         Wx1Samp = Sample(input_wx1, isMC=True, name="wx1",
-                         isWSR=True, reweightZpt=False)
+                         isWSR=True, reweightZpt=reweightZpt)
         Wx2Samp = Sample(input_wx2, isMC=True, name="wx2",
-                         isWSR=True, reweightZpt=False)
+                         isWSR=True, reweightZpt=reweightZpt)
 
         if not doTest:
             sampMan = SampleManager(DataSamp, [Wl0Samp, Wl1Samp, Wl2Samp, TTbarSamp, TT1LepSamp,
@@ -261,7 +287,7 @@ def main():
 
         wjetsnorm = 1.0
         WlSamp = Sample(input_wl, isMC=True, name="wlnu", color=92,
-                        legend="W#rightarrow#mu#nu", isWSR=True, additionalnorm=wjetsnorm, is5TeV=True, reweightZpt=False)
+                        legend="W#rightarrow#mu#nu", isWSR=True, additionalnorm=wjetsnorm, is5TeV=True, reweightZpt=reweightZpt)
         # ttbar
         TTbarSamp = Sample(input_ttbar, isMC=True, name="ttbar",
                            color=86, legend="t#bar{t}", isWSR=True, is5TeV=True)
@@ -276,15 +302,17 @@ def main():
                           isWSR=True, is5TeV=True)
         # tau
         ZXXSamp = Sample(input_zxx, isMC=True, name="ZXX",
-                         isWSR=True, is5TeV=True, reweightZpt=False)
+                         isWSR=True, is5TeV=True, reweightZpt=reweightZpt)
+        ZXX2Samp = Sample(input_zxx2, isMC=True, name="ZXX2",
+                          isWSR=True, is5TeV=True, reweightZpt=reweightZpt)
         WxSamp = Sample(input_wx, isMC=True, name="WX",
-                        color=216, legend="WX", isWSR=True, is5TeV=True, reweightZpt=False)
+                        color=216, legend="WX", isWSR=True, is5TeV=True, reweightZpt=reweightZpt)
 
         sampMan = SampleManager(DataSamp, [WlAisoSamp, TTbarAisoSamp, WWAisoSamp, WZAisoSamp, ZZ2LAisoSamp, ZZ4LAisoSamp,
-                                ZXXAisoSamp, WxAisoSamp, WlSamp, TTbarSamp, WWSamp, WZSamp, ZZ2LSamp, ZZ4LSamp, ZXXSamp, WxSamp], is5TeV=True)
+                                ZXXAisoSamp, WxAisoSamp, WlSamp, TTbarSamp, WWSamp, WZSamp, ZZ2LSamp, ZZ4LSamp, ZXXSamp, ZXX2Samp, WxSamp], is5TeV=True)
         sampMan.groupMCs(["WW", "WZ", "ZZ2L", "ZZ4L", "WW_aiso",
                          "WZ_aiso", "ZZ2L_aiso", "ZZ4L_aiso"], 'EWK', 216, 'EWK')
-        sampMan.groupMCs(['ZXX', 'ZXX_aiso'], 'zxx', 216, 'zxx')
+        sampMan.groupMCs(['ZXX', 'ZXX2', 'ZXX_aiso'], 'zxx', 216, 'zxx')
         sampMan.groupMCs(['WX', 'wx_aiso'], 'wx', 216, 'wx')
         sampMan.groupMCs(['ttbar', 'ttbar_aiso'], 'ttbar', 86, 't#bar{t}')
         label = "W#rightarrow#mu#nu" if doMuon else "W#rightarrow e#nu"
@@ -336,6 +364,8 @@ def main():
     sampMan.DefineAll("V2W", "UVec(lep.Pt(), lep.Phi(), met_pt, met_phi)")
     sampMan.DefineAll("WpT", "V2W.Mod()")
     sampMan.DefineAll("Wphi", "TVector2::Phi_mpi_pi(V2W.Phi())")
+    
+    sampMan.DefineAll("deltaPhi", "abs(TVector2::Phi_mpi_pi(met_phi - lep.Phi()))")
 
     # charge
     lepname = "mu" if doMuon else "e"
@@ -376,42 +406,36 @@ def main():
         sampMan.DefineAll(
             f"mt{imt}", f"mtCorr >= {mass_bins[imt]} && mtCorr < {mass_bins[imt+1]}")
         mtbins.append(f"mt{imt}")
+        
+    def makeDraws(strname, ymax):
+        sampMan.cacheDraw("RelIso", f"histo_wjets_{lepname}_RelIso_{strname}", 72, 0, 0.72, DrawConfig(xmin=0., xmax=0.75, xlabel="Relative Isolation", ylabel=f"Events / 0.01", dology=True, ymax=ymax, donormalizebin=False, addOverflow=True, addUnderflow=True, showratio=True, legendPos=[0.94, 0.88, 0.70, 0.68]), weightname=strname)
+        
+        sampMan.cacheDraw("Lep_pt", f"histo_wjets_{lepname}_Lep_pt_{strname}", 50, 20, 70, DrawConfig(xmin=20, xmax=70, xlabel="Lepton p_{T} [GeV]", ylabel=f"Events / GeV", dology=True, ymax=ymax, donormalizebin=False, addOverflow=True, addUnderflow=True, showratio=True, legendPos=[0.94, 0.88, 0.70, 0.68]), weightname=strname)
+        
+        sampMan.cacheDraw("Lep_eta", f"histo_wjets_{lepname}_Lep_eta_{strname}", 50, -2.5, 2.5, DrawConfig(xmin=-2.5, xmax=2.5, xlabel="Lepton #eta", ylabel=f"Events / {(2.5+2.5)/50:.2f}", dology=True, ymax=ymax, donormalizebin=False, addOverflow=True, addUnderflow=True, showratio=True, legendPos=[0.94, 0.88, 0.70, 0.68]), weightname=strname)
+        
+        sampMan.cacheDraw("met_pt", f"histo_wjets_{lepname}_met_pt_{strname}", 70, 0, 70, DrawConfig(xmin=0, xmax=70, xlabel="MET [GeV]", ylabel=f"Events / GeV", dology=True, ymax=ymax, donormalizebin=False, addOverflow=True, addUnderflow=True, showratio=True, legendPos=[0.94, 0.88, 0.70, 0.68]), weightname=strname)
+        
+        sampMan.cacheDraw("deltaPhi", f"histo_wjets_{lepname}_deltaPhi_{strname}", 30, 0, ROOT.TMath.Pi(), DrawConfig(xmin=0, xmax=ROOT.TMath.Pi(), xlabel="#Delta#phi(#mu, MET)", ylabel=f"Events / {(2*ROOT.TMath.Pi())/30:.2f}", dology=True, ymax=ymax, donormalizebin=False, addOverflow=True, addUnderflow=True, showratio=True, legendPos=[0.94, 0.88, 0.70, 0.68]), weightname=strname)
+        
+        sampMan.cacheDraw2D("Lep_pt", "Lep_eta", f"histo_wjets_{lepname}_pt_vs_eta_{strname}", 9, 25, 70, 8, -2.4, 2.4, DrawConfig(xmin=25, xmax=70, ymin=-2.4, ymax=2.4, xlabel="Lepton p_{T} [GeV]", ylabel="Lepton #eta", zlabel="Events / 10 GeV", dology=False, donormalizebin=False, addOverflow=True, addUnderflow=True, showratio=False, legendPos=[0.94, 0.88, 0.70, 0.68]), weightname=strname)
+        sampMan.cacheDraw2D("Lep_pt", "met_pt", f"histo_wjets_{lepname}_pt_vs_met_{strname}", 9, 25, 70, 10, 0, 70, DrawConfig(xmin=25, xmax=70, ymin=0, ymax=70, xlabel="Lepton p_{T} [GeV]", ylabel="MET [GeV]", zlabel="Events / 10 GeV", dology=False, donormalizebin=False, addOverflow=True, addUnderflow=True, showratio=False, legendPos=[0.94, 0.88, 0.70, 0.68]), weightname=strname)
+        sampMan.cacheDraw2D("Lep_pt", "deltaPhi", f"histo_wjets_{lepname}_pt_vs_deltaPhi_{strname}", 9, 25, 70, 10, 0., ROOT.TMath.Pi(), DrawConfig(xmin=25, xmax=70, ymin=0, ymax=ROOT.TMath.Pi(), xlabel="Lepton p_{T} [GeV]", ylabel="#Delta#phi(#mu, MET)", zlabel="Events / 10 GeV", dology=False, donormalizebin=False, addOverflow=True, addUnderflow=True, showratio=False, legendPos=[0.94, 0.88, 0.70, 0.68]), weightname=strname)
+        
 
     # draw the lepton isolation distribution
     ymax = 5e7 if doMuon else 1e6
     for wpt in wptbins:
         for lepeta in etabins:
             strname = f"weight_{wpt}_{lepeta}"
-            sampMan.DefineAll(strname, f"weight_WoVpt * {wpt} * {lepeta}")
-            
-            sampMan.cacheDraw("RelIso", f"histo_wjets_{lepname}_RelIso_{strname}", 72, 0, 0.72, DrawConfig(xmin=0., xmax=0.75, xlabel="Relative Isolation", ylabel=f"Events / 0.01", dology=True, ymax=ymax, donormalizebin=False, addOverflow=True, addUnderflow=True, showratio=True, legendPos=[0.94, 0.88, 0.70, 0.68]), weightname=strname)
-            
-            sampMan.cacheDraw("Lep_pt", f"histo_wjets_{lepname}_Lep_pt_{strname}", 50, 20, 70, DrawConfig(xmin=20, xmax=70, xlabel="Lepton p_{T} [GeV]", ylabel=f"Events / GeV", dology=True, ymax=ymax, donormalizebin=False, addOverflow=True, addUnderflow=True, showratio=True, legendPos=[0.94, 0.88, 0.70, 0.68]), weightname=strname)
-            
-            sampMan.cacheDraw("Lep_eta", f"histo_wjets_{lepname}_Lep_eta_{strname}", 50, -2.5, 2.5, DrawConfig(xmin=-2.5, xmax=2.5, xlabel="Lepton #eta", ylabel=f"Events / {(2.5+2.5)/50:.2f}", dology=True, ymax=ymax, donormalizebin=False, addOverflow=True, addUnderflow=True, showratio=True, legendPos=[0.94, 0.88, 0.70, 0.68]), weightname=strname)
-            
-            sampMan.cacheDraw("met_pt", f"histo_wjets_{lepname}_met_pt_{strname}", 70, 0, 70, DrawConfig(xmin=0, xmax=70, xlabel="MET [GeV]", ylabel=f"Events / GeV", dology=True, ymax=ymax, donormalizebin=False, addOverflow=True, addUnderflow=True, showratio=True, legendPos=[0.94, 0.88, 0.70, 0.68]), weightname=strname)
-            
-            sampMan.cacheDraw2D("Lep_pt", "Lep_eta", f"histo_wjets_{lepname}_pt_vs_eta_{strname}", 9, 25, 70, 8, -2.4, 2.4, DrawConfig(xmin=25, xmax=70, ymin=-2.4, ymax=2.4, xlabel="Lepton p_{T} [GeV]", ylabel="Lepton #eta", zlabel="Events / 10 GeV", dology=False, donormalizebin=False, addOverflow=True, addUnderflow=True, showratio=False, legendPos=[0.94, 0.88, 0.70, 0.68]), weightname=strname)
-            sampMan.cacheDraw2D("Lep_pt", "met_pt", f"histo_wjets_{lepname}_pt_vs_met_{strname}", 9, 25, 70, 10, 0, 70, DrawConfig(xmin=25, xmax=70, ymin=0, ymax=70, xlabel="Lepton p_{T} [GeV]", ylabel="MET [GeV]", zlabel="Events / 10 GeV", dology=False, donormalizebin=False, addOverflow=True, addUnderflow=True, showratio=False, legendPos=[0.94, 0.88, 0.70, 0.68]), weightname=strname)
+            sampMan.DefineAll(strname, f"weight_WVpt * {wpt} * {lepeta}")
+            makeDraws(strname, ymax)
             
             for mt in mtbins:
                 strname = f"weight_{wpt}_{lepeta}_{mt}"
-                sampMan.DefineAll(strname, f"weight_WoVpt * {wpt} * {lepeta} * {mt}")
+                sampMan.DefineAll(strname, f"weight_WVpt * {wpt} * {lepeta} * {mt}")
+                makeDraws(strname, ymax)
                 
-                sampMan.cacheDraw("RelIso", f"histo_wjets_{lepname}_RelIso_{strname}", 100, 0, 0.72, DrawConfig(xmin=0., xmax=0.75, xlabel="Relative Isolation", ylabel=f"Events / 0.01", dology=True, ymax=ymax, donormalizebin=False, addOverflow=True, addUnderflow=True, showratio=True, legendPos=[0.94, 0.88, 0.70, 0.68]), weightname=strname)
-                
-                sampMan.cacheDraw("Lep_pt", f"histo_wjets_{lepname}_Lep_pt_{strname}", 50, 20, 70, DrawConfig(xmin=20, xmax=70, xlabel="Lepton pT", ylabel=f"Events / GeV", dology=True, ymax=ymax, donormalizebin=False, addOverflow=True, addUnderflow=True, showratio=True, legendPos=[0.94, 0.88, 0.70, 0.68]), weightname=strname)
-                
-                sampMan.cacheDraw("Lep_eta", f"histo_wjets_{lepname}_Lep_eta_{strname}", 50, -2.5, 2.5, DrawConfig(xmin=-2.5, xmax=2.5, xlabel="Lepton eta", ylabel=f"Events / 0.1", dology=True, ymax=ymax, donormalizebin=False, addOverflow=True, addUnderflow=True, showratio=True, legendPos=[0.94, 0.88, 0.70, 0.68]), weightname=strname)
-                
-                sampMan.cacheDraw("met_pt", f"histo_wjets_{lepname}_met_pt_{strname}", 70, 0, 70, DrawConfig(xmin=0, xmax=70, xlabel="MET", ylabel=f"Events / GeV", dology=True, ymax=ymax, donormalizebin=False, addOverflow=True, addUnderflow=True, showratio=True, legendPos=[0.94, 0.88, 0.70, 0.68]), weightname=strname)
-                
-                sampMan.cacheDraw2D("Lep_pt", "Lep_eta", f"histo_wjets_{lepname}_pt_vs_eta_{strname}", 9, 25, 70, 8, -2.4, 2.4, DrawConfig(xmin=25, xmax=70, ymin=-2.4, ymax=2.4, xlabel="Lepton p_{T} [GeV]", ylabel="Lepton #eta", zlabel="Events / 10 GeV", dology=False, donormalizebin=False, addOverflow=True, addUnderflow=True, showratio=False, legendPos=[0.94, 0.88, 0.70, 0.68]), weightname=strname)
-                
-                sampMan.cacheDraw2D("Lep_pt", "met_pt", f"histo_wjets_{lepname}_pt_vs_met_{strname}", 9, 25, 70, 10, 0, 70, DrawConfig(xmin=25, xmax=70, ymin=0, ymax=70, xlabel="Lepton p_{T} [GeV]", ylabel="MET [GeV]", zlabel="Events / 10 GeV", dology=False, donormalizebin=False, addOverflow=True, addUnderflow=True, showratio=False, legendPos=[0.94, 0.88, 0.70, 0.68]), weightname=strname)
-                
-
     idx = 0
     # do the fine binning first; then rebin in the processHists
     mass_bins = np.array([0, 5.0, 10.0, 15.0, 20.0, 25.0, 30.0, 35.0, 40.0, 45.0, 50.0, 55.0, 60.0, 65.0,
@@ -424,38 +448,16 @@ def main():
                         chg, iso, wpt, lepeta)
 
                     sampMan.DefineAll(
-                        strname, "w_{} * weight_WoVpt * {} * {} * {}".format(iso, wpt, lepeta, chg))
+                        strname, "w_{} * weight_WVpt * {} * {} * {}".format(iso, wpt, lepeta, chg))
                    
                     sampMan.cacheDraw("mtCorr", f"histo_wjets_{lepname}_mtcorr_{strname}", mass_bins, DrawConfig(xmin=0., xmax=140.0, xlabel="m_{T} [GeV]", ylabel=f"Events / 5 GeV", dology=True, ymax=6e5, donormalizebin=False, addOverflow=True, addUnderflow=True, showratio=False, lheader=f"{isoCuts[idx]} < I < {isoCuts[idx + 1]}", legendPos=[0.94, 0.88, 0.70, 0.68]), weightname=strname)
 
-                    # draw the isolation in different bins, in order to calculate the mean in each bin
-                    sampMan.cacheDraw("RelIso", f"histo_wjets_{lepname}_RelIso_{strname}", 100, isoCuts[idx], isoCuts[idx + 1], DrawConfig(xmin=isoCuts[idx], xmax=isoCuts[idx+1], xlabel="Relative Isolation", ylabel=f"Events / {(isoCuts[idx + 1]-isoCuts[idx])/100:.2f}", dology=True, ymax=ymax, donormalizebin=False, addOverflow=True, addUnderflow=True, showratio=False, legendPos=[0.94, 0.88, 0.70, 0.68]), weightname=strname)
+                    makeDraws(strname, ymax)
                     
-                    sampMan.cacheDraw("Lep_pt", f"histo_wjets_{lepname}_Lep_pt_{strname}", 50, 20, 70, DrawConfig(xmin=20, xmax=70, xlabel="Lepton pT", ylabel=f"Events / GeV", dology=True, ymax=ymax, donormalizebin=False, addOverflow=True, addUnderflow=True, showratio=False, legendPos=[0.94, 0.88, 0.70, 0.68]), weightname=strname)
-                    
-                    sampMan.cacheDraw("Lep_eta", f"histo_wjets_{lepname}_Lep_eta_{strname}", 50, -2.5, 2.5, DrawConfig(xmin=-2.5, xmax=2.5, xlabel="Lepton eta", ylabel=f"Events / 0.1", dology=True, ymax=ymax, donormalizebin=False, addOverflow=True, addUnderflow=True, showratio=False, legendPos=[0.94, 0.88, 0.70, 0.68]), weightname=strname)
-                    
-                    sampMan.cacheDraw("met_pt", f"histo_wjets_{lepname}_met_pt_{strname}", 70, 0, 70, DrawConfig(xmin=0, xmax=70, xlabel="MET", ylabel=f"Events / GeV", dology=True, ymax=ymax, donormalizebin=False, addOverflow=True, addUnderflow=True, showratio=False, legendPos=[0.94, 0.88, 0.70, 0.68]), weightname=strname)
-                    
-                    sampMan.cacheDraw2D("Lep_pt", "Lep_eta", f"histo_wjets_{lepname}_pt_vs_eta_{strname}", 9, 25, 70, 8, -2.4, 2.4, DrawConfig(xmin=25, xmax=70, ymin=-2.4, ymax=2.4, xlabel="Lepton p_{T} [GeV]", ylabel="Lepton #eta", zlabel="Events / 10 GeV", dology=False, donormalizebin=False, addOverflow=True, addUnderflow=True, showratio=False, legendPos=[0.94, 0.88, 0.70, 0.68]), weightname=strname)
-                    
-                    sampMan.cacheDraw2D("Lep_pt", "met_pt", f"histo_wjets_{lepname}_pt_vs_met_{strname}", 9, 25, 70, 10, 0, 70, DrawConfig(xmin=25, xmax=70, ymin=0, ymax=70, xlabel="Lepton p_{T} [GeV]", ylabel="MET [GeV]", zlabel="Events / 10 GeV", dology=False, donormalizebin=False, addOverflow=True, addUnderflow=True, showratio=False, legendPos=[0.94, 0.88, 0.70, 0.68]), weightname=strname)
-
                     for mt in mtbins:
                         strname = "weight_{}_{}_{}_{}_{}".format(chg, iso, wpt, lepeta, mt)
-                        sampMan.DefineAll(strname, "w_{} * weight_WoVpt * {} * {} * {} * {}".format(iso, wpt, lepeta, chg, mt))
-
-                        sampMan.cacheDraw("RelIso", f"histo_wjets_{lepname}_RelIso_{strname}", 100, isoCuts[idx], isoCuts[idx + 1], DrawConfig(xmin=isoCuts[idx], xmax=isoCuts[idx+1], xlabel="Relative Isolation", ylabel=f"Events / {(isoCuts[idx+1]-isoCuts[idx])/100:.2f}", dology=True, ymax=ymax, donormalizebin=False, addOverflow=True, addUnderflow=True, showratio=True, legendPos=[0.94, 0.88, 0.70, 0.68]), weightname=strname)
-                        
-                        sampMan.cacheDraw("Lep_pt", f"histo_wjets_{lepname}_Lep_pt_{strname}", 50, 20, 70, DrawConfig(xmin=20, xmax=70, xlabel="Lepton pT", ylabel=f"Events / GeV", dology=True, ymax=ymax, donormalizebin=False, addOverflow=True, addUnderflow=True, showratio=True, legendPos=[0.94, 0.88, 0.70, 0.68]), weightname=strname)
-                        
-                        sampMan.cacheDraw("Lep_eta", f"histo_wjets_{lepname}_Lep_eta_{strname}", 50, -2.5, 2.5, DrawConfig(xmin=-2.5, xmax=2.5, xlabel="Lepton eta", ylabel=f"Events / 0.1", dology=True, ymax=ymax, donormalizebin=False, addOverflow=True, addUnderflow=True, showratio=True, legendPos=[0.94, 0.88, 0.70, 0.68]), weightname=strname)
-                        
-                        sampMan.cacheDraw("met_pt", f"histo_wjets_{lepname}_met_pt_{strname}", 70, 0, 70, DrawConfig(xmin=0, xmax=70, xlabel="MET", ylabel=f"Events / GeV", dology=True, ymax=ymax, donormalizebin=False, addOverflow=True, addUnderflow=True, showratio=True, legendPos=[0.94, 0.88, 0.70, 0.68]), weightname=strname)
-                        
-                        sampMan.cacheDraw2D("Lep_pt", "Lep_eta", f"histo_wjets_{lepname}_pt_vs_eta_{strname}", 9, 25, 70, 8, -2.4, 2.4, DrawConfig(xmin=25, xmax=70, ymin=-2.4, ymax=2.4, xlabel="Lepton p_{T} [GeV]", ylabel="Lepton #eta", zlabel="Events / 10 GeV", dology=False, donormalizebin=False, addOverflow=True, addUnderflow=True, showratio=False, legendPos=[0.94, 0.88, 0.70, 0.68]), weightname=strname)
-                        
-                        sampMan.cacheDraw2D("Lep_pt", "met_pt", f"histo_wjets_{lepname}_pt_vs_met_{strname}", 9, 25, 70, 10, 0, 70, DrawConfig(xmin=25, xmax=70, ymin=0, ymax=70, xlabel="Lepton p_{T} [GeV]", ylabel="MET [GeV]", zlabel="Events / 10 GeV", dology=False, donormalizebin=False, addOverflow=True, addUnderflow=True, showratio=False, legendPos=[0.94, 0.88, 0.70, 0.68]), weightname=strname)
+                        sampMan.DefineAll(strname, "w_{} * weight_WVpt * {} * {} * {} * {}".format(iso, wpt, lepeta, chg, mt))
+                        makeDraws(strname, ymax)
                         
         idx += 1
 
@@ -470,6 +472,8 @@ def main():
     hlepetas_mt = OrderedDict()
     hmetpts = OrderedDict()
     hmetpts_mt = OrderedDict()
+    hdeltaphis = OrderedDict()
+    hdeltaphis_mt = OrderedDict()
     
     hpt_vs_etas_data = OrderedDict()
     hpt_vs_etas_mc = OrderedDict()
@@ -480,6 +484,11 @@ def main():
     hpt_vs_mets_mc = OrderedDict()
     hpt_vs_mets_data_mt = OrderedDict()
     hpt_vs_mets_mc_mt = OrderedDict()
+    
+    hpt_vs_deltaphis_data = OrderedDict()
+    hpt_vs_deltaphis_mc = OrderedDict()
+    hpt_vs_deltaphis_data_mt = OrderedDict()
+    hpt_vs_deltaphis_mc_mt = OrderedDict()
     
     def getHisto(name):
         hdata = sampMan.hdatas[name]
@@ -533,11 +542,17 @@ def main():
                     outputname = f"histo_wjets_{lepname}_met_pt_{strname}"
                     hmetpts[strname] = getHisto(outputname)
                     
+                    outputname = f"histo_wjets_{lepname}_deltaPhi_{strname}"
+                    hdeltaphis[strname] = getHisto(outputname)
+                    
                     outputname = f"histo_wjets_{lepname}_pt_vs_eta_{strname}"
                     hpt_vs_etas_data[strname], hpt_vs_etas_mc[strname] = getHisto2D(outputname)
                     
                     outputname = f"histo_wjets_{lepname}_pt_vs_met_{strname}"
                     hpt_vs_mets_data[strname], hpt_vs_mets_mc[strname] = getHisto2D(outputname)
+                    
+                    outputname = f"histo_wjets_{lepname}_pt_vs_deltaPhi_{strname}"
+                    hpt_vs_deltaphis_data[strname], hpt_vs_deltaphis_mc[strname] = getHisto2D(outputname)
 
                     for mt in mtbins:
                         strname = "weight_{}_{}_{}_{}_{}".format(
@@ -556,11 +571,17 @@ def main():
                         outputname = f"histo_wjets_{lepname}_met_pt_{strname}"
                         hmetpts_mt[strname] = getHisto(outputname)
                         
+                        outputname = f"histo_wjets_{lepname}_deltaPhi_{strname}"
+                        hdeltaphis_mt[strname] = getHisto(outputname)
+                        
                         outputname = f"histo_wjets_{lepname}_pt_vs_eta_{strname}"
                         hpt_vs_etas_data_mt[strname], hpt_vs_etas_mc_mt[strname] = getHisto2D(outputname)
                         
                         outputname = f"histo_wjets_{lepname}_pt_vs_met_{strname}"
                         hpt_vs_mets_data_mt[strname], hpt_vs_mets_mc_mt[strname] = getHisto2D(outputname)
+                        
+                        outputname = f"histo_wjets_{lepname}_pt_vs_deltaPhi_{strname}"
+                        hpt_vs_deltaphis_data_mt[strname], hpt_vs_deltaphis_mc_mt[strname] = getHisto2D(outputname)
                         
 
     postfix = lepname + "nu"
@@ -573,10 +594,13 @@ def main():
     dumpHistos([hleppts, hleppts_mt], f"output_qcdLepPtMean_{postfix}", doPrint=False)
     dumpHistos([hlepetas, hlepetas_mt], f"output_qcdLepEtaMean_{postfix}", doPrint=False)
     dumpHistos([hmetpts, hmetpts_mt], f"output_qcdMetPtMean_{postfix}", doPrint=False)
+    dumpHistos([hdeltaphis, hdeltaphis_mt], f"output_qcdDeltaPhiMean_{postfix}", doPrint=False)
     
     dumpHistos([hpt_vs_etas_data, hpt_vs_etas_mc, hpt_vs_etas_data_mt, hpt_vs_etas_mc_mt], f"output_qcdLepPtVsEtaMean_{postfix}", doPrint=False)
     
     dumpHistos([hpt_vs_mets_data, hpt_vs_mets_mc, hpt_vs_mets_data_mt, hpt_vs_mets_mc_mt], f"output_qcdLepPtVsMetMean_{postfix}", doPrint=False)
+    
+    dumpHistos([hpt_vs_deltaphis_data, hpt_vs_deltaphis_mc, hpt_vs_deltaphis_data_mt, hpt_vs_deltaphis_mc_mt], f"output_qcdLepPtVsDeltaPhiMean_{postfix}", doPrint=False)
     
     #
     # for the qcd background extrapolation
