@@ -232,6 +232,9 @@ def AddOverflows(hinput, dolastbin=True):
         # do the AddOverflowsTH1 for all the histograms in THStack
         hlist = list(hinput.GetHists())
         list(map(AddOverflowsTH1, hlist, [dolastbin]*len(hlist)))
+    
+    else:
+        print("input must be a ROOT.TH1 or ROOT.THStack for Over/Underflows")
         
 def IncludeOverflow2D(h2, doUnderflow=False):
     """
@@ -368,6 +371,9 @@ def DrawHistos(myhistos, mylabels, xmin, xmax, xlabel, ymin, ymax, ylabel, outpu
     else:
         # default val
         ROOT.TGaxis.SetMaxDigits(5)
+        
+    if ymax == None:
+        ymax = max([h.GetMaximum() for h in myhistos]) * 1.25
 
     H_ref = 500
     W = W_ref
@@ -464,7 +470,7 @@ def DrawHistos(myhistos, mylabels, xmin, xmax, xlabel, ymin, ymax, ylabel, outpu
     else:
         h1 = ROOT.TH2F("h2" + outputname, "h2", 80, xmin, xmax, 80, ymin, ymax)
         if zmin!=None and zmax!=None:
-            print(f"configuring z range to {zmin}, {zmax}")
+            #print(f"configuring z range to {zmin}, {zmax}")
             h1.GetZaxis().SetRangeUser(zmin, zmax)
 
     # print "xmin : %f xmax : %f"%(xmin, xmax)
@@ -707,7 +713,7 @@ def DrawHistos(myhistos, mylabels, xmin, xmax, xlabel, ymin, ymax, ylabel, outpu
 
         if showratio:
             if hratiopanel:
-                print("draw hratiopanel")
+                #print("draw hratiopanel")
                 # hratiopanel.SetFillColor(15)
                 hratiopanel.SetFillColorAlpha(15, 0.5)
                 hratiopanel.SetLineColor(2)
@@ -776,7 +782,7 @@ def DrawHistos(myhistos, mylabels, xmin, xmax, xlabel, ymin, ymax, ylabel, outpu
         os.makedirs(dirpath)
 
     if savepdf:
-        print("save plot to %s.pdf" % outputname)
+        #print("save plot to %s.pdf" % outputname)
         # canvas.Print("%s.C"%outputname)
         canvas.Print("%s.pdf" % outputname)
         # canvas.Print("%s.png" % outputname)
