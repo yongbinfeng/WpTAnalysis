@@ -286,6 +286,22 @@ def MultiplyH2(h1, h2):
             h1.SetBinError(ix, iy, ROOT.TMath.Sqrt((val1*err2)**2 + (val2*err1)**2))
     return h1
 
+def PositiveProtection(h):
+    if isinstance(h, ROOT.TH1):
+        PositiveProtection1D(h)
+    elif isinstance(h, ROOT.TH2):
+        PositiveProtection2D(h)
+    else:
+        print("input must be a ROOT.TH1 or ROOT.TH2 for PositiveProtection")
+        sys.exit(1)
+
+def PositiveProtection1D(h1):
+    for ix in range(1, h1.GetNbinsX()+1):
+        if h1.GetBinContent(ix) < 0:
+            print("WARNING: negative bin content found, set to 0 for bin", ix, h1.GetBinContent(ix), " in histogram ", h1.GetName())
+            h1.SetBinContent(ix, 0)
+            h1.SetBinError(ix, 0)
+
 def PositiveProtection2D(h2):
     for ix in range(1, h2.GetNbinsX()+1):
         for iy in range(1, h2.GetNbinsY()+1):

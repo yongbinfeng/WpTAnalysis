@@ -41,6 +41,14 @@ def main():
     print("doTest:", doTest)
     print("doWpT:", doWpT)
     print("is5TeV:", is5TeV)
+  
+    useChgIso = True
+    if useChgIso: 
+        isovar = "pfChIso / lep.Pt()"
+        suffix = "pfChIso"
+    else:
+        isovar = "relIso"
+        suffix = "relIso"
     
     if not is5TeV:
         if doMuon:
@@ -303,13 +311,13 @@ def main():
         # tau
         ZXXSamp = Sample(input_zxx, isMC=True, name="ZXX",
                          isWSR=True, is5TeV=True, reweightZpt=reweightZpt)
-        ZXX2Samp = Sample(input_zxx2, isMC=True, name="ZXX2",
-                          isWSR=True, is5TeV=True, reweightZpt=reweightZpt)
+        #ZXX2Samp = Sample(input_zxx2, isMC=True, name="ZXX2",
+        #                  isWSR=True, is5TeV=True, reweightZpt=reweightZpt)
         WxSamp = Sample(input_wx, isMC=True, name="WX",
                         color=216, legend="WX", isWSR=True, is5TeV=True, reweightZpt=reweightZpt)
 
         sampMan = SampleManager(DataSamp, [WlAisoSamp, TTbarAisoSamp, WWAisoSamp, WZAisoSamp, ZZ2LAisoSamp, ZZ4LAisoSamp,
-                                ZXXAisoSamp, WxAisoSamp, WlSamp, TTbarSamp, WWSamp, WZSamp, ZZ2LSamp, ZZ4LSamp, ZXXSamp, ZXX2Samp, WxSamp], is5TeV=True)
+                                ZXXAisoSamp, WxAisoSamp, WlSamp, TTbarSamp, WWSamp, WZSamp, ZZ2LSamp, ZZ4LSamp, ZXXSamp, WxSamp], is5TeV=True)
         sampMan.groupMCs(["WW", "WZ", "ZZ2L", "ZZ4L", "WW_aiso",
                          "WZ_aiso", "ZZ2L_aiso", "ZZ4L_aiso"], 'EWK', 216, 'EWK')
         sampMan.groupMCs(['ZXX', 'ZXX2', 'ZXX_aiso'], 'zxx', 216, 'zxx')
@@ -336,10 +344,11 @@ def main():
         isoCuts = [0.0,0.001, 0.05, 0.10, 0.15, 0.20, 0.25, 0.30, 0.35, 0.40, 0.45, 0.50,
                    0.55, 0.60, 0.65, 0.70, 0.75, 0.80, 0.85, 0.90, 0.95]
         isobins = []
-        sampMan.DefineAll("RelIso", "relIso")
+        sampMan.DefineAll("RelIso", isovar)
+        #sampMan.DefineAll("RelIso", "pfChIso / lep.Pt()")
         for isobin in range(0, 20):
             sampMan.DefineAll(
-                f"w_iso{isobin}", f"(relIso >= {isoCuts[isobin]} && relIso < {isoCuts[isobin+1]})")
+                f"w_iso{isobin}", f"(RelIso >= {isoCuts[isobin]} && RelIso < {isoCuts[isobin+1]})")
             isobins.append(f"iso{isobin}")
 
     else:
@@ -349,7 +358,7 @@ def main():
         sampMan.DefineAll("isEB",   "fabs(Lep_eta) <= 1.4442")
         # sampMan.DefineAll("RelIso", "isEB ? (relIso + 0.0287 - 0.0478) : (relIso + 0.0445 - 0.0658)")
         #sampMan.DefineAll("RelIso", "(pfCombIso/lep.Pt())")
-        sampMan.DefineAll("RelIso", "relIso")
+        sampMan.DefineAll("RelIso", isovar)
         for isobin in range(3, 13):
             sampMan.DefineAll(
                 f"w_iso{isobin}", f"(RelIso > {isoCuts[isobin-3]} && RelIso < {isoCuts[isobin-2]})")
@@ -584,23 +593,23 @@ def main():
                         hpt_vs_deltaphis_data_mt[strname], hpt_vs_deltaphis_mc_mt[strname] = getHisto2D(outputname)
                         
 
-    postfix = lepname + "nu"
+    suffix += "_" + lepname + "nu"
     sqrtS = "5TeV" if is5TeV else "13TeV"
-    postfix += f"_{sqrtS}.root"
+    suffix += f"_{sqrtS}.root"
 
     sampMan.dumpCounts()
 
-    dumpHistos([hIsos, hIsos_mt], f"output_qcdIsoMean_{postfix}", doPrint=True)
-    dumpHistos([hleppts, hleppts_mt], f"output_qcdLepPtMean_{postfix}", doPrint=False)
-    dumpHistos([hlepetas, hlepetas_mt], f"output_qcdLepEtaMean_{postfix}", doPrint=False)
-    dumpHistos([hmetpts, hmetpts_mt], f"output_qcdMetPtMean_{postfix}", doPrint=False)
-    dumpHistos([hdeltaphis, hdeltaphis_mt], f"output_qcdDeltaPhiMean_{postfix}", doPrint=False)
+    dumpHistos([hIsos, hIsos_mt], f"output_qcdIsoMean_{suffix}", doPrint=True)
+    dumpHistos([hleppts, hleppts_mt], f"output_qcdLepPtMean_{suffix}", doPrint=False)
+    dumpHistos([hlepetas, hlepetas_mt], f"output_qcdLepEtaMean_{suffix}", doPrint=False)
+    dumpHistos([hmetpts, hmetpts_mt], f"output_qcdMetPtMean_{suffix}", doPrint=False)
+    dumpHistos([hdeltaphis, hdeltaphis_mt], f"output_qcdDeltaPhiMean_{suffix}", doPrint=False)
     
-    dumpHistos([hpt_vs_etas_data, hpt_vs_etas_mc, hpt_vs_etas_data_mt, hpt_vs_etas_mc_mt], f"output_qcdLepPtVsEtaMean_{postfix}", doPrint=False)
+    dumpHistos([hpt_vs_etas_data, hpt_vs_etas_mc, hpt_vs_etas_data_mt, hpt_vs_etas_mc_mt], f"output_qcdLepPtVsEtaMean_{suffix}", doPrint=False)
     
-    dumpHistos([hpt_vs_mets_data, hpt_vs_mets_mc, hpt_vs_mets_data_mt, hpt_vs_mets_mc_mt], f"output_qcdLepPtVsMetMean_{postfix}", doPrint=False)
+    dumpHistos([hpt_vs_mets_data, hpt_vs_mets_mc, hpt_vs_mets_data_mt, hpt_vs_mets_mc_mt], f"output_qcdLepPtVsMetMean_{suffix}", doPrint=False)
     
-    dumpHistos([hpt_vs_deltaphis_data, hpt_vs_deltaphis_mc, hpt_vs_deltaphis_data_mt, hpt_vs_deltaphis_mc_mt], f"output_qcdLepPtVsDeltaPhiMean_{postfix}", doPrint=False)
+    dumpHistos([hpt_vs_deltaphis_data, hpt_vs_deltaphis_mc, hpt_vs_deltaphis_data_mt, hpt_vs_deltaphis_mc_mt], f"output_qcdLepPtVsDeltaPhiMean_{suffix}", doPrint=False)
     
     #
     # for the qcd background extrapolation
@@ -637,7 +646,7 @@ def main():
                     hmts_comp[strname] = hdata
                     hmts_comp[strname].SetName(outputname)
 
-    outfile = ROOT.TFile.Open("root/output_qcdshape_backup_"+postfix, "recreate")
+    outfile = ROOT.TFile.Open("root/output_qcdshape_backup_"+suffix, "recreate")
 
     for wpt in wptbins:
         # odir = outfile.mkdir(wpt)
