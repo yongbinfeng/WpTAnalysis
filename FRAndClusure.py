@@ -7,7 +7,7 @@ import sys
 import argparse
 from collections import OrderedDict
 from modules.Binnings import mass_bins_test
-from CMSPLOTS.myFunction import DrawHistos, MultiplyH2, PositiveProtection, IntegralAndError2D, CombineOneBin2D, GetRatioPanel, LHistos2Hist, IncludeOverflow2D
+from CMSPLOTS.myFunction import DrawHistos, MultiplyH2, PositiveProtection, IntegralAndError2D, CombineOneBin2D, GetRatioPanel, LHistos2Hist, IncludeOverflow2D, TH2ToTH1s
 
 ROOT.gROOT.SetBatch(True)
 
@@ -57,8 +57,6 @@ def GetFR(hnums, hdens, projX = False, projY = False):
                 hFR.SetBinError(ix, iy, hnumN.GetBinError(iy))
     else:
         hFR.Divide(hden)
-        
-    PositiveProtection(hFR)
     return hFR
 
 
@@ -243,7 +241,9 @@ def main():
                         IncludeOverflow2D(hdata, True)
                         IncludeOverflow2D(hmc, True)
                        
-                        if 0: 
+                        if 1: 
+                            hdata.RebinX(3)
+                            hmc.RebinX(3)
                             hdata.RebinY(5)
                             hmc.RebinY(5)
 
@@ -291,10 +291,21 @@ def main():
                         hdens.append( histos_count[wpt][lepeta][chg][mtn][isog] )
                         #hnum.Divide(hden)
 
-                    hFR = GetFR(hnums, hdens, projY=0, projX=0)
+                    doProjX = False
+                    doProjY = False
+                    suffix = "ProjY" if doProjY else "ProjX" if doProjX else "2D" 
+                    hFR = GetFR(hnums, hdens, projX=doProjX, projY=doProjY)
+                    PositiveProtection(hFR)
                     histos_FR[wpt][lepeta][chg][isog] = hFR
 
-                    DrawHistos([hFR], [], x1min, x1max, x1label, x2min, x2max, x2label, f"{outdir}/ISO_{isog}/FR/histo_wjets_{var2D}_FR_{chg}_{wpt}_{lepeta}_{isog}", False, False, False, dologz=False, doth2=True, drawoptions="COLZ,text", is5TeV=is5TeV) 
+                    DrawHistos([hFR], [], x1min, x1max, x1label, x2min, x2max, x2label, f"{outdir}/ISO_{isog}/FR/histo_wjets_{var2D}_FR_{chg}_{wpt}_{lepeta}_{isog}_{suffix}", False, False, False, dologz=False, doth2=True, drawoptions="COLZ,texte", is5TeV=is5TeV) 
+                    
+                    # Draw FRs in 1D
+                    hFRxs, labelsy = TH2ToTH1s(hFR, False, x2label)
+                    DrawHistos(hFRxs, labelsy, x1min, x1max, x1label, 0, None, "Fake Factor", f"{outdir}/ISO_{isog}/FR/histo_wjets_{var1}_FR_{chg}_{wpt}_{lepeta}_{isog}_{suffix}_ProjX", False, False, False, is5TeV=is5TeV)
+                    
+                    hFRys, labelsx = TH2ToTH1s(hFR, True, x1label)
+                    DrawHistos(hFRys, labelsx, x2min, x2max, x2label, 0, None, "Fake Factor", f"{outdir}/ISO_{isog}/FR/histo_wjets_{var2}_FR_{chg}_{wpt}_{lepeta}_{isog}_{suffix}_ProjY", False, False, False, is5TeV=is5TeV)
                         
                 # get the predictions in the SR, 
                 # using the FR/TF in that anti-isolation region
@@ -314,9 +325,17 @@ def main():
                         hcounts_sr = histos_count[wpt][lepeta][chg][mtn]["SR"]
 
                         h = hcounts_cr.Clone(hcounts_cr.GetName() + "_CT")
+                        PositiveProtection(h)
 
                         hpred = MultiplyH2(h, hfr)
                         histos_count_QCD[wpt][lepeta][chg][mtn]['SR'] = hpred
+                        
+                        for ibinx in range(1, h.GetNbinsX()+1):
+                            for ibiny in range(1, h.GetNbinsY()+1):
+                                if hpred.GetBinContent(ibinx, ibiny) < 0:
+                                    print("Found negative: ", ibinx, ibiny, hpred.GetBinContent(ibinx, ibiny), h.GetBinContent(ibinx, ibiny), hfr.GetBinContent(ibinx, ibiny))
+                                    sys.exit(1)
+                                    
 
                         hpred_var1 = hpred.ProjectionX(f"{hpred.GetName()}_Proj_{var1}")
                         hcounts_sr_var1 = hcounts_sr.ProjectionX(f"{hcounts_sr.GetName()}_Proj_{var1}")
@@ -401,6 +420,7 @@ def main():
     for h in histos_ToSave:
         h.SetDirectory(ofile)
         h.Write()
+    ofile.Write()
     ofile.Close()
     
 if __name__ == "__main__":

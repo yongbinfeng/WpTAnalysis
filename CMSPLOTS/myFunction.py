@@ -1,6 +1,6 @@
 import ROOT
-from ROOT import TH1F, TCanvas, TPad, Math
 import os
+import sys
 from . import CMS_lumi
 from . import tdrstyle
 
@@ -55,8 +55,8 @@ def GetHisto(myfile, lhistos, *args):
         for ibin in range(1, htemp_rebin.GetNbinsX()+1):
             if htemp_rebin.GetBinContent(ibin) == 0 and htemp_den_rebin.GetBinContent(ibin) != 0:
                 htemp_rebin.SetBinError(
-                    ibin, Math.gamma_quantile_c((1 - 0.6827)/2.0, 1, 1))
-                htemp_den_rebin.SetBinError(ibin, Math.gamma_quantile_c(
+                    ibin, ROOT.Math.gamma_quantile_c((1 - 0.6827)/2.0, 1, 1))
+                htemp_den_rebin.SetBinError(ibin, ROOT.Math.gamma_quantile_c(
                     (1 - 0.6827)/2.0, htemp_den_rebin.GetBinContent(ibin)+1, 1))
         # divide
         # set the uncertainty to binomial, see line 2800 of https://root.cern.ch/doc/master/TH1_8cxx_source.html
@@ -287,10 +287,11 @@ def MultiplyH2(h1, h2):
     return h1
 
 def PositiveProtection(h):
-    if isinstance(h, ROOT.TH1):
-        PositiveProtection1D(h)
-    elif isinstance(h, ROOT.TH2):
+    if isinstance(h, ROOT.TH2):
+        print("input is a ROOT.TH2", h.GetName())
         PositiveProtection2D(h)
+    elif isinstance(h, ROOT.TH1):
+        PositiveProtection1D(h)
     else:
         print("input must be a ROOT.TH1 or ROOT.TH2 for PositiveProtection")
         sys.exit(1)
@@ -357,10 +358,53 @@ def LHistos2Hist(hs, hname):
             h_added.Add(h)
     return h_added
 
-def DrawHistos(myhistos, mylabels, xmin, xmax, xlabel, ymin, ymax, ylabel, outputname, dology=True, showratio=False, dologx=False, lheader=None, donormalize=False, binomialratio=False, yrmax=2.0, yrmin=0.0, yrlabel=None, MCOnly=False, leftlegend=False, mycolors=[], legendPos=[], legendNCols=1, linestyles=[], markerstyles=[], showpull=False, doNewman=False, doPearson=False, ignoreHistError=False, ypullmin=-3.99, ypullmax=3.99, drawashist=False, padsize=(2, 0.9, 1.1), setGridx=False, setGridy=False, drawoptions=[], legendoptions=[], ratiooptions=[], dologz=False, doth2=False, ratiobase=0, redrawihist=-1, extraText=None, noCMS=False, noLumi=False, nMaxDigits=None, addOverflow=False, addUnderflow=False, plotdiff=False, hratiopanel=None, doratios=None, hpulls=None, W_ref=600, is5TeV=False, outdir="plots", savepdf=True,zmin=0,zmax=2):
+def TH2ToTH1s(h2, projY = False, label = "X"):
+    """
+    return a list of h1 from a 2D histogram,
+    by default project on X axis
+    """
+    hs = []
+    labels = []
+    if not projY:
+        for i in range(1, h2.GetNbinsY()+1):
+            h1 = h2.ProjectionX(h2.GetName() + f"_projX_{i}", i, i)
+            h1.SetLineColor(i)
+            h1.SetMarkerColor(i)
+            hs.append(h1)
+            ymin, ymax = h2.GetYaxis().GetBinLowEdge(i), h2.GetYaxis().GetBinUpEdge(i)
+            labels.append(f"{ymin: .2f}<{label}<{ymax: .2f}")
+    else:
+        for i in range(1, h2.GetNbinsX()+1):
+            h1 = h2.ProjectionY(h2.GetName() + f"_projY_{i}", i, i)
+            h1.SetLineColor(i)
+            h1.SetMarkerColor(i)
+            hs.append(h1)
+            xmin, xmax = h2.GetXaxis().GetBinLowEdge(i), h2.GetXaxis().GetBinUpEdge(i)
+            labels.append(f"{xmin: .2f}<{label}<{xmax: .2f}")
+    return hs, labels
+
+def DrawHistos(myhistos, mylabels, xmin, xmax, xlabel, ymin, ymax, ylabel, outputname, dology=True, showratio=False, dologx=False, lheader=None, donormalize=False, binomialratio=False, yrmax=2.0, yrmin=0.0, yrlabel=None, MCOnly=False, leftlegend=False, mycolors=None, legendPos=None, legendNCols=1, linestyles=None, markerstyles=None, showpull=False, doNewman=False, doPearson=False, ignoreHistError=False, ypullmin=-3.99, ypullmax=3.99, drawashist=False, padsize=(2, 0.9, 1.1), setGridx=False, setGridy=False, drawoptions=None, legendoptions=None, ratiooptions=None, dologz=False, doth2=False, ratiobase=0, redrawihist=-1, extraText=None, noCMS=False, noLumi=False, nMaxDigits=None, addOverflow=False, addUnderflow=False, plotdiff=False, hratiopanel=None, doratios=None, hpulls=None, W_ref=600, is5TeV=False, outdir="plots", savepdf=True,zmin=0,zmax=2):
     """
     draw histograms with the CMS tdr style
     """
+    # python feature: for immutable objects, default values are evaluated only once
+    # need to be cautious when using mutable objects as default values
+    # https://docs.python.org/3/reference/compound_stmts.html#function-definitions
+    if mycolors is None:
+        mycolors = []
+    if legendPos is None:
+        legendPos = []
+    if linestyles is None:
+        linestyles = []
+    if markerstyles is None:
+        markerstyles = []
+    if drawoptions is None:
+        drawoptions = []
+    if legendoptions is None:
+        legendoptions = []
+    if ratiooptions is None:
+        ratiooptions = []
+        
     # set the tdr style
     tdrstyle.setTDRStyle()
     # not sure why need this...
@@ -382,7 +426,7 @@ def DrawHistos(myhistos, mylabels, xmin, xmax, xlabel, ymin, ymax, ylabel, outpu
         CMS_lumi.extraText = ""
 
     if nMaxDigits:
-        print(f"set the maximum number of digits {nMaxDigits}")
+        #print(f"set the maximum number of digits {nMaxDigits}")
         ROOT.TGaxis.SetMaxDigits(nMaxDigits)
     else:
         # default val
@@ -390,6 +434,8 @@ def DrawHistos(myhistos, mylabels, xmin, xmax, xlabel, ymin, ymax, ylabel, outpu
         
     if ymax == None:
         ymax = max([h.GetMaximum() for h in myhistos]) * 1.25
+    if ymin == None:
+        ymin = min([h.GetMinimum() for h in myhistos]) * 0.75
 
     H_ref = 500
     W = W_ref
@@ -400,12 +446,12 @@ def DrawHistos(myhistos, mylabels, xmin, xmax, xlabel, ymin, ymax, ylabel, outpu
     npads = 1 + showratio + showpull
 
     if npads == 2:
-        canvas = TCanvas("c2"+outputname, "c2", 50, 50, W, 600)
+        canvas = ROOT.TCanvas("c2"+outputname, "c2", 50, 50, W, 600)
         padsize1 = float(padsize[0])/(padsize[0]+padsize[1])
         padsize2 = float(padsize[1])/(padsize[0]+padsize[1])
         padsize3 = 0.
     elif npads == 1:
-        canvas = TCanvas("c2"+outputname, "c2", 50, 50, W, 600)
+        canvas = ROOT.TCanvas("c2"+outputname, "c2", 50, 50, W, 600)
         canvas.SetGrid(setGridx, setGridy)
         canvas.SetTicks(1, 1)
         padsize1 = 1.0
@@ -415,7 +461,7 @@ def DrawHistos(myhistos, mylabels, xmin, xmax, xlabel, ymin, ymax, ylabel, outpu
         padsize3 = 0.
         canvas.cd()
     else:
-        canvas = TCanvas("c2"+outputname, "c2", 50, 50, W, 800)
+        canvas = ROOT.TCanvas("c2"+outputname, "c2", 50, 50, W, 800)
         padsize1 = float(padsize[0])/(padsize[0]+padsize[1]+padsize[2])
         padsize2 = float(padsize[1])/(padsize[0]+padsize[1]+padsize[2])
         padsize3 = float(padsize[2])/(padsize[0]+padsize[1]+padsize[2])
@@ -436,8 +482,8 @@ def DrawHistos(myhistos, mylabels, xmin, xmax, xlabel, ymin, ymax, ylabel, outpu
         canvas.SetTopMargin(0.06)
 
     if npads == 2:
-        pad1 = TPad("pad1" + outputname, "pad1", 0, padsize2, 1, 1)
-        pad2 = TPad("pad2" + outputname, "pad1", 0, 0, 1, padsize2)
+        pad1 = ROOT.TPad("pad1" + outputname, "pad1", 0, padsize2, 1, 1)
+        pad2 = ROOT.TPad("pad2" + outputname, "pad1", 0, 0, 1, padsize2)
         pad1.SetTopMargin(0.06/padsize1)
         pad1.SetBottomMargin(0.012/padsize1)
         pad1.SetLeftMargin(0.15 * (600.0)/W)
@@ -450,9 +496,9 @@ def DrawHistos(myhistos, mylabels, xmin, xmax, xlabel, ymin, ymax, ylabel, outpu
         pad2.Draw()
 
     if npads == 3:
-        pad1 = TPad("pad1" + outputname, "pad1", 0, 1-padsize1, 1, 1)
-        pad2 = TPad("pad2" + outputname, "pad2", 0, padsize3, 1, 1-padsize1)
-        pad3 = TPad("pad3" + outputname, "pad3", 0, 0.,   1, padsize3)
+        pad1 = ROOT.TPad("pad1" + outputname, "pad1", 0, 1-padsize1, 1, 1)
+        pad2 = ROOT.TPad("pad2" + outputname, "pad2", 0, padsize3, 1, 1-padsize1)
+        pad3 = ROOT.TPad("pad3" + outputname, "pad3", 0, 0.,   1, padsize3)
         pad1.SetTopMargin(0.06/(padsize1+padsize3))
         pad1.SetBottomMargin(0.012/padsize1)
         pad1.SetLeftMargin(0.15 * (600.0)/W)
@@ -480,7 +526,7 @@ def DrawHistos(myhistos, mylabels, xmin, xmax, xlabel, ymin, ymax, ylabel, outpu
             pad1.SetLogx()
 
     if not doth2:
-        h1 = TH1F("h1" + outputname, "h1", 80, xmin, xmax)
+        h1 = ROOT.TH1F("h1" + outputname, "h1", 80, xmin, xmax)
         h1.SetMinimum(ymin)
         h1.SetMaximum(ymax)    
     else:
@@ -548,12 +594,12 @@ def DrawHistos(myhistos, mylabels, xmin, xmax, xlabel, ymin, ymax, ylabel, outpu
         ihcolone = ihisto.Clone("%s_Clone" % ihisto.GetName())
         # ihcolone.SetDirectory(0)
         myhistos_clone.append(ihcolone)
-
+        
     if drawashist:
         drawoptions = ["HIST" for i in range(len(myhistos_clone))]
         legendoptions = ['L' for i in range(len(myhistos_clone))]
 
-    if not isinstance(drawoptions, list):
+    if drawoptions and not isinstance(drawoptions, list):
         # copy the option n times
         tmp = [drawoptions for i in range(len(myhistos_clone))]
         drawoptions = tmp
@@ -699,7 +745,7 @@ def DrawHistos(myhistos, mylabels, xmin, xmax, xlabel, ymin, ymax, ylabel, outpu
         if dologx:
             pad2.SetLogx()
 
-        h2 = TH1F("h2", "h2", 80, xmin, xmax)
+        h2 = ROOT.TH1F("h2", "h2", 80, xmin, xmax)
         h2.GetXaxis().SetTitleSize(0.050/(padsize2+0.3*padsize3))
         h2.GetXaxis().SetLabelSize(0.045/(padsize2+0.3*padsize3))
         h2.GetYaxis().SetTitleSize(0.050/(padsize2+0.3*padsize3))
@@ -761,7 +807,7 @@ def DrawHistos(myhistos, mylabels, xmin, xmax, xlabel, ymin, ymax, ylabel, outpu
         if dologx:
             pad3.SetLogx()
 
-        h3 = TH1F("h3", "h3", 80, xmin, xmax)
+        h3 = ROOT.TH1F("h3", "h3", 80, xmin, xmax)
         h3.GetXaxis().SetTitle("%s" % xlabel)
         h3.GetXaxis().SetTitleOffset(1.1)
         h3.GetXaxis().SetTitleSize(0.050/(padsize3+0.3*padsize2))
