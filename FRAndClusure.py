@@ -67,6 +67,8 @@ def main():
     parser.add_argument("--is5TeV", action="store_true", help="is 5TeV")
     parser.add_argument("--doElectron", action="store_true", help="do electron")
     parser.add_argument("--useChgIso", action="store_true", help="use charged isolation")
+    parser.add_argument("--useQCDMC", action="store_true", help="use QCD MC")
+    parser.add_argument("--useGenMET", action="store_true", help="use gen MET (Works only on 2017 QCD MC)")
     
     args = parser.parse_args()
     
@@ -75,10 +77,18 @@ def main():
     is5TeV = args.is5TeV
     doElectron = args.doElectron
     useChgIso = args.useChgIso
+    useQCDMC = args.useQCDMC
+    useGenMET = args.useGenMET
 
     doPtVsDeltaPhi = not doPtVsEta and not doPtVsMet
     lepname = "mu" if not doElectron else "e"
     sqrtS = "13TeV" if not is5TeV else "5TeV"
+    
+    if useQCDMC:
+        if useGenMET:
+            sqrtS = "QCDMC_GenMET"
+        else:
+            sqrtS = "QCDMC_PFMET"
     
     isovar = "relIso" if not useChgIso else "pfChIso"
 
@@ -123,7 +133,7 @@ def main():
         isogroups["SR"] = ["iso0", "iso1", "iso2", "iso3"]
         isogroups["CR0"] = ["iso4", "iso5", "iso6", "iso7", "iso8"]
         isogroups["CR1"] = ["iso9", "iso10", "iso11", "iso12"]
-        isogroups["CR2"] = ["iso13", "iso14", "iso15", "iso16"]
+        isogroups["CR2"] = ["iso13", "iso14", "iso15", "iso16", "iso17", "iso18"]
         isogroups["CRAll"] = isogroups["CR0"] + isogroups["CR1"] + isogroups["CR2"]
     else:
         isogroups["SR"] = ["iso3", "iso4"]
@@ -153,10 +163,10 @@ def main():
         bname = f"mt{imt}"
         mtnames.append(bname)
     
-    if doElectron:
-        frbins = ["mt0", "mt1"]
-    else:
+    if not doElectron:
         frbins = ["mt0"]
+    else:
+        frbins = ["mt0", "mt1"]
     
     mass_bins_groups = OrderedDict()
     mass_bins = OrderedDict()
@@ -244,8 +254,8 @@ def main():
                         if 1: 
                             hdata.RebinX(3)
                             hmc.RebinX(3)
-                            hdata.RebinY(5)
-                            hmc.RebinY(5)
+                            hdata.RebinY(2)
+                            hmc.RebinY(2)
 
                         # count = count_Data - count_MC
                         h = hdata.Clone(hname + f"_Subtracted")

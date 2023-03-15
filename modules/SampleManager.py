@@ -445,7 +445,16 @@ class SampleManager(object):
                 return mc
         raise Exception('can not find the mcname {}'.format(mcname))
     
-    def cacheDraw2D(self, varname1, varname2, hname, nbins1, xmin1, xmax1, nbins2, xmin2, xmax2, drawconfigs, weightname="weight_WVpt"):
+    def cacheDraw2D(self, *args, **kwds):
+        if len(args) == 10 or len(args) == 11:
+            self.cacheDraw2D_fb(*args, **kwds)
+        elif len(args) == 6 or len(args) == 7:
+            self.cacheDraw2D_vb(*args, **kwds)
+        else:
+            raise ValueError(
+                'The argument is problematic. It has to be either 6 or 10.')
+    
+    def cacheDraw2D_fb(self, varname1, varname2, hname, nbins1, xmin1, xmax1, nbins2, xmin2, xmax2, drawconfigs, weightname="weight_WVpt"):
         """ 
         cache the var to be drawn.
         But do not launch the action by the 'lazy action' in RDataFrame
@@ -458,11 +467,26 @@ class SampleManager(object):
             h_mcs.append(mc.rdf.Histo2D(
                 (hname+"_mc{}".format(imc), hname, nbins1, xmin1, xmax1, nbins2, xmin2, xmax2), varname1, varname2, weightname))
         self.to_draw2D[hname] = (h_data, h_mcs, drawconfigs)
+        
+    def cacheDraw2D_vb(self, varname1, varname2, hname, xbins, ybins, drawconfigs, weightname="weight_WVPt"):
+        assert isinstance(xbins, np.ndarray) and isinstance(ybins, np.ndarray), "input must be np array"
+        nbinsx = xbins.size - 1
+        nbinsy = ybins.size - 1
+        h_data = self.data.rdf.Histo2D(
+            (hname+"_data", hname, nbinsx, xbins, nbinsy, ybins), varname1, varname2, weightname)
+        h_mcs = []
+        for imc in range(len(self.mcs)):
+            mc = self.mcs[imc]
+            h_mcs.append(mc.rdf.Histo2D(
+                (hname+"_mc_"+str(imc), hname, nbinsx, xbins, nbinsy, ybins), varname1, varname2, weightname))
+
+        self.to_draw[hname] = (h_data, h_mcs, drawconfigs)
+        
 
     def cacheDraw(self, *args, **kwds):
-        if len(args) == 6:
+        if len(args) == 6 or len(args) == 7:
             self.cacheDraw_fb(*args, **kwds)
-        elif len(args) == 4:
+        elif len(args) == 4 or len(args) == 5:
             self.cacheDraw_vb(*args, **kwds)
         else:
             raise ValueError(
@@ -592,7 +616,8 @@ class SampleManager(object):
                     h_MC = h_gmc.Clone(h_gmc.GetName() + "_AllMCCombined")
                 else:
                     h_MC.Add(h_gmc)
-            h_subtract.Add(h_MC, -1)
+            if h_MC:
+                h_subtract.Add(h_MC, -1)
             
             self.hdatas2D[drawconfigs.outputname] = h_data
             self.hmcs2D[drawconfigs.outputname] = h_MC

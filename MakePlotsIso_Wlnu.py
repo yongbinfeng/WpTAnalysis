@@ -12,7 +12,7 @@ from modules.SampleManager import DrawConfig, Sample, SampleManager
 from modules.Binnings import mass_bins_test
 
 ROOT.gROOT.SetBatch(True)
-ROOT.ROOT.EnableImplicitMT(10)
+ROOT.ROOT.EnableImplicitMT(16)
 
 
 def main():
@@ -417,20 +417,32 @@ def main():
         mtbins.append(f"mt{imt}")
         
     def makeDraws(strname, ymax):
-        sampMan.cacheDraw("RelIso", f"histo_wjets_{lepname}_RelIso_{strname}", 72, 0, 0.72, DrawConfig(xmin=0., xmax=0.75, xlabel="Relative Isolation", ylabel=f"Events / 0.01", dology=True, ymax=ymax, donormalizebin=False, addOverflow=True, addUnderflow=True, showratio=True, legendPos=[0.94, 0.88, 0.70, 0.68]), weightname=strname)
+        ptbins = np.array([25.0, 30.0, 35.0, 45.0, 60.0, 80.0])
+        metbins = np.array([0, 10.0, 20.0, 30.0, 40.0, 50.0, 60.0, 80.0])
+        etabins = np.array([-2.4, -2.0, -1.6, -1.2, -0.8, -0.4, 0.0, 0.4, 0.8, 1.2, 1.6, 2.0, 2.4])
+        phibins = np.array([0, 0.8, 1.6, 2.4, 3.2])
         
-        sampMan.cacheDraw("Lep_pt", f"histo_wjets_{lepname}_Lep_pt_{strname}", 50, 20, 70, DrawConfig(xmin=20, xmax=70, xlabel="Lepton p_{T} [GeV]", ylabel=f"Events / GeV", dology=True, ymax=ymax, donormalizebin=False, addOverflow=True, addUnderflow=True, showratio=True, legendPos=[0.94, 0.88, 0.70, 0.68]), weightname=strname)
+        sampMan.cacheDraw("RelIso", f"histo_wjets_{lepname}_RelIso_{strname}", 72, 0, 0.72, DrawConfig(xmin=0., xmax=0.75, xlabel="Relative Isolation", ylabel=f"Events / bin", dology=True, ymax=ymax, donormalizebin=False, addOverflow=True, addUnderflow=True, showratio=True, legendPos=[0.94, 0.88, 0.70, 0.68]), weightname=strname)
         
-        sampMan.cacheDraw("Lep_eta", f"histo_wjets_{lepname}_Lep_eta_{strname}", 50, -2.5, 2.5, DrawConfig(xmin=-2.5, xmax=2.5, xlabel="Lepton #eta", ylabel=f"Events / {(2.5+2.5)/50:.2f}", dology=True, ymax=ymax, donormalizebin=False, addOverflow=True, addUnderflow=True, showratio=True, legendPos=[0.94, 0.88, 0.70, 0.68]), weightname=strname)
+        sampMan.cacheDraw("Lep_pt", f"histo_wjets_{lepname}_Lep_pt_{strname}", ptbins, DrawConfig(xmin=20, xmax=80, xlabel="Lepton p_{T} [GeV]", ylabel=f"Events / bin", dology=True, ymax=ymax, donormalizebin=False, addOverflow=True, addUnderflow=True, showratio=True, legendPos=[0.94, 0.88, 0.70, 0.68]), weightname=strname)
         
-        sampMan.cacheDraw("met_pt", f"histo_wjets_{lepname}_met_pt_{strname}", 70, 0, 70, DrawConfig(xmin=0, xmax=70, xlabel="MET [GeV]", ylabel=f"Events / GeV", dology=True, ymax=ymax, donormalizebin=False, addOverflow=True, addUnderflow=True, showratio=True, legendPos=[0.94, 0.88, 0.70, 0.68]), weightname=strname)
+        sampMan.cacheDraw("Lep_eta", f"histo_wjets_{lepname}_Lep_eta_{strname}", etabins, DrawConfig(xmin=-2.5, xmax=2.5, xlabel="Lepton #eta", ylabel=f"Events / bin", dology=True, ymax=ymax, donormalizebin=False, addOverflow=True, addUnderflow=True, showratio=True, legendPos=[0.94, 0.88, 0.70, 0.68]), weightname=strname)
         
-        sampMan.cacheDraw("deltaPhi", f"histo_wjets_{lepname}_deltaPhi_{strname}", 30, 0, ROOT.TMath.Pi(), DrawConfig(xmin=0, xmax=ROOT.TMath.Pi(), xlabel="#Delta#phi(#mu, MET)", ylabel=f"Events / {(2*ROOT.TMath.Pi())/30:.2f}", dology=True, ymax=ymax, donormalizebin=False, addOverflow=True, addUnderflow=True, showratio=True, legendPos=[0.94, 0.88, 0.70, 0.68]), weightname=strname)
+        sampMan.cacheDraw("met_pt", f"histo_wjets_{lepname}_met_pt_{strname}", metbins, DrawConfig(xmin=0, xmax=80, xlabel="MET [GeV]", ylabel=f"Events / bin", dology=True, ymax=ymax, donormalizebin=False, addOverflow=True, addUnderflow=True, showratio=True, legendPos=[0.94, 0.88, 0.70, 0.68]), weightname=strname)
         
-        sampMan.cacheDraw2D("Lep_pt", "Lep_eta", f"histo_wjets_{lepname}_pt_vs_eta_{strname}", 9, 25, 70, 8, -2.4, 2.4, DrawConfig(xmin=25, xmax=70, ymin=-2.4, ymax=2.4, xlabel="Lepton p_{T} [GeV]", ylabel="Lepton #eta", zlabel="Events / 10 GeV", dology=False, donormalizebin=False, addOverflow=True, addUnderflow=True, showratio=False, legendPos=[0.94, 0.88, 0.70, 0.68]), weightname=strname)
-        sampMan.cacheDraw2D("Lep_pt", "met_pt", f"histo_wjets_{lepname}_pt_vs_met_{strname}", 9, 25, 70, 10, 0, 70, DrawConfig(xmin=25, xmax=70, ymin=0, ymax=70, xlabel="Lepton p_{T} [GeV]", ylabel="MET [GeV]", zlabel="Events / 10 GeV", dology=False, donormalizebin=False, addOverflow=True, addUnderflow=True, showratio=False, legendPos=[0.94, 0.88, 0.70, 0.68]), weightname=strname)
-        sampMan.cacheDraw2D("Lep_pt", "deltaPhi", f"histo_wjets_{lepname}_pt_vs_deltaPhi_{strname}", 9, 25, 70, 10, 0., ROOT.TMath.Pi(), DrawConfig(xmin=25, xmax=70, ymin=0, ymax=ROOT.TMath.Pi(), xlabel="Lepton p_{T} [GeV]", ylabel="#Delta#phi(#mu, MET)", zlabel="Events / 10 GeV", dology=False, donormalizebin=False, addOverflow=True, addUnderflow=True, showratio=False, legendPos=[0.94, 0.88, 0.70, 0.68]), weightname=strname)
+        sampMan.cacheDraw("deltaPhi", f"histo_wjets_{lepname}_deltaPhi_{strname}", phibins, DrawConfig(xmin=0, xmax=3.2, xlabel="#Delta#phi(#mu, MET)", ylabel=f"Events / bin", dology=True, ymax=ymax, donormalizebin=False, addOverflow=True, addUnderflow=True, showratio=True, legendPos=[0.94, 0.88, 0.70, 0.68]), weightname=strname)
         
+        sampMan.cacheDraw2D("Lep_pt", "Lep_eta", f"histo_wjets_{lepname}_pt_vs_eta_{strname}", ptbins, etabins, DrawConfig(xmin=25, xmax=80, ymin=-2.4, ymax=2.4, xlabel="Lepton p_{T} [GeV]", ylabel="Lepton #eta", zlabel="Events / bin", dology=False, donormalizebin=False, addOverflow=True, addUnderflow=True, showratio=False, legendPos=[0.94, 0.88, 0.70, 0.68]), weightname=strname)
+        sampMan.cacheDraw2D("Lep_pt", "met_pt", f"histo_wjets_{lepname}_pt_vs_met_{strname}", ptbins, metbins, DrawConfig(xmin=25, xmax=80, ymin=0, ymax=80, xlabel="Lepton p_{T} [GeV]", ylabel="MET [GeV]", zlabel="Events / bin", dology=False, donormalizebin=False, addOverflow=True, addUnderflow=True, showratio=False, legendPos=[0.94, 0.88, 0.70, 0.68]), weightname=strname)
+        sampMan.cacheDraw2D("Lep_pt", "deltaPhi", f"histo_wjets_{lepname}_pt_vs_deltaPhi_{strname}", ptbins, phibins, DrawConfig(xmin=25, xmax=80, ymin=0, ymax=3.2, xlabel="Lepton p_{T} [GeV]", ylabel="#Delta#phi(#mu, MET)", zlabel="Events / bin", dology=False, donormalizebin=False, addOverflow=True, addUnderflow=True, showratio=False, legendPos=[0.94, 0.88, 0.70, 0.68]), weightname=strname)
+        
+        # make the pt vs eta and pt vs met plots in deltaPhi < pi/2 and deltaPhi > pi/2
+        sampMan.DefineAll(f"{strname}_deltaPhiP", f"{strname} * (deltaPhi >= {ROOT.TMath.Pi()/2.})")
+        sampMan.DefineAll(f"{strname}_deltaPhiM", f"{strname} * (deltaPhi <  {ROOT.TMath.Pi()/2.})")
+        sampMan.cacheDraw2D("Lep_pt", "Lep_eta", f"histo_wjets_{lepname}_pt_vs_eta_{strname}_deltaPhiP", ptbins, etabins, DrawConfig(xmin=25, xmax=80, ymin=-2.4, ymax=2.4, xlabel="Lepton p_{T} [GeV]", ylabel="Lepton #eta", zlabel="Events / bin", dology=False, donormalizebin=False, addOverflow=True, addUnderflow=True, showratio=False, legendPos=[0.94, 0.88, 0.70, 0.68]), weightname=f"{strname}_deltaPhiP")
+        sampMan.cacheDraw2D("Lep_pt", "met_pt", f"histo_wjets_{lepname}_pt_vs_met_{strname}_deltaPhiP", ptbins, metbins, DrawConfig(xmin=25, xmax=80, ymin=0, ymax=80, xlabel="Lepton p_{T} [GeV]", ylabel="MET [GeV]", zlabel="Events / bin", dology=False, donormalizebin=False, addOverflow=True, addUnderflow=True, showratio=False, legendPos=[0.94, 0.88, 0.70, 0.68]), weightname=f"{strname}_deltaPhiP")
+        sampMan.cacheDraw2D("Lep_pt", "Lep_eta", f"histo_wjets_{lepname}_pt_vs_eta_{strname}_deltaPhiM", ptbins, etabins, DrawConfig(xmin=25, xmax=80, ymin=-2.4, ymax=2.4, xlabel="Lepton p_{T} [GeV]", ylabel="Lepton #eta", zlabel="Events / bin", dology=False, donormalizebin=False, addOverflow=True, addUnderflow=True, showratio=False, legendPos=[0.94, 0.88, 0.70, 0.68]), weightname=f"{strname}_deltaPhiM")
+        sampMan.cacheDraw2D("Lep_pt", "met_pt", f"histo_wjets_{lepname}_pt_vs_met_{strname}_deltaPhiM", ptbins, metbins, DrawConfig(xmin=25, xmax=80, ymin=0, ymax=80, xlabel="Lepton p_{T} [GeV]", ylabel="MET [GeV]", zlabel="Events / bin", dology=False, donormalizebin=False, addOverflow=True, addUnderflow=True, showratio=False, legendPos=[0.94, 0.88, 0.70, 0.68]), weightname=f"{strname}_deltaPhiM")
 
     # draw the lepton isolation distribution
     ymax = 5e7 if doMuon else 1e6
@@ -447,8 +459,8 @@ def main():
                 
     idx = 0
     # do the fine binning first; then rebin in the processHists
-    mass_bins = np.array([0, 5.0, 10.0, 15.0, 20.0, 25.0, 30.0, 35.0, 40.0, 45.0, 50.0, 55.0, 60.0, 65.0,
-                         70.0, 75.0, 80.0, 85.0, 90.0, 95.0, 100.0, 105.0, 110.0, 115.0, 120.0, 125.0, 130.0, 135.0, 140.])
+    #mass_bins = np.array([0, 5.0, 10.0, 15.0, 20.0, 25.0, 30.0, 35.0, 40.0, 45.0, 50.0, 55.0, 60.0, 65.0,
+    #                     70.0, 75.0, 80.0, 85.0, 90.0, 95.0, 100.0, 105.0, 110.0, 115.0, 120.0, 125.0, 130.0, 135.0, 140.])
     for iso in isobins:
         for wpt in wptbins:
             for lepeta in etabins:
@@ -489,10 +501,30 @@ def main():
     hpt_vs_etas_data_mt = OrderedDict()
     hpt_vs_etas_mc_mt = OrderedDict()
     
+    hpt_vs_etas_deltaPhiP_data = OrderedDict()
+    hpt_vs_etas_deltaPhiP_mc = OrderedDict()
+    hpt_vs_etas_deltaPhiP_data_mt = OrderedDict()
+    hpt_vs_etas_deltaPhiP_mc_mt = OrderedDict()
+    
+    hpt_vs_etas_deltaPhiM_data = OrderedDict()
+    hpt_vs_etas_deltaPhiM_mc = OrderedDict()
+    hpt_vs_etas_deltaPhiM_data_mt = OrderedDict()
+    hpt_vs_etas_deltaPhiM_mc_mt = OrderedDict() 
+    
     hpt_vs_mets_data = OrderedDict()
     hpt_vs_mets_mc = OrderedDict()
     hpt_vs_mets_data_mt = OrderedDict()
     hpt_vs_mets_mc_mt = OrderedDict()
+    
+    hpt_vs_mets_deltaPhiP_data = OrderedDict()
+    hpt_vs_mets_deltaPhiP_mc = OrderedDict()
+    hpt_vs_mets_deltaPhiP_data_mt = OrderedDict()
+    hpt_vs_mets_deltaPhiP_mc_mt = OrderedDict() 
+    
+    hpt_vs_mets_deltaPhiM_data = OrderedDict()
+    hpt_vs_mets_deltaPhiM_mc = OrderedDict()
+    hpt_vs_mets_deltaPhiM_data_mt = OrderedDict()
+    hpt_vs_mets_deltaPhiM_mc_mt = OrderedDict()  
     
     hpt_vs_deltaphis_data = OrderedDict()
     hpt_vs_deltaphis_mc = OrderedDict()
@@ -559,6 +591,18 @@ def main():
                     
                     outputname = f"histo_wjets_{lepname}_pt_vs_met_{strname}"
                     hpt_vs_mets_data[strname], hpt_vs_mets_mc[strname] = getHisto2D(outputname)
+                   
+                    outputname = f"histo_wjets_{lepname}_pt_vs_eta_{strname}_deltaPhiP"
+                    hpt_vs_etas_deltaPhiP_data[strname], hpt_vs_etas_deltaPhiP_mc[strname] = getHisto2D(outputname)
+                    
+                    outputname = f"histo_wjets_{lepname}_pt_vs_met_{strname}_deltaPhiP"
+                    hpt_vs_mets_deltaPhiP_data[strname], hpt_vs_mets_deltaPhiP_mc[strname] = getHisto2D(outputname) 
+                    
+                    outputname = f"histo_wjets_{lepname}_pt_vs_eta_{strname}_deltaPhiM"
+                    hpt_vs_etas_deltaPhiM_data[strname], hpt_vs_etas_deltaPhiM_mc[strname] = getHisto2D(outputname)
+                    
+                    outputname = f"histo_wjets_{lepname}_pt_vs_met_{strname}_deltaPhiM"
+                    hpt_vs_mets_deltaPhiM_data[strname], hpt_vs_mets_deltaPhiM_mc[strname] = getHisto2D(outputname)  
                     
                     outputname = f"histo_wjets_{lepname}_pt_vs_deltaPhi_{strname}"
                     hpt_vs_deltaphis_data[strname], hpt_vs_deltaphis_mc[strname] = getHisto2D(outputname)
@@ -589,6 +633,18 @@ def main():
                         outputname = f"histo_wjets_{lepname}_pt_vs_met_{strname}"
                         hpt_vs_mets_data_mt[strname], hpt_vs_mets_mc_mt[strname] = getHisto2D(outputname)
                         
+                        outputname = f"histo_wjets_{lepname}_pt_vs_eta_{strname}_deltaPhiP"
+                        hpt_vs_etas_deltaPhiP_data_mt[strname], hpt_vs_etas_deltaPhiP_mc_mt[strname] = getHisto2D(outputname)
+                        
+                        outputname = f"histo_wjets_{lepname}_pt_vs_met_{strname}_deltaPhiP"
+                        hpt_vs_mets_deltaPhiP_data_mt[strname], hpt_vs_mets_deltaPhiP_mc_mt[strname] = getHisto2D(outputname) 
+                        
+                        outputname = f"histo_wjets_{lepname}_pt_vs_eta_{strname}_deltaPhiM"
+                        hpt_vs_etas_deltaPhiM_data_mt[strname], hpt_vs_etas_deltaPhiM_mc_mt[strname] = getHisto2D(outputname)
+                        
+                        outputname = f"histo_wjets_{lepname}_pt_vs_met_{strname}_deltaPhiM"
+                        hpt_vs_mets_deltaPhiM_data_mt[strname], hpt_vs_mets_deltaPhiM_mc_mt[strname] = getHisto2D(outputname)  
+                        
                         outputname = f"histo_wjets_{lepname}_pt_vs_deltaPhi_{strname}"
                         hpt_vs_deltaphis_data_mt[strname], hpt_vs_deltaphis_mc_mt[strname] = getHisto2D(outputname)
                         
@@ -605,9 +661,9 @@ def main():
     dumpHistos([hmetpts, hmetpts_mt], f"output_qcdMetPtMean_{suffix}", doPrint=False)
     dumpHistos([hdeltaphis, hdeltaphis_mt], f"output_qcdDeltaPhiMean_{suffix}", doPrint=False)
     
-    dumpHistos([hpt_vs_etas_data, hpt_vs_etas_mc, hpt_vs_etas_data_mt, hpt_vs_etas_mc_mt], f"output_qcdLepPtVsEtaMean_{suffix}", doPrint=False)
+    dumpHistos([hpt_vs_etas_data, hpt_vs_etas_mc, hpt_vs_etas_data_mt, hpt_vs_etas_mc_mt, hpt_vs_etas_deltaPhiP_data, hpt_vs_etas_deltaPhiP_mc, hpt_vs_etas_deltaPhiP_data_mt, hpt_vs_etas_deltaPhiP_mc_mt, hpt_vs_etas_deltaPhiM_data, hpt_vs_etas_deltaPhiM_mc, hpt_vs_etas_deltaPhiM_data_mt, hpt_vs_etas_deltaPhiM_mc_mt], f"output_qcdLepPtVsEtaMean_{suffix}", doPrint=False)
     
-    dumpHistos([hpt_vs_mets_data, hpt_vs_mets_mc, hpt_vs_mets_data_mt, hpt_vs_mets_mc_mt], f"output_qcdLepPtVsMetMean_{suffix}", doPrint=False)
+    dumpHistos([hpt_vs_mets_data, hpt_vs_mets_mc, hpt_vs_mets_data_mt, hpt_vs_mets_mc_mt, hpt_vs_mets_deltaPhiP_data, hpt_vs_mets_deltaPhiP_mc, hpt_vs_mets_deltaPhiP_data_mt, hpt_vs_mets_deltaPhiP_mc_mt, hpt_vs_mets_deltaPhiM_data, hpt_vs_mets_deltaPhiM_mc, hpt_vs_mets_deltaPhiM_data_mt, hpt_vs_mets_deltaPhiM_mc_mt], f"output_qcdLepPtVsMetMean_{suffix}", doPrint=False)
     
     dumpHistos([hpt_vs_deltaphis_data, hpt_vs_deltaphis_mc, hpt_vs_deltaphis_data_mt, hpt_vs_deltaphis_mc_mt], f"output_qcdLepPtVsDeltaPhiMean_{suffix}", doPrint=False)
     
