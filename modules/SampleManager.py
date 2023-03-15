@@ -480,8 +480,7 @@ class SampleManager(object):
             h_mcs.append(mc.rdf.Histo2D(
                 (hname+"_mc_"+str(imc), hname, nbinsx, xbins, nbinsy, ybins), varname1, varname2, weightname))
 
-        self.to_draw[hname] = (h_data, h_mcs, drawconfigs)
-        
+        self.to_draw2D[hname] = (h_data, h_mcs, drawconfigs)
 
     def cacheDraw(self, *args, **kwds):
         if len(args) == 6 or len(args) == 7:

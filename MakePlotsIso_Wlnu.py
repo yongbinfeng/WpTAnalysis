@@ -258,8 +258,7 @@ def main():
         sampMan.groupMCs(["wx0", "wx1", "wx2", "wx0_aiso",
                          "wx1_aiso", "wx2_aiso"], "wx", 216, 'wx')
         sampMan.groupMCs(['ZXX', 'ZXX_aiso'], 'zxx', 216, 'zxx')
-        sampMan.groupMCs(["WW_aiso", "WZ_aiso", "ZZ_aiso",
-                         "wx0_aiso", "wx1_aiso", "wx2_aiso", "WW", "WZ", "ZZ"], "EWK", 216, "EWK")
+        sampMan.groupMCs(["WW_aiso", "WZ_aiso", "ZZ_aiso", "WW", "WZ", "ZZ"], "VV", 216, "VV")
         sampMan.groupMCs(["ttbar_dilepton_aiso", "ttbar_1lepton_aiso",
                          "ttbar_0lepton_aiso", "ttbar_dilepton", "ttbar_1lepton",
                           "ttbar_0lepton"], "ttbar", 96, "t#bar{t}")
@@ -319,17 +318,12 @@ def main():
         sampMan = SampleManager(DataSamp, [WlAisoSamp, TTbarAisoSamp, WWAisoSamp, WZAisoSamp, ZZ2LAisoSamp, ZZ4LAisoSamp,
                                 ZXXAisoSamp, WxAisoSamp, WlSamp, TTbarSamp, WWSamp, WZSamp, ZZ2LSamp, ZZ4LSamp, ZXXSamp, WxSamp], is5TeV=True)
         sampMan.groupMCs(["WW", "WZ", "ZZ2L", "ZZ4L", "WW_aiso",
-                         "WZ_aiso", "ZZ2L_aiso", "ZZ4L_aiso"], 'EWK', 216, 'EWK')
+                         "WZ_aiso", "ZZ2L_aiso", "ZZ4L_aiso"], 'VV', 216, 'VV')
         sampMan.groupMCs(['ZXX', 'ZXX2', 'ZXX_aiso'], 'zxx', 216, 'zxx')
         sampMan.groupMCs(['WX', 'wx_aiso'], 'wx', 216, 'wx')
         sampMan.groupMCs(['ttbar', 'ttbar_aiso'], 'ttbar', 86, 't#bar{t}')
         label = "W#rightarrow#mu#nu" if doMuon else "W#rightarrow e#nu"
         sampMan.groupMCs(['wlnu_aiso', 'wlnu'], "wl", 92, label)
-
-    # customize legends
-    label_plus = "W^{+}#rightarrow#mu^{+}#nu" if doMuon else "W^{+}#rightarrow e^{+}#nu"
-    label_minus = "W^{-}#rightarrow#mu^{-}#bar{#nu}" if doMuon else "W^{-}#rightarrow e^{-}#bar{#nu}"
-    legends = ["Data", label_plus, "t#bar{t}", "EWK"]
 
     sampMan.outdir = outdir
 
@@ -341,25 +335,24 @@ def main():
     # muon and electron isolation distributions are different
     # more coarse binning for electrons to make sure enough statistics
     if doMuon:
-        isoCuts = [0.0,0.001, 0.05, 0.10, 0.15, 0.20, 0.25, 0.30, 0.35, 0.40, 0.45, 0.50,
-                   0.55, 0.60, 0.65, 0.70, 0.75, 0.80, 0.85, 0.90, 0.95]
+        #isoCuts = [0.0,0.001, 0.05, 0.10, 0.15, 0.20, 0.25, 0.30, 0.35, 0.40, 0.45, 0.50,
+        #           0.55, 0.60, 0.65, 0.70, 0.75, 0.80, 0.85, 0.90, 0.95]
+        isoCuts = [0.0,0.001, 0.15, 0.25, 0.50, 0.75, 1.0]
         isobins = []
         sampMan.DefineAll("RelIso", isovar)
-        #sampMan.DefineAll("RelIso", "pfChIso / lep.Pt()")
-        for isobin in range(0, 20):
+        for isobin in range(0, 6):
             sampMan.DefineAll(
                 f"w_iso{isobin}", f"(RelIso >= {isoCuts[isobin]} && RelIso < {isoCuts[isobin+1]})")
             isobins.append(f"iso{isobin}")
 
     else:
-        isoCuts = [0.0, 0.10, 0.15, 0.20, 0.25,
-                   0.30, 0.35, 0.40, 0.50, 0.65, 0.90]
+        isoCuts = [0.0, 0.10, 0.15, 0.20, 0.25, 0.40, 0.60, 0.90]
         isobins = []
         sampMan.DefineAll("isEB",   "fabs(Lep_eta) <= 1.4442")
         # sampMan.DefineAll("RelIso", "isEB ? (relIso + 0.0287 - 0.0478) : (relIso + 0.0445 - 0.0658)")
         #sampMan.DefineAll("RelIso", "(pfCombIso/lep.Pt())")
         sampMan.DefineAll("RelIso", isovar)
-        for isobin in range(3, 13):
+        for isobin in range(3, 10):
             sampMan.DefineAll(
                 f"w_iso{isobin}", f"(RelIso > {isoCuts[isobin-3]} && RelIso < {isoCuts[isobin-2]})")
             isobins.append(f"iso{isobin}")
@@ -446,16 +439,16 @@ def main():
 
     # draw the lepton isolation distribution
     ymax = 5e7 if doMuon else 1e6
-    for wpt in wptbins:
-        for lepeta in etabins:
-            strname = f"weight_{wpt}_{lepeta}"
-            sampMan.DefineAll(strname, f"weight_WVpt * {wpt} * {lepeta}")
-            makeDraws(strname, ymax)
-            
-            for mt in mtbins:
-                strname = f"weight_{wpt}_{lepeta}_{mt}"
-                sampMan.DefineAll(strname, f"weight_WVpt * {wpt} * {lepeta} * {mt}")
-                makeDraws(strname, ymax)
+    #for wpt in wptbins:
+    #    for lepeta in etabins:
+    #        strname = f"weight_{wpt}_{lepeta}"
+    #        sampMan.DefineAll(strname, f"weight_WVpt * {wpt} * {lepeta}")
+    #        makeDraws(strname, ymax)
+    #        
+    #        for mt in mtbins:
+    #            strname = f"weight_{wpt}_{lepeta}_{mt}"
+    #            sampMan.DefineAll(strname, f"weight_WVpt * {wpt} * {lepeta} * {mt}")
+    #            makeDraws(strname, ymax)
                 
     idx = 0
     # do the fine binning first; then rebin in the processHists
