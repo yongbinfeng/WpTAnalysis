@@ -311,13 +311,16 @@ def PositiveProtection2D(h2):
                 h2.SetBinContent(ix, iy, 0)
                 h2.SetBinError(ix, iy, 0)
                 
-def IntegralAndError2D(h2):
+def IntegralAndError2D(h2s):
+    if isinstance(h2s, ROOT.TH2):
+        h2s = [h2s]
     val = 0
     err2 = 0
-    for ibinx in range(1, h2.GetNbinsX()+1):
-        for ibiny in range(1, h2.GetNbinsY()+1):
-            val += h2.GetBinContent(ibinx, ibiny)
-            err2 += h2.GetBinError(ibinx, ibiny)**2
+    for h2 in h2s:
+        for ibinx in range(1, h2.GetNbinsX()+1):
+            for ibiny in range(1, h2.GetNbinsY()+1):
+                val += h2.GetBinContent(ibinx, ibiny)
+                err2 += h2.GetBinError(ibinx, ibiny)**2
     return val, ROOT.TMath.Sqrt(err2)
 
 def CombineOneBin2D(h, ix, iy, jx, jy):

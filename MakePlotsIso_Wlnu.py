@@ -28,12 +28,15 @@ def main():
                         help="Analyze the 5TeV data; false runs on 13TeV data")
     parser.add_argument("--doElectron", action="store_true", dest="doElectron",
                         help="Analyze the electron channel; false runs the muon channel")
+    parser.add_argument("--useChgIso", action="store_true", dest="useChgIso",
+                        help="Use charged isolation instead of relIso; false runs relIso")
     args = parser.parse_args()
 
     doMuon = not args.doElectron
     doTest = args.doTest
     doWpT = args.doWpT
     is5TeV = args.is5TeV
+    useChgIso = args.useChgIso
     
     reweightZpt = True
 
@@ -42,7 +45,6 @@ def main():
     print("doWpT:", doWpT)
     print("is5TeV:", is5TeV)
   
-    useChgIso = True
     if useChgIso: 
         isovar = "pfChIso / lep.Pt()"
         suffix = "pfChIso"
