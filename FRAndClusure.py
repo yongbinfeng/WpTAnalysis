@@ -59,6 +59,34 @@ def GetFR(hnums, hdens, projX = False, projY = False):
         hFR.Divide(hden)
     return hFR
 
+def AverageEta2D(h2):
+    """
+    average eta+ and eta-, assuming eta is on the y axis
+    """
+    nbinsy = h2.GetNbinsY()
+    for ix in range(1, h2.GetNbinsX()+1):
+        for iy in range(1, int(nbinsy/2)+1):
+            val = h2.GetBinContent(ix, iy) + h2.GetBinContent(ix, nbinsy-iy+1)
+            err = np.sqrt((h2.GetBinError(ix, iy)**2 + h2.GetBinError(ix, nbinsy-iy+1)**2)*0.5)
+            h2.SetBinContent(ix, iy, val)
+            h2.SetBinError(ix, iy, err)
+            h2.SetBinContent(ix, nbinsy-iy+1, val)
+            h2.SetBinError(ix, nbinsy-iy+1, err)
+    return h2
+
+def StatUnc2SysUnc(h1):
+    hs = []
+    for ix in range(1, h1.GetNbinsX()+1):
+        hup = h1.Clone(f"{h1.GetName()}_bin{ix}Up")
+        hdn = h1.Clone(f"{h1.GetName()}_bin{ix}Down")
+        val = h1.GetBinContent(ix)
+        err = h1.GetBinError(ix)
+        hup.SetBinContent(ix, val+err)
+        hdn.SetBinContent(ix, val-err)
+        hs.append(hup)
+        hs.append(hdn)
+    return hs
+
 
 def main():
     parser = argparse.ArgumentParser()
@@ -100,7 +128,7 @@ def main():
         var2 = "eta"
         x1label = "p_{T}^{l} [GeV]"
         x1min = 25
-        x1max = 80
+        x1max = 70
         x2label = "#eta^{l}"
         x2min = -2.4
         x2max = 2.4  
@@ -110,23 +138,25 @@ def main():
         var2 = "met"
         x1label = "p_{T}^{l} [GeV]"
         x1min = 25
-        x1max = 80
+        x1max = 70
         x2label = "p_{T}^{miss} [GeV]"
         x2min = 0
-        x2max = 80
+        x2max = 70
     else:
         iname = f"root/output_qcdLepPtVsDeltaPhiMean_{isovar}_{lepname}nu_{sqrtS}.root"
         var1 = f"{lepname}_pt"
         var2 = "deltaPhi"
         x1label = "p_{T}^{l} [GeV]"
         x1min = 25
-        x1max = 80
+        x1max = 70
         x2label = "#Delta#phi"
         x2min = 0.
         x2max = 3.2
 
     var2D = f"{var1}_vs_{var2}"
-    outdir = f"plots/{sqrtS}/FRAndClosure/{isovar}/{var2D}/"
+    outdir = f"plots/{sqrtS}/FRAndClosure/{isovar}/{var2D}"
+    if useTwoPhis:
+        outdir += "_TwoPhis"
     
     print("input root file name: ", iname)
     f = ROOT.TFile.Open(iname) 
@@ -267,12 +297,16 @@ def main():
                             # include overflow and underflow bins 
                             IncludeOverflow2D(hdata, True)
                             IncludeOverflow2D(hmc, True)
-
+                            
                             if 1: 
                                 #hdata.RebinX(3)
                                 #hmc.RebinX(3)
                                 hdata.RebinY(3)
                                 hmc.RebinY(3)
+                                
+                            if 1:
+                                hdata = AverageEta2D(hdata)
+                                hmc = AverageEta2D(hmc)
 
                             # count = count_Data - count_MC
                             h = hdata.Clone(hname + f"Subtracted")
@@ -331,13 +365,15 @@ def main():
                         histos_FR[wpt][lepeta][chg][phin][isog] = hFR
 
                         DrawHistos([hFR], [], x1min, x1max, x1label, x2min, x2max, x2label, f"{outdir}/ISO_{isog}/FR/histo_wjets_{var2D}_FR_{chg}_{wpt}_{lepeta}_{isog}{suffix}", False, False, False, dologz=False, doth2=True, drawoptions="COLZ,texte", is5TeV=is5TeV) 
+                        
+                        ymax = 0.35 if not doElectron else 6.0
 
                         # Draw FRs in 1D
                         hFRxs, labelsy = TH2ToTH1s(hFR, False, x2label)
-                        DrawHistos(hFRxs, labelsy, x1min, x1max, x1label, 0, None, "Fake Factor", f"{outdir}/ISO_{isog}/FR/histo_wjets_{var1}_FR_{chg}_{wpt}_{lepeta}_{isog}{suffix}_ProjX", False, False, False, is5TeV=is5TeV)
+                        DrawHistos(hFRxs, labelsy, x1min, x1max, x1label, 0, ymax, "Fake Factor", f"{outdir}/ISO_{isog}/FR/histo_wjets_{var1}_FR_{chg}_{wpt}_{lepeta}_{isog}{suffix}_ProjX", False, False, False, is5TeV=is5TeV)
 
                         hFRys, labelsx = TH2ToTH1s(hFR, True, x1label)
-                        DrawHistos(hFRys, labelsx, x2min, x2max, x2label, 0, None, "Fake Factor", f"{outdir}/ISO_{isog}/FR/histo_wjets_{var2}_FR_{chg}_{wpt}_{lepeta}_{isog}{suffix}_ProjY", False, False, False, is5TeV=is5TeV)
+                        DrawHistos(hFRys, labelsx, x2min, x2max, x2label, 0, ymax, "Fake Factor", f"{outdir}/ISO_{isog}/FR/histo_wjets_{var2}_FR_{chg}_{wpt}_{lepeta}_{isog}{suffix}_ProjY", False, False, False, is5TeV=is5TeV)
                         
                 # get the predictions in the SR, 
                 # using the FR/TF in that anti-isolation region
@@ -445,6 +481,10 @@ def main():
                             hpred_mt.SetBinError(imtn + 1, err_pred)
 
                         DrawDataMCStack(hdata_mt, hmc_mt, hpred_mt, 0, 140, "m_{T}", f"{outdir}/ISO_{isog}/MTG_{mtgn}/histos_wjets_{strname}_stacked", is5TeV = is5TeV)
+                        
+                        if mtgn == "MTSR":
+                            hmtsys = StatUnc2SysUnc(hpred_mt)
+                            histos_ToSave += hmtsys
 
                         histos_ToSave.append(hdata_mt)
                         histos_ToSave.append(hmc_mt)
