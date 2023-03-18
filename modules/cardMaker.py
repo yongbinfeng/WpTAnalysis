@@ -27,7 +27,12 @@ class Process(object):
         #prefix_LPC = "/uscms/home/yfeng/nobackup/WpT/Cards/TestCode/WpTAnalysis/"
         #self.fname = prefix_LPC + kwargs.get('fname', 'test.root')
         # this should be changed depending on how cards and files are organized
-        self.fname = "../../root" + kwargs.get('fname', "test.root").rpartition('/root')[-1]
+        fname = kwargs.get('fname', 'test.root')
+        if fname.startswith('/'):
+            # absolute path
+            self.fname = fname
+        else:
+            self.fname = "../../root" + kwargs.get('fname', "test.root").rpartition('/root')[-1]
 
         #  regulation
         if self.isObs:
@@ -122,7 +127,8 @@ def WriteCard(data, processes, nuisgroups, cardname):
     isig = 0
     ibkg = 1
     for proc in processes:
-        if proc.isSignal or proc.isQCD:
+        #if proc.isSignal or proc.isQCD:
+        if proc.isSignal:
             ofile.write(f" {isig:<10}")
             isig -= 1
         else:
@@ -248,10 +254,13 @@ def MakeWJetsCards(fname_mc, fname_qcd, channel, wptbin, etabin, doWpT = False, 
                  xsecUnc = "1.10"
                  )
     # QCD bkg
+    lepname = "mu" if "mu" in channel else "e" 
     qcd = Process(name = "QCD_"+channel+"_"+etabin+"_"+wptbin+"_"+sqrtS, fname = fname_qcd,
-                  hname = "h_QCD_Extrapolated_{}_{}_{}".format(channel, etabin, wptbin),
+                  #hname = "h_QCD_Extrapolated_{}_{}_{}".format(channel, etabin, wptbin),
+                  hname = f"hqcd_{lepname}_mT_{channel}_{wptbin}_{etabin}_CR0_MTSR_QCD",
                   #hsys = "h_QCD_Extrapolated_{}_lepEta_".format(channel),
-                  hsys = "h_QCD_Extrapolated_",
+                  hsys = f"hqcd_{lepname}_mT_{channel}_{wptbin}_{etabin}_CR0_MTSR_QCD_", 
+                  #hsys = "h_QCD_Extrapolated_",
                   isSignal = False,
                   isMC = False,
                   isV = False,
@@ -336,10 +345,10 @@ def MakeWJetsCards(fname_mc, fname_qcd, channel, wptbin, etabin, doWpT = False, 
     # qcd stat
     # this is hard coded for now. Will be improved later
     nuisgroups["qcdbkg"] = []
-    prefix = channel + "_" + etabin + "_" + wptbin
+    prefix = f"{channel}_{etabin}_{wptbin}_{sqrtS}"
     nbins = nMTBins
     for ibin in range(1, nbins+1):
-        nuis_QCDStat = Nuisance(name = prefix + f"_bin{ibin}shape_{sqrtS}", type = "shape")
+        nuis_QCDStat = Nuisance(name = prefix + f"_bin{ibin}", type = "shape")
         for proc in processes:
             if proc.isQCD:
                 nuis_QCDStat[proc.name] = 1.0

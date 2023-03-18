@@ -1,6 +1,7 @@
 import ROOT
 import re
 import numpy as np
+import os
 from CMSPLOTS.myFunction import AddOverflowsTH1, RebinHisto
 from modules.qcdExtrapolater import ExtrapolateQCD, LoadQCDNorms, InclusiveQCD
 from modules.cardMaker import MakeWJetsCards, MakeZJetsCards, GenerateRunCommand, MakeXSecCard
@@ -22,7 +23,7 @@ def RunPreparations(fwsig_input, fwsig_rebin, fwsig_mergeTau, fqcd_input, fqcd_r
     generate datacard for Z;
     return the list of datacard names
     """
-    includeUnderflow = True
+    includeUnderflow = False
     includeOverflow = True
 
     ProcessHists(fwsig_input, fwsig_rebin, mass_bins_w,
@@ -31,23 +32,26 @@ def RunPreparations(fwsig_input, fwsig_rebin, fwsig_mergeTau, fqcd_input, fqcd_r
     CopyandMergeTau(fwsig_rebin, fwsig_mergeTau)
 
     # for QCD
-    ProcessHists(fqcd_input, fqcd_rebin, mass_bins_w,
-                 includeUnderflow, includeOverflow)
-    if fqcd_input_scaled and fqcd_rebin_scaled:
-        ProcessHists(fqcd_input_scaled, fqcd_rebin_scaled,
-                     mass_bins_w, includeUnderflow, includeOverflow)
+    #ProcessHists(fqcd_input, fqcd_rebin, mass_bins_w,
+    #             includeUnderflow, includeOverflow)
+    #if fqcd_input_scaled and fqcd_rebin_scaled:
+    #    ProcessHists(fqcd_input_scaled, fqcd_rebin_scaled,
+    #                 mass_bins_w, includeUnderflow, includeOverflow)
 
-    # extrapolate the QCD template from anti-isolated region to isolated region
-    # manually set the QCD normalization factors for the prefit impacts
-    # very hacky, not ideal at all; only temporary solution
-    fqcdnorm = "data/QCDNorms_inc.json"
-    qcdnorms = LoadQCDNorms(fqcdnorm)
-    print("QCD Norms: ", qcdnorms)
-    # qcdnorms = {}
-    ExtrapolateQCD(fqcd_rebin, fqcd_output, [lepname+"plus", lepname+"minus"], "WpT_bin0", [
-                   "lepEta_bin0"], fname_scaled=fqcd_rebin_scaled, rebinned=True, is5TeV=is5TeV, qcdnorms=qcdnorms)
-    #InclusiveQCD(fqcd_rebin, fqcd_output, [lepname+"plus", lepname+"minus"], "WpT_bin0", [
-    #                "lepEta_bin0"], fname_scaled=fqcd_rebin_scaled, rebinned=True, is5TeV=is5TeV, qcdnorms=qcdnorms)
+    ## extrapolate the QCD template from anti-isolated region to isolated region
+    ## manually set the QCD normalization factors for the prefit impacts
+    ## very hacky, not ideal at all; only temporary solution
+    #fqcdnorm = "data/QCDNorms_inc.json"
+    #qcdnorms = LoadQCDNorms(fqcdnorm)
+    #print("QCD Norms: ", qcdnorms)
+    ## qcdnorms = {}
+    #ExtrapolateQCD(fqcd_rebin, fqcd_output, [lepname+"plus", lepname+"minus"], "WpT_bin0", [
+    #               "lepEta_bin0"], fname_scaled=fqcd_rebin_scaled, rebinned=True, is5TeV=is5TeV, qcdnorms=qcdnorms)
+    ##InclusiveQCD(fqcd_rebin, fqcd_output, [lepname+"plus", lepname+"minus"], "WpT_bin0", [
+    ##                "lepEta_bin0"], fname_scaled=fqcd_rebin_scaled, rebinned=True, is5TeV=is5TeV, qcdnorms=qcdnorms)
+    
+    # copy fqcd_input to fqcd_output
+    os.system("cp "+fqcd_input+" "+fqcd_output)
 
     # generate card based on the signal and qcd templates
     card_plus = MakeWJetsCards(fwsig_mergeTau, fqcd_output, lepname+"plus", "WpT_bin0", "lepEta_bin0",
@@ -128,7 +132,9 @@ if __name__ == "__main__":
             fqcd_rebin_scaled = f"root/{odir}/test{key}/{sqrtS}/output_qcdshape_munu_Rebin_applyScaling" + suffix_qcd
             fqcd_input_scaled = None
             fqcd_rebin_scaled = None
+            fqcd_input = f"plots/{sqrtS}/FRAndClosure/relIso/mu_pt_vs_eta_TwoPhis/histos_qcdFR_mu_{sqrtS}.root"
             fqcd_output = f"forCombine/{odir}/test{key}/root/{sqrtS}/qcdshape_extrapolated_munu" + suffix_qcd
+            fqcd_output = f"forCombine/{odir}/test{key}/root/{sqrtS}/histos_qcdFR_mu_{sqrtS}.root"
 
             fzsig_output = f"forCombine/{odir}/test{key}/root/{sqrtS}/output_shapes_mumu_Rebin" + suffix
 
@@ -152,6 +158,8 @@ if __name__ == "__main__":
             fqcd_input_scaled = None
             fqcd_rebin_scaled = None
             fqcd_output = f"forCombine/{odir}/test{key}/root/{sqrtS}/qcdshape_extrapolated_enu" + suffix_qcd
+            fqcd_input = f"plots/{sqrtS}/FRAndClosure/relIso/e_pt_vs_eta_TwoPhis/histos_qcdFR_e_{sqrtS}.root"
+            fqcd_output = f"forCombine/{odir}/test{key}/root/{sqrtS}/histos_qcdFR_e_{sqrtS}.root"
 
             fzsig_output = f"forCombine/{odir}/test{key}/root/{sqrtS}/output_shapes_ee_Rebin" + suffix
 

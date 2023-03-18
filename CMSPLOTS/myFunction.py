@@ -244,21 +244,22 @@ def IncludeOverflow2D(h2, doUnderflow=False):
     nbinsY = h2.GetNbinsY()
     
     for ix in range(1, nbinsX+1):
-        CombineOneBin2D(h2, ix, nbinsY, ix, nbinsY+1)
+        h2 = CombineOneBin2D(h2, ix, nbinsY, ix, nbinsY+1)
     for iy in range(1, nbinsY+1):
-        CombineOneBin2D(h2, nbinsX, iy, nbinsX+1, iy)
+        h2 = CombineOneBin2D(h2, nbinsX, iy, nbinsX+1, iy)
     # correct the corner
-    CombineOneBin2D(h2, nbinsX, nbinsY, nbinsX+1, nbinsY+1)
+    h2 = CombineOneBin2D(h2, nbinsX, nbinsY, nbinsX+1, nbinsY+1)
         
     if doUnderflow:
         for ix in range(1, nbinsX+1):
-            CombineOneBin2D(h2, ix, 1, ix, 0)
+            h2 = CombineOneBin2D(h2, ix, 1, ix, 0)
         for iy in range(1, nbinsY+1):
-            CombineOneBin2D(h2, 1, iy, 0, iy)
+            h2 = CombineOneBin2D(h2, 1, iy, 0, iy)
         # correct the corner
-        CombineOneBin2D(h2, 1, 1, 0, 0)
-        CombineOneBin2D(h2, 1, nbinsY, 0, nbinsY+1)
-        CombineOneBin2D(h2, nbinsX, 1, nbinsX+1, 0)
+        h2 = CombineOneBin2D(h2, 1, 1, 0, 0)
+        h2 = CombineOneBin2D(h2, 1, nbinsY, 0, nbinsY+1)
+        h2 = CombineOneBin2D(h2, nbinsX, 1, nbinsX+1, 0)
+    return h2
 
 
 def Ratio2Diff(hratio, inpercent=True):
@@ -317,6 +318,7 @@ def IntegralAndError2D(h2s):
     val = 0
     err2 = 0
     for h2 in h2s:
+        #print("hname ", h2.GetName())
         for ibinx in range(1, h2.GetNbinsX()+1):
             for ibiny in range(1, h2.GetNbinsY()+1):
                 val += h2.GetBinContent(ibinx, ibiny)
@@ -332,6 +334,7 @@ def CombineOneBin2D(h, ix, iy, jx, jy):
     # clean the original bin so that there would not be double counting
     h.SetBinContent(jx, jy, 0)
     h.SetBinError(jx, jy, 0)
+    return h
     
 def GetRatioPanel(hs):
     """

@@ -6,7 +6,7 @@ import numpy as np
 import sys
 import argparse
 from collections import OrderedDict
-from modules.Binnings import mass_bins_test
+from modules.Binnings import mass_bins_forqcd
 from CMSPLOTS.myFunction import DrawHistos, MultiplyH2, PositiveProtection, IntegralAndError2D, CombineOneBin2D, GetRatioPanel, LHistos2Hist, IncludeOverflow2D, TH2ToTH1s
 
 ROOT.gROOT.SetBatch(True)
@@ -66,7 +66,7 @@ def AverageEta2D(h2):
     nbinsy = h2.GetNbinsY()
     for ix in range(1, h2.GetNbinsX()+1):
         for iy in range(1, int(nbinsy/2)+1):
-            val = h2.GetBinContent(ix, iy) + h2.GetBinContent(ix, nbinsy-iy+1)
+            val = (h2.GetBinContent(ix, iy) + h2.GetBinContent(ix, nbinsy-iy+1)) * 0.5
             err = np.sqrt((h2.GetBinError(ix, iy)**2 + h2.GetBinError(ix, nbinsy-iy+1)**2)*0.5)
             h2.SetBinContent(ix, iy, val)
             h2.SetBinError(ix, iy, err)
@@ -74,11 +74,11 @@ def AverageEta2D(h2):
             h2.SetBinError(ix, nbinsy-iy+1, err)
     return h2
 
-def StatUnc2SysUnc(h1):
+def StatUnc2SysUnc(h1, prefix = "stat"):
     hs = []
     for ix in range(1, h1.GetNbinsX()+1):
-        hup = h1.Clone(f"{h1.GetName()}_bin{ix}Up")
-        hdn = h1.Clone(f"{h1.GetName()}_bin{ix}Down")
+        hup = h1.Clone(f"{h1.GetName()}_{prefix}_bin{ix}Up")
+        hdn = h1.Clone(f"{h1.GetName()}_{prefix}_bin{ix}Down")
         val = h1.GetBinContent(ix)
         err = h1.GetBinError(ix)
         hup.SetBinContent(ix, val+err)
@@ -128,7 +128,7 @@ def main():
         var2 = "eta"
         x1label = "p_{T}^{l} [GeV]"
         x1min = 25
-        x1max = 70
+        x1max = 60
         x2label = "#eta^{l}"
         x2min = -2.4
         x2max = 2.4  
@@ -138,17 +138,17 @@ def main():
         var2 = "met"
         x1label = "p_{T}^{l} [GeV]"
         x1min = 25
-        x1max = 70
+        x1max = 60
         x2label = "p_{T}^{miss} [GeV]"
         x2min = 0
-        x2max = 70
+        x2max = 60
     else:
         iname = f"root/output_qcdLepPtVsDeltaPhiMean_{isovar}_{lepname}nu_{sqrtS}.root"
         var1 = f"{lepname}_pt"
         var2 = "deltaPhi"
         x1label = "p_{T}^{l} [GeV]"
         x1min = 25
-        x1max = 70
+        x1max = 60
         x2label = "#Delta#phi"
         x2min = 0.
         x2max = 3.2
@@ -189,7 +189,7 @@ def main():
     # CR1 is the one used to derive FRs
     # CR2 is for the closure test
     # SR is the signal region
-    mtbins = mass_bins_test[0]
+    mtbins = mass_bins_forqcd
     bmaxs = OrderedDict()
     if not doElectron:
         bmaxs["MTCR1"] = 20
@@ -233,6 +233,7 @@ def main():
         v.append( bmaxs[k] )
         mass_bins[k] = np.array(v)
     print("mass_bins", mass_bins)
+    print("mass_bins_groups", mass_bins_groups)
     
     mc_suffix = "MC"
     data_suffix = "Data"
@@ -293,10 +294,10 @@ def main():
                                     hmc = f.Get(hname + f"{mc_suffix}").Clone(hname+"PureMC")
                                 else:
                                     hmc.Add(f.Get(hname + f"{mc_suffix}"))
-
+                                    
                             # include overflow and underflow bins 
-                            IncludeOverflow2D(hdata, True)
-                            IncludeOverflow2D(hmc, True)
+                            hdata = IncludeOverflow2D(hdata, True)
+                            hmc = IncludeOverflow2D(hmc, True)
                             
                             if 1: 
                                 #hdata.RebinX(3)
@@ -307,22 +308,17 @@ def main():
                             if 1:
                                 hdata = AverageEta2D(hdata)
                                 hmc = AverageEta2D(hmc)
-
+                                
                             # count = count_Data - count_MC
                             h = hdata.Clone(hname + f"Subtracted")
                             h.Add(hmc, -1)
                             #PositiveProtection(h)
 
                             # no sure if we still need this if
-                            if isog not in histos_count[wpt][lepeta][chg][mtn][phin]:
-                                histos_count[wpt][lepeta][chg][mtn][phin][isog] = h
-                                histos_count_Data[wpt][lepeta][chg][mtn][phin][isog] = hdata
-                                histos_count_MC[wpt][lepeta][chg][mtn][phin][isog] = hmc       
-                            else:
-                                histos_count[wpt][lepeta][chg][mtn][phin][isog].Add(h) 
-                                histos_count_Data[wpt][lepeta][chg][mtn][phin][isog].Add(hdata)
-                                histos_count_MC[wpt][lepeta][chg][mtn][phin][isog].Add(hmc)
-                                
+                            histos_count[wpt][lepeta][chg][mtn][phin][isog] = h
+                            histos_count_Data[wpt][lepeta][chg][mtn][phin][isog] = hdata
+                            histos_count_MC[wpt][lepeta][chg][mtn][phin][isog] = hmc       
+                            
                 # draw the data-MC comparisons in different mt and iso groups
                 # in order to validate signal contaminations
                 # plot isolation CR only
@@ -483,7 +479,8 @@ def main():
                         DrawDataMCStack(hdata_mt, hmc_mt, hpred_mt, 0, 140, "m_{T}", f"{outdir}/ISO_{isog}/MTG_{mtgn}/histos_wjets_{strname}_stacked", is5TeV = is5TeV)
                         
                         if mtgn == "MTSR":
-                            hmtsys = StatUnc2SysUnc(hpred_mt)
+                            prefix = f"{chg}_{lepeta}_{wpt}_{sqrtS}"
+                            hmtsys = StatUnc2SysUnc(hpred_mt, prefix = prefix)
                             histos_ToSave += hmtsys
 
                         histos_ToSave.append(hdata_mt)
