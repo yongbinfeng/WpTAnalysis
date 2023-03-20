@@ -9,7 +9,7 @@ import argparse
 from CMSPLOTS.myFunction import THStack2TH1
 
 from modules.SampleManager import DrawConfig, Sample, SampleManager
-from modules.Binnings import mass_bins_test
+from modules.Binnings import mass_bins_forqcd
 
 ROOT.gROOT.SetBatch(True)
 ROOT.ROOT.EnableImplicitMT(16)
@@ -339,22 +339,22 @@ def main():
     if doMuon:
         #isoCuts = [0.0,0.001, 0.05, 0.10, 0.15, 0.20, 0.25, 0.30, 0.35, 0.40, 0.45, 0.50,
         #           0.55, 0.60, 0.65, 0.70, 0.75, 0.80, 0.85, 0.90, 0.95]
-        isoCuts = [0.0,0.001, 0.15, 0.25, 0.50, 0.75, 1.0]
+        isoCuts = [0.0,0.001, 0.15, 0.25, 0.50, 0.75, 1.0, 1000000]
         isobins = []
         sampMan.DefineAll("RelIso", isovar)
-        for isobin in range(0, 6):
+        for isobin in range(0, len(isoCuts)-1):
             sampMan.DefineAll(
                 f"w_iso{isobin}", f"(RelIso >= {isoCuts[isobin]} && RelIso < {isoCuts[isobin+1]})")
             isobins.append(f"iso{isobin}")
 
     else:
-        isoCuts = [0.0, 0.10, 0.15, 0.20, 0.25, 0.40, 0.60, 0.90]
+        isoCuts = [0.0, 0.10, 0.15, 0.20, 0.25, 0.40, 0.60, 0.90, 1000000]
         isobins = []
         sampMan.DefineAll("isEB",   "fabs(Lep_eta) <= 1.4442")
         # sampMan.DefineAll("RelIso", "isEB ? (relIso + 0.0287 - 0.0478) : (relIso + 0.0445 - 0.0658)")
         #sampMan.DefineAll("RelIso", "(pfCombIso/lep.Pt())")
         sampMan.DefineAll("RelIso", isovar)
-        for isobin in range(3, 10):
+        for isobin in range(3, 11):
             sampMan.DefineAll(
                 f"w_iso{isobin}", f"(RelIso > {isoCuts[isobin-3]} && RelIso < {isoCuts[isobin-2]})")
             isobins.append(f"iso{isobin}")
@@ -404,7 +404,7 @@ def main():
         etabins = ["lepEta_bin0", "lepEta_bin1", "lepEta_bin2"]
     etabins = ["lepEta_bin0"]
     
-    mass_bins = mass_bins_test[0]
+    mass_bins = mass_bins_forqcd
     mtbins = []
     for imt in range(len(mass_bins)-1):
         sampMan.DefineAll(

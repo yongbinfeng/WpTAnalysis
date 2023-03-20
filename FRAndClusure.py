@@ -30,10 +30,14 @@ def DrawDataMCStack(hdata, hmc, hpred = None, xmin = 0, xmax = 140, xlabel = "m_
     hratiopanel = GetRatioPanel(hsmc) 
     DrawHistos([hdata, hsmc], labels, xmin, xmax, xlabel, 0., None, "Events", f"{outputname}", dology=False, showratio=True, yrmin = 0.89, yrmax = 1.11, ratiobase=1, redrawihist=0, hratiopanel=hratiopanel, is5TeV=is5TeV)
     
-def GetFR(hnums, hdens, projX = False, projY = False):
+def GetFR(hnums, hdens, projX = False, projY = False, avergeEta = False):
     hnum = LHistos2Hist(hnums, f"{hnums[0].GetName()}_Clone")
     hden = LHistos2Hist(hdens, f"{hdens[0].GetName()}_Clone")
     
+    if avergeEta:
+        hnum = AverageEta2D(hnum)
+        hden = AverageEta2D(hden)
+        
     assert projX + projY < 2, "only one projection can be done at a time"
     hFR = hnum.Clone(f"{hnum.GetName()}_FR")
     
@@ -165,14 +169,18 @@ def main():
     if not doElectron:
         #isogroups["SR"] = ["iso0", "iso1", "iso2", "iso3"]
         isogroups["SR"] = ["iso0", "iso1"]
-        isogroups["CR0"] = ["iso2", "iso3", "iso4", "iso5"]
+        isogroups["CR0"] = ["iso2", "iso3"]
+        isogroups["CR1"] = ["iso4", "iso5", "iso6"]
+        isogroups["CRAll"] = isogroups["CR0"] + isogroups["CR1"]
         #isogroups["CR0"] = ["iso4", "iso5", "iso6", "iso7", "iso8"]
         #isogroups["CR1"] = ["iso9", "iso10", "iso11", "iso12"]
         #isogroups["CR2"] = ["iso13", "iso14", "iso15", "iso16", "iso17", "iso18"]
         #isogroups["CRAll"] = isogroups["CR0"] + isogroups["CR1"] + isogroups["CR2"]
     else:
         isogroups["SR"] = ["iso3", "iso4"]
-        isogroups["CR0"] = ["iso5", "iso6", "iso7", "iso8", "iso9"]
+        isogroups["CR0"] = ["iso5", "iso6", "iso7"]
+        isogroups["CR1"] = ["iso8", "iso9"]
+        isogroups["CRAll"] = isogroups["CR0"] + isogroups["CR1"]
 
     etabins = ["lepEta_bin0"]
 
@@ -299,15 +307,11 @@ def main():
                             hdata = IncludeOverflow2D(hdata, True)
                             hmc = IncludeOverflow2D(hmc, True)
                             
-                            if 1: 
+                            if doPtVsEta: 
                                 #hdata.RebinX(3)
                                 #hmc.RebinX(3)
                                 hdata.RebinY(3)
                                 hmc.RebinY(3)
-                                
-                            if 1:
-                                hdata = AverageEta2D(hdata)
-                                hmc = AverageEta2D(hmc)
                                 
                             # count = count_Data - count_MC
                             h = hdata.Clone(hname + f"Subtracted")
@@ -347,16 +351,15 @@ def main():
                         hnums = []
                         hdens = []
                         for mtn in frbins:
-                            # PositiveProtection(histos_count[wpt][lepeta][chg][mtn][isog])
                             hnums.append( histos_count[wpt][lepeta][chg][mtn][phin]["SR"] )
                             hdens.append( histos_count[wpt][lepeta][chg][mtn][phin][isog] )
-                            #hnum.Divide(hden)
 
                         doProjX = False
                         doProjY = False
+                        doAverageEta = (True and doPtVsEta)
                         suffix = phin
                         suffix += "ProjY" if doProjY else "ProjX" if doProjX else "2D" 
-                        hFR = GetFR(hnums, hdens, projX=doProjX, projY=doProjY)
+                        hFR = GetFR(hnums, hdens, projX=doProjX, projY=doProjY, avergeEta=doAverageEta)
                         PositiveProtection(hFR)
                         histos_FR[wpt][lepeta][chg][phin][isog] = hFR
 
