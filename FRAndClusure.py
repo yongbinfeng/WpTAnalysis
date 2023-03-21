@@ -7,7 +7,7 @@ import sys
 import argparse
 from collections import OrderedDict
 from modules.Binnings import mass_bins_forqcd
-from CMSPLOTS.myFunction import DrawHistos, MultiplyH2, PositiveProtection, IntegralAndError2D, CombineOneBin2D, GetRatioPanel, LHistos2Hist, IncludeOverflow2D, TH2ToTH1s
+from CMSPLOTS.myFunction import DrawHistos, MultiplyH2, PositiveProtection, IntegralAndError2D, CombineOneBin2D, GetRatioPanel, LHistos2Hist, IncludeOverflow2D, TH2ToTH1s, SymmetrizeHisto
 
 ROOT.gROOT.SetBatch(True)
 
@@ -30,9 +30,19 @@ def DrawDataMCStack(hdata, hmc, hpred = None, xmin = 0, xmax = 140, xlabel = "m_
     hratiopanel = GetRatioPanel(hsmc) 
     DrawHistos([hdata, hsmc], labels, xmin, xmax, xlabel, 0., None, "Events", f"{outputname}", dology=False, showratio=True, yrmin = 0.89, yrmax = 1.11, ratiobase=1, redrawihist=0, hratiopanel=hratiopanel, is5TeV=is5TeV)
     
-def GetFR(hnums, hdens, projX = False, projY = False, avergeEta = False):
-    hnum = LHistos2Hist(hnums, f"{hnums[0].GetName()}_Clone")
-    hden = LHistos2Hist(hdens, f"{hdens[0].GetName()}_Clone")
+def GetFR(hnums_data, hnums_mc, hdens_data, hdens_mc, projX = False, projY = False, avergeEta = False, suffix = "Clone", scaleNumMC = 1.0, scaleDenMC = 1.0):
+    hnum_data = LHistos2Hist(hnums_data, f"{hnums_data[0].GetName()}_{suffix}")
+    hnum_mc = LHistos2Hist(hnums_mc, f"{hnums_mc[0].GetName()}_{suffix}")
+    hden_data = LHistos2Hist(hdens_data, f"{hdens_data[0].GetName()}_{suffix}")
+    hden_mc = LHistos2Hist(hdens_mc, f"{hdens_mc[0].GetName()}_{suffix}")
+    
+    # scale up/down contributions from MC in the (anti)isolated region
+    # for systematic variations
+    hnum_mc.Scale(scaleNumMC)
+    hden_mc.Scale(scaleDenMC)
+    
+    hnum = GetAbsYield(hnum_data, hnum_mc, f"num_FR_for_{suffix}")
+    hden = GetAbsYield(hden_data, hden_mc, f"den_FR_for_{suffix}")
     
     if avergeEta:
         hnum = AverageEta2D(hnum)
@@ -45,6 +55,8 @@ def GetFR(hnums, hdens, projX = False, projY = False, avergeEta = False):
         # 1D histo along x axis
         hnumN = hnum.ProjectionX(f"{hnum.GetName()}_ProjX")
         hdenN = hden.ProjectionX(f"{hden.GetName()}_ProjX")
+        PositiveProtection(hnumN)
+        PositiveProtection(hdenN)
         hnumN.Divide(hdenN)
         for iy in range(1, hFR.GetNbinsY()+1):
             for ix in range(1, hFR.GetNbinsX()+1):
@@ -54,12 +66,16 @@ def GetFR(hnums, hdens, projX = False, projY = False, avergeEta = False):
         # 1D histo along y axis
         hnumN = hnum.ProjectionY(f"{hnum.GetName()}_ProjY")
         hdenN = hden.ProjectionY(f"{hden.GetName()}_ProjY")
+        PositiveProtection(hnumN)
+        PositiveProtection(hdenN)
         hnumN.Divide(hdenN)
         for ix in range(1, hFR.GetNbinsX()+1):
             for iy in range(1, hFR.GetNbinsY()+1):
                 hFR.SetBinContent(ix, iy, hnumN.GetBinContent(iy))
                 hFR.SetBinError(ix, iy, hnumN.GetBinError(iy))
     else:
+        PositiveProtection(hnum)
+        PositiveProtection(hden)
         hFR.Divide(hden)
     return hFR
 
@@ -90,6 +106,11 @@ def StatUnc2SysUnc(h1, prefix = "stat"):
         hs.append(hup)
         hs.append(hdn)
     return hs
+
+def GetAbsYield(hdata, hmc, suffix=""):
+    habs = hdata.Clone(f"{hdata.GetName()}_{suffix}")
+    habs.Add(hmc, -1)
+    return habs
 
 
 def main():
@@ -247,40 +268,36 @@ def main():
     data_suffix = "Data"
 
     # get the histograms
-    histos_count = OrderedDict()
     histos_count_Data = OrderedDict()
     histos_count_MC = OrderedDict()
     histos_count_QCD = OrderedDict()
     histos_FR = OrderedDict()
     histos_ToSave = []
-
+   
+    # to save the central values of predictions
+    # for systematic variations 
     for wpt in wptbins:
-        histos_count[wpt] = OrderedDict()
         histos_count_Data[wpt] = OrderedDict()
         histos_count_MC[wpt] = OrderedDict()
         histos_count_QCD[wpt] = OrderedDict()
         histos_FR[wpt] = OrderedDict()
         for lepeta in etabins:
-            histos_count[wpt][lepeta] = OrderedDict()
             histos_count_Data[wpt][lepeta] = OrderedDict()
             histos_count_MC[wpt][lepeta] = OrderedDict()
             histos_count_QCD[wpt][lepeta] = OrderedDict()
             histos_FR[wpt][lepeta] = OrderedDict()
             for chg in chgbins:
-                histos_count[wpt][lepeta][chg] = OrderedDict()
                 histos_count_Data[wpt][lepeta][chg] = OrderedDict()
                 histos_count_MC[wpt][lepeta][chg] = OrderedDict()
                 histos_count_QCD[wpt][lepeta][chg] = OrderedDict()
                 histos_FR[wpt][lepeta][chg] = OrderedDict()
                 for mtn in mtnames:
-                    histos_count[wpt][lepeta][chg][mtn] = OrderedDict()
                     histos_count_Data[wpt][lepeta][chg][mtn] = OrderedDict()
                     histos_count_MC[wpt][lepeta][chg][mtn] = OrderedDict()
                     histos_count_QCD[wpt][lepeta][chg][mtn] = OrderedDict()
                     
                     for phin in phibins:
                         
-                        histos_count[wpt][lepeta][chg][mtn][phin] = OrderedDict()
                         histos_count_Data[wpt][lepeta][chg][mtn][phin] = OrderedDict()
                         histos_count_MC[wpt][lepeta][chg][mtn][phin] = OrderedDict()
                         histos_count_QCD[wpt][lepeta][chg][mtn][phin] = OrderedDict()
@@ -313,13 +330,6 @@ def main():
                                 hdata.RebinY(3)
                                 hmc.RebinY(3)
                                 
-                            # count = count_Data - count_MC
-                            h = hdata.Clone(hname + f"Subtracted")
-                            h.Add(hmc, -1)
-                            #PositiveProtection(h)
-
-                            # no sure if we still need this if
-                            histos_count[wpt][lepeta][chg][mtn][phin][isog] = h
                             histos_count_Data[wpt][lepeta][chg][mtn][phin][isog] = hdata
                             histos_count_MC[wpt][lepeta][chg][mtn][phin][isog] = hmc       
                             
@@ -348,20 +358,41 @@ def main():
                 for phin in phibins:
                     histos_FR[wpt][lepeta][chg][phin] = OrderedDict()
                     for isog in isogroups: 
-                        hnums = []
-                        hdens = []
+                        histos_FR[wpt][lepeta][chg][phin][isog] = OrderedDict()
+                        hnums_data = []
+                        hnums_mc = []
+                        hdens_data = []
+                        hdens_mc = []
+                        # accumulate all histograms in different mt groups
                         for mtn in frbins:
-                            hnums.append( histos_count[wpt][lepeta][chg][mtn][phin]["SR"] )
-                            hdens.append( histos_count[wpt][lepeta][chg][mtn][phin][isog] )
+                            hnum_data = histos_count_Data[wpt][lepeta][chg][mtn][phin]["SR"]
+                            hnum_mc = histos_count_MC[wpt][lepeta][chg][mtn][phin]["SR"]
+                            hden_data = histos_count_Data[wpt][lepeta][chg][mtn][phin][isog]
+                            hden_mc = histos_count_MC[wpt][lepeta][chg][mtn][phin][isog]
+                            
+                            hnums_data.append(hnum_data)
+                            hnums_mc.append(hnum_mc)
+                            hdens_data.append(hden_data)
+                            hdens_mc.append(hden_mc)
 
                         doProjX = False
                         doProjY = False
                         doAverageEta = (True and doPtVsEta)
                         suffix = phin
                         suffix += "ProjY" if doProjY else "ProjX" if doProjX else "2D" 
-                        hFR = GetFR(hnums, hdens, projX=doProjX, projY=doProjY, avergeEta=doAverageEta)
-                        PositiveProtection(hFR)
-                        histos_FR[wpt][lepeta][chg][phin][isog] = hFR
+                        
+                        hFR = GetFR(hnums_data, hnums_mc, hdens_data, hdens_mc, projX=doProjX, projY=doProjY, avergeEta=doAverageEta, suffix = f"{wpt}_{lepeta}_{chg}_{iso}_{suffix}")
+                        histos_FR[wpt][lepeta][chg][phin][isog]["central"] = hFR
+                       
+                        # scale the MC contribution in the anti-isolation region
+                        # down by 20% 
+                        hFR_crUp = GetFR(hnums_data, hnums_mc, hdens_data, hdens_mc, projX=doProjX, projY=doProjY, avergeEta=doAverageEta, suffix = f"{wpt}_{lepeta}_{chg}_{iso}_{suffix}", scaleDenMC=0.50) 
+                        histos_FR[wpt][lepeta][chg][phin][isog]["CRUp"] = hFR_crUp
+                       
+                        # scale the MC contribution in the signal region 
+                        # up by 10% 
+                        hFR_srUp = GetFR(hnums_data, hnums_mc, hdens_data, hdens_mc, projX=doProjX, projY=doProjY, avergeEta=doAverageEta, suffix = f"{wpt}_{lepeta}_{chg}_{iso}_{suffix}", scaleNumMC=1.10)
+                        histos_FR[wpt][lepeta][chg][phin][isog]["SRUp"] = hFR_srUp
 
                         DrawHistos([hFR], [], x1min, x1max, x1label, x2min, x2max, x2label, f"{outdir}/ISO_{isog}/FR/histo_wjets_{var2D}_FR_{chg}_{wpt}_{lepeta}_{isog}{suffix}", False, False, False, dologz=False, doth2=True, drawoptions="COLZ,texte", is5TeV=is5TeV) 
                         
@@ -376,125 +407,168 @@ def main():
                         
                 # get the predictions in the SR, 
                 # using the FR/TF in that anti-isolation region
-                for isog in isogroups: 
-                    hdatas_var1 = OrderedDict()
-                    hmcs_var1 = OrderedDict()
-                    hpreds_var1 = OrderedDict()
-                    hdatas_var2 = OrderedDict()
-                    hmcs_var2 = OrderedDict()
-                    hpreds_var2 = OrderedDict()
+                hpreds_mt_sr = OrderedDict()
+                for frsys in ["central", "CRUp", "SRUp"]:
+                    hpreds_mt_sr[frsys] = OrderedDict()
+                    for isog in isogroups: 
+                        hdatas_var1 = OrderedDict()
+                        hmcs_var1 = OrderedDict()
+                        hpreds_var1 = OrderedDict()
+                        hdatas_var2 = OrderedDict()
+                        hmcs_var2 = OrderedDict()
+                        hpreds_var2 = OrderedDict()
+                        if isog == "SR":
+                            continue
+                        
+                        for phin in phibins:
+                            hfr = histos_FR[wpt][lepeta][chg][phin][isog][frsys]
+                            for mtn in mtnames:
+                                # get the abs yield in the anti-isolation region
+                                # then yield * FR = QCD prediction in the signal region
+                                hdata_cr = histos_count_Data[wpt][lepeta][chg][mtn][phin][isog]
+                                hmc_cr = histos_count_MC[wpt][lepeta][chg][mtn][phin][isog]
+                                hcounts_cr = GetAbsYield(hdata_cr, hmc_cr, f"CR_for_{isog}_with_FR{frsys}")
+
+                                h = hcounts_cr.Clone(hcounts_cr.GetName() + "_CT")
+                                PositiveProtection(h)
+
+                                hpred = MultiplyH2(h, hfr)
+                                histos_count_QCD[wpt][lepeta][chg][mtn][phin]['SR'] = hpred
+                               
+                                # get the abs yield in the signal region 
+                                hdata_sr = histos_count_Data[wpt][lepeta][chg][mtn][phin]["SR"]
+                                hmc_sr = histos_count_MC[wpt][lepeta][chg][mtn][phin]["SR"]
+                                hcounts_sr = GetAbsYield(hdata_sr, hmc_sr, "SR")
+
+                                for ibinx in range(1, h.GetNbinsX()+1):
+                                    for ibiny in range(1, h.GetNbinsY()+1):
+                                        if hpred.GetBinContent(ibinx, ibiny) < 0:
+                                            print("Found negative: ", ibinx, ibiny, hpred.GetBinContent(ibinx, ibiny), h.GetBinContent(ibinx, ibiny), hfr.GetBinContent(ibinx, ibiny))
+                                            sys.exit(1)
+
+                                hpred_var1 = hpred.ProjectionX(f"{hpred.GetName()}_Proj_{var1}")
+                                hcounts_sr_var1 = hcounts_sr.ProjectionX(f"{hcounts_sr.GetName()}_Proj_{var1}")
+
+                                hpred_var2 = hpred.ProjectionY(f"{hpred.GetName()}_Proj_{var2}")
+                                hcounts_sr_var2 = hcounts_sr.ProjectionY(f"{hcounts_sr.GetName()}_Proj_{var2}")
+
+                                hratio = hpred.Clone(hpred.GetName() + "_ratio")
+                                hratio.Divide(hcounts_sr)
+
+                                # compare predicted QCD with abs yield in SR (i.e., data-MC)
+                                DrawHistos([hcounts_sr_var1, hpred_var1], ["Obs", "Pred"], x1min, x1max, x1label, 0, None, "Events", f"{outdir}/{frsys}/ISO_{isog}/Closure_mT/histos_wjets_{var1}_CT_{chg}_{wpt}_{lepeta}_{mtn}", dology=False, showratio=True, yrmin = 0.8, yrmax = 1.2, is5TeV = is5TeV, mycolors=[ROOT.kBlack, ROOT.kRed])
+
+                                DrawHistos([hcounts_sr_var2, hpred_var2], ["Obs", "Pred"], x2min, x2max, x2label, 0., None, "Events", f"{outdir}/{frsys}/ISO_{isog}/Closure_mT/histos_wjets_{var2}_CT_{chg}_{wpt}_{lepeta}_{mtn}", dology=False, showratio=True, yrmin = 0.8, yrmax = 1.2, is5TeV = is5TeV, mycolors=[ROOT.kBlack, ROOT.kRed])
+                                
+                                # draw 2D closure ratio
+                                DrawHistos([hratio], [], x1min, x1max, x1label, x2min, x2max, x2label, f"{outdir}/{frsys}/ISO_{isog}/Closure_mT_2D/histo_wjets_{var2D}_CT_{chg}_{wpt}_{lepeta}_{mtn}{phin}", False, False, False, dologz=False, doth2=True, drawoptions="COLZ,text", zmin=0.8, zmax=1.2, is5TeV=is5TeV)
+
+                                # make the stacked histograms 
+                                # so that the signal contribution can be visualized
+                                hdata_var1 = hdata_sr.ProjectionX(f"{hdata_sr.GetName()}_Proj_{var1}_for{isog}")
+                                hmc_var1 = hmc_sr.ProjectionX(f"{hmc_sr.GetName()}_Proj_{var1}_for{isog}")
+                                DrawDataMCStack(hdata_var1, hmc_var1, hpred_var1, x1min, x1max, x1label, f"{outdir}/{frsys}/ISO_{isog}/Closure_mT_Stacked/histos_wjets_{var1}_CT_{chg}_{wpt}_{lepeta}_{mtn}{phin}_stacked", is5TeV = is5TeV)
+
+                                kname = mtn + phin
+                                hdatas_var1[kname] = hdata_var1
+                                hmcs_var1[kname] = hmc_var1
+                                hpreds_var1[kname] = hpred_var1
+                                
+                                hdata_var2 = hdata_sr.ProjectionY(f"{hdata_sr.GetName()}_Proj_{var2}_for{isog}")
+                                hmc_var2 = hmc_sr.ProjectionY(f"{hmc_sr.GetName()}_Proj_{var2}_for{isog}")
+                                DrawDataMCStack(hdata_var2, hmc_var2, hpred_var2, x2min, x2max, x2label, f"{outdir}/{frsys}/ISO_{isog}/Closure_mT_Stacked/histos_wjets_{var2}_CT_{chg}_{wpt}_{lepeta}_{mtn}{phin}_stacked", is5TeV = is5TeV)
+
+                                hdatas_var2[kname] = hdata_var2
+                                hmcs_var2[kname] = hmc_var2
+                                hpreds_var2[kname] = hpred_var2
+
+                        # check the var1, var2, and mt distributions in different mt groups
+                        for mtgn, mtns in mass_bins_groups.items():
+                            # check lepton var1 distribution in that mtgroup
+                            strname = f"{lepname}_{var1}_{chg}_{wpt}_{lepeta}_{isog}_{mtgn}_{frsys}"
+                            hdata_var1 = LHistos2Hist([hdatas_var1[mtn+phin] for mtn in mtns for phin in phibins], f"hdata_{strname}_Data")
+                            hmc_var1   = LHistos2Hist([hmcs_var1  [mtn+phin] for mtn in mtns for phin in phibins], f"hmc_{strname}_MC")
+                            hpred_var1 = LHistos2Hist([hpreds_var1[mtn+phin] for mtn in mtns for phin in phibins], f"hqcd_{strname}_QCD")
+                            DrawDataMCStack(hdata_var1, hmc_var1, hpred_var1, x1min, x1max, x1label, f"{outdir}/{frsys}/ISO_{isog}/MTG_{mtgn}/histos_wjets_{strname}_stacked", is5TeV = is5TeV)
+
+                            # check lepton var2 distribution in that mtgroup
+                            strname = f"{lepname}_{var2}_{chg}_{wpt}_{lepeta}_{isog}_{mtgn}_{frsys}"
+                            hdata_var2 = LHistos2Hist([hdatas_var2[mtn+phin] for mtn in mtns for phin in phibins], f"hdata_{strname}_Data")
+                            hmc_var2   = LHistos2Hist([hmcs_var2  [mtn+phin] for mtn in mtns for phin in phibins], f"hmc_{strname}_MC")
+                            hpred_var2 = LHistos2Hist([hpreds_var2[mtn+phin] for mtn in mtns for phin in phibins], f"hqcd_{strname}_QCD")
+                            DrawDataMCStack(hdata_var2, hmc_var2, hpred_var2, x2min, x2max, x2label, f"{outdir}/{frsys}/ISO_{isog}/MTG_{mtgn}/histos_wjets_{strname}_stacked", is5TeV = is5TeV)
+
+                            # check the mT distribution in that mtgroup
+                            strname = f"{lepname}_mT_{chg}_{wpt}_{lepeta}_{isog}_{mtgn}_{frsys}"
+                            hdata_mt = ROOT.TH1D(f"hdata_{strname}_Data", f"hdata_{strname}_Data", len(mass_bins[mtgn])-1, mass_bins[mtgn]) 
+                            hdata_mt.Sumw2()
+                            hmc_mt = ROOT.TH1D(f"hmc_{strname}_MC", f"hmc_{strname}_MC", len(mass_bins[mtgn])-1, mass_bins[mtgn])
+                            hmc_mt.Sumw2()
+                            hpred_mt = ROOT.TH1D(f"hqcd_{strname}_QCD", f"hqcd_{strname}_QCD", len(mass_bins[mtgn])-1, mass_bins[mtgn])
+                            hpred_mt.Sumw2()
+                            for imtn, mtn in enumerate(mtns):
+                                val_data, err_data = IntegralAndError2D([histos_count_Data[wpt][lepeta][chg][mtn][phin]["SR"] for phin in phibins])
+                                val_mc, err_mc     = IntegralAndError2D([histos_count_MC  [wpt][lepeta][chg][mtn][phin]["SR"] for phin in phibins])
+                                val_pred, err_pred = IntegralAndError2D([histos_count_QCD [wpt][lepeta][chg][mtn][phin]["SR"] for phin in phibins])
+                                hdata_mt.SetBinContent(imtn + 1, val_data)
+                                hdata_mt.SetBinError(imtn + 1, err_data)
+                                hmc_mt.SetBinContent(imtn + 1, val_mc)
+                                hmc_mt.SetBinError(imtn + 1, err_mc)
+                                hpred_mt.SetBinContent(imtn + 1, val_pred)
+                                hpred_mt.SetBinError(imtn + 1, err_pred)
+
+                            DrawDataMCStack(hdata_mt, hmc_mt, hpred_mt, 0, 140, "m_{T}", f"{outdir}/{frsys}/ISO_{isog}/MTG_{mtgn}/histos_wjets_{strname}_stacked", is5TeV = is5TeV)
+
+                            if mtgn == "MTSR":
+                                # estimated qcd mT distributions in the SR
+                                # estimated using different anti-isolation regions
+                                # and different fr systematics
+                                # save for further processing in order to be used as
+                                # combine inputs
+                                hpreds_mt_sr[frsys][isog] = hpred_mt
+                                
+                            #histos_ToSave.append(hdata_mt)
+                            #histos_ToSave.append(hmc_mt)
+                            #histos_ToSave.append(hpred_mt)
+                
+                # proccess the estimated qcd mT distributions in the SR
+                # (including stat. and sys. variations)
+                # to be used as combine inputs                
+                for isog in isogroups:
                     if isog == "SR":
                         continue
+                    mtgn = "MTSR"
+                    strname = f"{lepname}_mT_{chg}_{wpt}_{lepeta}_{isog}_{mtgn}" 
+                    hname = f"hqcd_{strname}_QCD"
                     
-                    for phin in phibins:
-                        hfr = histos_FR[wpt][lepeta][chg][phin][isog]
-                        for mtn in mtnames:
-                            hcounts_cr = histos_count[wpt][lepeta][chg][mtn][phin][isog]
-                            hcounts_sr = histos_count[wpt][lepeta][chg][mtn][phin]["SR"]
-
-                            h = hcounts_cr.Clone(hcounts_cr.GetName() + "_CT")
-                            PositiveProtection(h)
-
-                            hpred = MultiplyH2(h, hfr)
-                            histos_count_QCD[wpt][lepeta][chg][mtn][phin]['SR'] = hpred
-
-                            for ibinx in range(1, h.GetNbinsX()+1):
-                                for ibiny in range(1, h.GetNbinsY()+1):
-                                    if hpred.GetBinContent(ibinx, ibiny) < 0:
-                                        print("Found negative: ", ibinx, ibiny, hpred.GetBinContent(ibinx, ibiny), h.GetBinContent(ibinx, ibiny), hfr.GetBinContent(ibinx, ibiny))
-                                        sys.exit(1)
-
-
-                            hpred_var1 = hpred.ProjectionX(f"{hpred.GetName()}_Proj_{var1}")
-                            hcounts_sr_var1 = hcounts_sr.ProjectionX(f"{hcounts_sr.GetName()}_Proj_{var1}")
-
-                            hpred_var2 = hpred.ProjectionY(f"{hpred.GetName()}_Proj_{var2}")
-                            hcounts_sr_var2 = hcounts_sr.ProjectionY(f"{hcounts_sr.GetName()}_Proj_{var2}")
-
-                            hratio = hpred.Clone(hpred.GetName() + "_ratio")
-                            hratio.Divide(hcounts_sr)
-
-                            # compare predicted QCD with data-MC
-                            DrawHistos([hcounts_sr_var1, hpred_var1], ["Obs", "Pred"], x1min, x1max, x1label, 0, None, "Events", f"{outdir}/ISO_{isog}/Closure_mT/histos_wjets_{var1}_CT_{chg}_{wpt}_{lepeta}_{mtn}", dology=False, showratio=True, yrmin = 0.8, yrmax = 1.2, is5TeV = is5TeV, mycolors=[ROOT.kBlack, ROOT.kRed])
-
-                            DrawHistos([hcounts_sr_var2, hpred_var2], ["Obs", "Pred"], x2min, x2max, x2label, 0., None, "Events", f"{outdir}/ISO_{isog}/Closure_mT/histos_wjets_{var2}_CT_{chg}_{wpt}_{lepeta}_{mtn}", dology=False, showratio=True, yrmin = 0.8, yrmax = 1.2, is5TeV = is5TeV, mycolors=[ROOT.kBlack, ROOT.kRed])
-
-                            # make the stacked histograms 
-                            # so that the signal contribution can be visualized
-                            hdata = histos_count_Data[wpt][lepeta][chg][mtn][phin]["SR"]
-                            hmc = histos_count_MC[wpt][lepeta][chg][mtn][phin]["SR"]  
-
-                            hdata_var2 = hdata.ProjectionY(f"{hdata.GetName()}_Proj_{var2}_for{isog}")
-                            hmc_var2 = hmc.ProjectionY(f"{hmc.GetName()}_Proj_{var2}_for{isog}")
-                            DrawDataMCStack(hdata_var2, hmc_var2, hpred_var2, x2min, x2max, x2label, f"{outdir}/ISO_{isog}/Closure_mT_Stacked/histos_wjets_{var2}_CT_{chg}_{wpt}_{lepeta}_{mtn}{phin}_stacked", is5TeV = is5TeV)
-
-                            kname = mtn + phin
-                            hdatas_var2[kname] = hdata_var2
-                            hmcs_var2[kname] = hmc_var2
-                            hpreds_var2[kname] = hpred_var2
-
-                            hdata_var1 = hdata.ProjectionX(f"{hdata.GetName()}_Proj_{var1}_for{isog}")
-                            hmc_var1 = hmc.ProjectionX(f"{hmc.GetName()}_Proj_{var1}_for{isog}")
-                            DrawDataMCStack(hdata_var1, hmc_var1, hpred_var1, x1min, x1max, x1label, f"{outdir}/ISO_{isog}/Closure_mT_Stacked/histos_wjets_{var1}_CT_{chg}_{wpt}_{lepeta}_{mtn}{phin}_stacked", is5TeV = is5TeV)
-
-                            hdatas_var1[kname] = hdata_var1
-                            hmcs_var1[kname] = hmc_var1
-                            hpreds_var1[kname] = hpred_var1
-
-                            # draw 2D closure ratio
-                            DrawHistos([hratio], [], x1min, x1max, x1label, x2min, x2max, x2label, f"{outdir}/ISO_{isog}/Closure_mT_2D/histo_wjets_{var2D}_CT_{chg}_{wpt}_{lepeta}_{mtn}{phin}", False, False, False, dologz=False, doth2=True, drawoptions="COLZ,text", zmin=0.8, zmax=1.2, is5TeV=is5TeV)
-
-                    # check the var1, var2, and mt distributions in different mt groups
-                    for mtgn, mtns in mass_bins_groups.items():
-                        # check lepton var1 distribution in that mtgroup
-                        strname = f"{lepname}_{var1}_{chg}_{wpt}_{lepeta}_{isog}_{mtgn}"
-                        hdata_var1 = LHistos2Hist([hdatas_var1[mtn+phin] for mtn in mtns for phin in phibins], f"hdata_{strname}_Data")
-                        hmc_var1   = LHistos2Hist([hmcs_var1  [mtn+phin] for mtn in mtns for phin in phibins], f"hmc_{strname}_MC")
-                        hpred_var1 = LHistos2Hist([hpreds_var1[mtn+phin] for mtn in mtns for phin in phibins], f"hqcd_{strname}_QCD")
-                        DrawDataMCStack(hdata_var1, hmc_var1, hpred_var1, x1min, x1max, x1label, f"{outdir}/ISO_{isog}/MTG_{mtgn}/histos_wjets_{strname}_stacked", is5TeV = is5TeV)
-
-                        # check lepton var2 distribution in that mtgroup
-                        strname = f"{lepname}_{var2}_{chg}_{wpt}_{lepeta}_{isog}_{mtgn}"
-                        hdata_var2 = LHistos2Hist([hdatas_var2[mtn+phin] for mtn in mtns for phin in phibins], f"hdata_{strname}_Data")
-                        hmc_var2   = LHistos2Hist([hmcs_var2  [mtn+phin] for mtn in mtns for phin in phibins], f"hmc_{strname}_MC")
-                        hpred_var2 = LHistos2Hist([hpreds_var2[mtn+phin] for mtn in mtns for phin in phibins], f"hqcd_{strname}_QCD")
-                        DrawDataMCStack(hdata_var2, hmc_var2, hpred_var2, x2min, x2max, x2label, f"{outdir}/ISO_{isog}/MTG_{mtgn}/histos_wjets_{strname}_stacked", is5TeV = is5TeV)
-
-                        # check the mT distribution in that mtgroup
-                        strname = f"{lepname}_mT_{chg}_{wpt}_{lepeta}_{isog}_{mtgn}"
-                        hdata_mt = ROOT.TH1D(f"hdata_{strname}_Data", f"hdata_{strname}_Data", len(mass_bins[mtgn])-1, mass_bins[mtgn]) 
-                        hdata_mt.Sumw2()
-                        hmc_mt = ROOT.TH1D(f"hmc_{strname}_MC", f"hmc_{strname}_MC", len(mass_bins[mtgn])-1, mass_bins[mtgn])
-                        hmc_mt.Sumw2()
-                        hpred_mt = ROOT.TH1D(f"hqcd_{strname}_QCD", f"hqcd_{strname}_QCD", len(mass_bins[mtgn])-1, mass_bins[mtgn])
-                        hpred_mt.Sumw2()
-                        for imtn, mtn in enumerate(mtns):
-                            val_data, err_data = IntegralAndError2D([histos_count_Data[wpt][lepeta][chg][mtn][phin]["SR"] for phin in phibins])
-                            val_mc, err_mc     = IntegralAndError2D([histos_count_MC  [wpt][lepeta][chg][mtn][phin]["SR"] for phin in phibins])
-                            val_pred, err_pred = IntegralAndError2D([histos_count_QCD [wpt][lepeta][chg][mtn][phin]["SR"] for phin in phibins])
-                            hdata_mt.SetBinContent(imtn + 1, val_data)
-                            hdata_mt.SetBinError(imtn + 1, err_data)
-                            hmc_mt.SetBinContent(imtn + 1, val_mc)
-                            hmc_mt.SetBinError(imtn + 1, err_mc)
-                            hpred_mt.SetBinContent(imtn + 1, val_pred)
-                            hpred_mt.SetBinError(imtn + 1, err_pred)
-
-                        DrawDataMCStack(hdata_mt, hmc_mt, hpred_mt, 0, 140, "m_{T}", f"{outdir}/ISO_{isog}/MTG_{mtgn}/histos_wjets_{strname}_stacked", is5TeV = is5TeV)
-                        
-                        if mtgn == "MTSR":
-                            prefix = f"{chg}_{lepeta}_{wpt}_{sqrtS}"
-                            hmtsys = StatUnc2SysUnc(hpred_mt, prefix = prefix)
-                            histos_ToSave += hmtsys
-
-                        histos_ToSave.append(hdata_mt)
-                        histos_ToSave.append(hmc_mt)
-                        histos_ToSave.append(hpred_mt)
+                    h_mtsr_central = hpreds_mt_sr["central"][isog]
+                    h_mtsr_central.SetName(hname)
+                    histos_ToSave.append(h_mtsr_central)
+                    
+                    # save stat uncs    
+                    # use prefix to the variations such that they can be uncorrelated
+                    prefix = f"{chg}_{lepeta}_{wpt}_{sqrtS}"
+                    hmtsys = StatUnc2SysUnc(h_mtsr_central, prefix = prefix)
+                    histos_ToSave += hmtsys 
+                    
+                    # systematic uncs from CRs 
+                    h_mtsr_CRUp = hpreds_mt_sr["CRUp"][isog]
+                    h_mtsr_CRUp.SetName(f"{hname}_{prefix}_CRMCUp")
+                    h_mtsr_CRDown = SymmetrizeHisto(h_mtsr_central, h_mtsr_CRUp, f"{hname}_{prefix}_CRMCDown")
+                    histos_ToSave.append(h_mtsr_CRUp)
+                    histos_ToSave.append(h_mtsr_CRDown)
+                    
+                    # systematic uncs from SRs
+                    h_mtsr_SRUp = hpreds_mt_sr["SRUp"][isog]
+                    h_mtsr_SRUp.SetName(f"{hname}_{prefix}_SRMCUp")    
+                    h_mtsr_SRDown = SymmetrizeHisto(h_mtsr_central, h_mtsr_SRUp, f"{hname}_{prefix}_SRMCDown")
+                    histos_ToSave.append(h_mtsr_SRUp)
+                    histos_ToSave.append(h_mtsr_SRDown)
 
     ofile = ROOT.TFile.Open(f"{outdir}/histos_qcdFR_{lepname}_{sqrtS}.root", "RECREATE")
     for h in histos_ToSave:
         h.SetDirectory(ofile)
         h.Write()
-    ofile.Write()
     ofile.Close()
     
 if __name__ == "__main__":

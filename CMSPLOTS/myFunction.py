@@ -352,6 +352,7 @@ def GetRatioPanel(hs):
     hratio.SetFillColor(15)
     return hratio
 
+
 def LHistos2Hist(hs, hname):
     """
     combine a list of hists to one hist
@@ -363,6 +364,26 @@ def LHistos2Hist(hs, hname):
         else:
             h_added.Add(h)
     return h_added
+
+
+def SymmetrizeHisto(h, hSysUp, hname = "hSysDown", useRatio = False):
+    """
+    given one histogram and its up variation,
+    prepare the down variation.
+    If useRatio is True, then the down variation is c*c/c_up
+    else it is 2*c - c_up
+    """
+    hSysDown = h.Clone(hname)
+    for ibin in range(1, h.GetNbinsX()+1):
+        val_c = h.GetBinContent(ibin)
+        val_up = hSysUp.GetBinContent(ibin)
+        if useRatio:
+            val_down = val_c*val_c / val_up
+        else:
+            val_down = 2*val_c - val_up    
+        hSysDown.SetBinContent(ibin, val_down)
+    return hSysDown
+        
 
 def TH2ToTH1s(h2, projY = False, label = "X"):
     """
