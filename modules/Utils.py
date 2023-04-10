@@ -75,7 +75,8 @@ def FormatTable(pdict: str, columns: list = None, caption: str = None, label: st
     df = pd.DataFrame(pdict, columns=columns)
     df = df.round(precision)
     #output = df.to_latex(float_format="{:.1f}".format, caption = caption, label = label)
-    output = df.to_latex(caption = caption, label = label)
+    #output = df.to_latex(caption = caption, label = label)
+    output = df.to_latex()
     output = output.replace('\\toprule', '\\hline').replace('\\midrule', '\\hline').replace('\\bottomrule','\\hline')
 
     output = FormatOutputForWZ(output)

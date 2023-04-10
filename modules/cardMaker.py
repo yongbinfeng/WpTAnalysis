@@ -4,7 +4,6 @@ code to generate the W(lnv) cards for tfCombine.
 
 from collections import OrderedDict
 from modules.Binnings import Vptbins
-from re import A
 import ROOT
 import os
 
@@ -344,7 +343,7 @@ def MakeWJetsCards(fname_mc, fname_qcd, channel, wptbin, etabin, doWpT = False, 
 
     # qcd stat
     # this is hard coded for now. Will be improved later
-    nuisgroups["qcdbkg"] = []
+    nuisgroups["qcdstat"] = []
     prefix = f"{channel}_{etabin}_{wptbin}_{sqrtS}"
     nbins = nMTBins
     for ibin in range(1, nbins+1):
@@ -352,7 +351,20 @@ def MakeWJetsCards(fname_mc, fname_qcd, channel, wptbin, etabin, doWpT = False, 
         for proc in processes:
             if proc.isQCD:
                 nuis_QCDStat[proc.name] = 1.0
-        nuisgroups["qcdbkg"].append(nuis_QCDStat)
+        nuisgroups["qcdstat"].append(nuis_QCDStat)
+   
+    nuisgroups["qcdsys"] = []
+    # nuisance describing MC contamination in the anti-isolated region for FR calculation
+    # and for the QCD estimation: nQCD = FR * nCR = (nSR0 / nCR0) * nCR
+    nuis_QCDCR = Nuisance(name = prefix + f"_CRMC", type = "shape")
+    # nuisance describing MC contamination in the signal region for FR calculation
+    nuis_QCDSR = Nuisance(name = prefix + f"_SRMC", type = "shape")
+    for proc in processes:
+        if proc.isQCD:
+            nuis_QCDCR[proc.name] = 1.0
+            nuis_QCDSR[proc.name] = 1.0
+    nuisgroups["qcdsys"].append(nuis_QCDCR)
+    nuisgroups["qcdsys"].append(nuis_QCDSR)
 
     if False:
         nuis_QCDMCCont = Nuisance(name = prefix + f"_ScaledMCshape_{sqrtS}", type = "shape")
