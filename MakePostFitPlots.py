@@ -7,26 +7,47 @@ from modules.Binnings import mass_bins_w, mass_bins_z, mass_bins_test
 from modules.Utils import FormatTable
 import ROOT
 import numpy as np
+import argparse
 from collections import OrderedDict
 ROOT.gROOT.SetBatch(True)
 
-doInclusive = True
-doDifferential = False
-doCombineYear = True
+parser = argparse.ArgumentParser(description="Make postfit plots and tables")
+parser.add_argument("--doInclusive", action="store_true", dest="doInclusive",help="Run on inclusive results; false runs on fiducial results.")
+parser.add_argument("--do13TeV", action="store_true", dest="do13TeV",help="Run on 13TeV results.")
+parser.add_argument("--do5TeV", action="store_true", dest="do5TeV",help="Run on 5TeV results.")
+parser.add_argument("--combineSqrtS", action="store_true", dest="combineSqrtS",help="Combine the results of 5TeV and 13TeV; false runs on each year separately.")
+parser.add_argument("--doElectron", action="store_true", dest="doElectron",help="Run on electron channel;")
+parser.add_argument("--doMuon", action="store_true", dest="doMuon",help="Run on muon channel;")
 
+args = parser.parse_args()
+
+doDifferential = False
 # boolean flag to config if the pull
 # distribution should be included in the plots
 showPULL = True
 
-# whether to analyze the results of fitting only muon or electron channel
-doElectronOnly = False
-doMuonOnly = False
-doCombineChannel = True
-assert doElectronOnly + doMuonOnly + doCombineChannel == 1, "Only one of doElectronOnly, doMuonOnly, doCombineChannel can be True"
+doInclusive = args.doInclusive
+do13TeV = args.do13TeV
+do5TeV = args.do5TeV
+combineSqrtS = args.combineSqrtS
+
+doElectron = args.doElectron
+doMuon = args.doMuon
+doCombineChannel = (doElectron and doMuon)
+
+assert doElectron + doMuon >= 1, "At least one of doElectron, doMuon must be True"
+assert do13TeV + do5TeV >= 1, "At least one of do13TeV, do5TeV must be True"
+
+sqrtSs = []
+if do13TeV:
+    sqrtSs.append("13TeV")
+if do5TeV:
+    sqrtSs.append("5TeV")
 
 if not doDifferential:
     idir = "Inclusive" if doInclusive else "Fiducial"
     for fits in ["asimov", "data"]:
+    #for fits in ["data"]:
         ntests = len(mass_bins_test)
 
         dvals_lep_pos = {}
@@ -48,7 +69,8 @@ if not doDifferential:
         derrs_leplep["5TeV"] = []
         derrs_leplep["13TeV"] = []
 
-        sqrtSs = ["13TeV", "5TeV"]
+        #sqrtSs = ["13TeV", "5TeV"]
+        #sqrtSs = ["5TeV"]
 
         for idx in range(ntests):
             if idx != 0:
@@ -61,12 +83,13 @@ if not doDifferential:
             binBase = 1
 
             for sqrtS in sqrtSs:
+                #binBase = 1
                 is5TeV = (sqrtS == "5TeV")
                 lumi_unc = 0.017 if not is5TeV else 0.019
 
                 workdir = f"forCombine/{idir}/test{idx}/commands/scripts/"
-                suffix = "combined" if doCombineChannel else "mu" if doMuonOnly else "e"
-                if doCombineYear:
+                suffix = "combined" if doCombineChannel else "mu" if doMuon else "e"
+                if combineSqrtS:
                     filename = workdir + f"card_{suffix}"
                 else:
                     filename = workdir + f"card_{suffix}_{sqrtS}"
@@ -90,31 +113,33 @@ if not doDifferential:
                 derrs_leplep[sqrtS] .append( err_leplep  )
 
                 # todo: binBase needs to be recomputed if not combine all years
-                #binBase =  len(mass_bins)*4 + len(mass_bins_z)*2 - 5 if is5TeV and doCombineYear else 1
+                #binBase =  len(mass_bins)*4 + len(mass_bins_z)*2 - 5 if is5TeV and combineSqrtS else 1
 
                 nevts_postfit = OrderedDict()
+                nevts_withCut_postfit = OrderedDict()
                 nevts_prefit = OrderedDict()
-                if doCombineChannel or doMuonOnly:
+                nevts_withCut_prefit = OrderedDict()
+                if doMuon:
                     # prefit
-                    nevts_prefit['muplus']  = MakeDataMCPlot(filename, "muplus",  mass_bins, f"_mT{idx}_{sqrtS}", False, startbin = binBase, is5TeV=is5TeV, outdir = f"{outdir}/prefits", doPostfit=False)
-                    nevts_prefit['muminus'] = MakeDataMCPlot(filename, "muminus", mass_bins, f"_mT{idx}_{sqrtS}", False, startbin = binBase + len(mass_bins) - 1, is5TeV=is5TeV, outdir = f"{outdir}/prefits", doPostfit=False)
-                    nevts_prefit['mumu']    = MakeDataMCPlot(filename, "mumu", mass_bins_z,  f"_mT{idx}_{sqrtS}", False, startbin = binBase + len(mass_bins)*2 - 2, is5TeV=is5TeV, outdir = f"{outdir}/prefits", doPostfit=False)
+                    nevts_prefit['muplus'], nevts_withCut_prefit['muplus']   = MakeDataMCPlot(filename, "muplus",  mass_bins, f"_mT{idx}_{sqrtS}", False, startbin = binBase, is5TeV=is5TeV, outdir = f"{outdir}/prefits", doPostfit=False)
+                    nevts_prefit['muminus'], nevts_withCut_prefit['muminus'] = MakeDataMCPlot(filename, "muminus", mass_bins, f"_mT{idx}_{sqrtS}", False, startbin = binBase + len(mass_bins) - 1, is5TeV=is5TeV, outdir = f"{outdir}/prefits", doPostfit=False)
+                    nevts_prefit['mumu'], nevts_withCut_prefit['mumu']       = MakeDataMCPlot(filename, "mumu", mass_bins_z,  f"_mT{idx}_{sqrtS}", False, startbin = binBase + len(mass_bins)*2 - 2, is5TeV=is5TeV, outdir = f"{outdir}/prefits", doPostfit=False)
                     # postfit
-                    nevts_postfit['muplus']  = MakeDataMCPlot(filename, "muplus",  mass_bins, f"_mT{idx}_{sqrtS}", showPULL, startbin = binBase, is5TeV=is5TeV, outdir = f"{outdir}/postfits")
-                    nevts_postfit['muminus'] = MakeDataMCPlot(filename, "muminus", mass_bins, f"_mT{idx}_{sqrtS}", showPULL, startbin = binBase + len(mass_bins) - 1, is5TeV=is5TeV, outdir = f"{outdir}/postfits")
-                    nevts_postfit['mumu']    = MakeDataMCPlot(filename, "mumu", mass_bins_z,  f"_mT{idx}_{sqrtS}", showPULL, startbin = binBase + len(mass_bins)*2 - 2, is5TeV=is5TeV, outdir = f"{outdir}/postfits")
+                    nevts_postfit['muplus'], nevts_withCut_postfit["muplus"]   = MakeDataMCPlot(filename, "muplus",  mass_bins, f"_mT{idx}_{sqrtS}", showPULL, startbin = binBase, is5TeV=is5TeV, outdir = f"{outdir}/postfits")
+                    nevts_postfit['muminus'], nevts_withCut_postfit["muminus"] = MakeDataMCPlot(filename, "muminus", mass_bins, f"_mT{idx}_{sqrtS}", showPULL, startbin = binBase + len(mass_bins) - 1, is5TeV=is5TeV, outdir = f"{outdir}/postfits")
+                    nevts_postfit['mumu'], nevts_withCut_postfit["mumu"]       = MakeDataMCPlot(filename, "mumu", mass_bins_z,  f"_mT{idx}_{sqrtS}", showPULL, startbin = binBase + len(mass_bins)*2 - 2, is5TeV=is5TeV, outdir = f"{outdir}/postfits")
 
                     binBase = binBase + len(mass_bins)*2 + len(mass_bins_z) - 3
 
-                if doCombineChannel or doElectronOnly:
+                if doElectron:
                     # prefit
-                    nevts_prefit['eplus']   = MakeDataMCPlot(filename, "eplus",  mass_bins,  f"_mT{idx}_{sqrtS}", False, startbin = binBase, is5TeV=is5TeV, outdir = f"{outdir}/prefits", doPostfit=False)
-                    nevts_prefit['eminus']  = MakeDataMCPlot(filename, "eminus", mass_bins,  f"_mT{idx}_{sqrtS}", False, startbin = binBase + len(mass_bins) - 1, is5TeV=is5TeV, outdir = f"{outdir}/prefits", doPostfit=False)
-                    nevts_prefit['ee']      = MakeDataMCPlot(filename, "ee",   mass_bins_z,  f"_mT{idx}_{sqrtS}", False, startbin = binBase + len(mass_bins)*2 - 2, is5TeV=is5TeV, outdir = f"{outdir}/prefits", doPostfit=False)
+                    nevts_prefit['eplus'], nevts_withCut_prefit['eplus']   = MakeDataMCPlot(filename, "eplus",  mass_bins,  f"_mT{idx}_{sqrtS}", False, startbin = binBase, is5TeV=is5TeV, outdir = f"{outdir}/prefits", doPostfit=False)
+                    nevts_prefit['eminus'], nevts_withCut_prefit['eminus']  = MakeDataMCPlot(filename, "eminus", mass_bins,  f"_mT{idx}_{sqrtS}", False, startbin = binBase + len(mass_bins) - 1, is5TeV=is5TeV, outdir = f"{outdir}/prefits", doPostfit=False)
+                    nevts_prefit['ee'], nevts_withCut_prefit['ee']          = MakeDataMCPlot(filename, "ee",   mass_bins_z,  f"_mT{idx}_{sqrtS}", False, startbin = binBase + len(mass_bins)*2 - 2, is5TeV=is5TeV, outdir = f"{outdir}/prefits", doPostfit=False)
                     # postfit
-                    nevts_postfit['eplus']   = MakeDataMCPlot(filename, "eplus",  mass_bins,  f"_mT{idx}_{sqrtS}", showPULL, startbin = binBase, is5TeV=is5TeV, outdir = f"{outdir}/postfits")
-                    nevts_postfit['eminus']  = MakeDataMCPlot(filename, "eminus", mass_bins,  f"_mT{idx}_{sqrtS}", showPULL, startbin = binBase + len(mass_bins) - 1, is5TeV=is5TeV, outdir = f"{outdir}/postfits")
-                    nevts_postfit['ee']      = MakeDataMCPlot(filename, "ee",   mass_bins_z,  f"_mT{idx}_{sqrtS}", showPULL, startbin = binBase + len(mass_bins)*2 - 2, is5TeV=is5TeV, outdir = f"{outdir}/postfits")
+                    nevts_postfit['eplus'], nevts_withCut_postfit['eplus']   = MakeDataMCPlot(filename, "eplus",  mass_bins,  f"_mT{idx}_{sqrtS}", showPULL, startbin = binBase, is5TeV=is5TeV, outdir = f"{outdir}/postfits")
+                    nevts_postfit['eminus'], nevts_withCut_postfit['eminus'] = MakeDataMCPlot(filename, "eminus", mass_bins,  f"_mT{idx}_{sqrtS}", showPULL, startbin = binBase + len(mass_bins) - 1, is5TeV=is5TeV, outdir = f"{outdir}/postfits")
+                    nevts_postfit['ee'], nevts_withCut_postfit['ee']         = MakeDataMCPlot(filename, "ee",   mass_bins_z,  f"_mT{idx}_{sqrtS}", showPULL, startbin = binBase + len(mass_bins)*2 - 2, is5TeV=is5TeV, outdir = f"{outdir}/postfits")
 
                     binBase = binBase + len(mass_bins)*2 + len(mass_bins_z) - 3
 
@@ -144,21 +169,29 @@ if not doDifferential:
 
                 ## print out the nevts pre and post fit information
                 # prefit
-                outputs = FormatTable(nevts_prefit, caption="Event yield at 13 TeV", label = f"tab:nevts_prefit_{sqrtS}")
+                outputs = FormatTable(nevts_prefit, caption=f"Event yield at {sqrtS}", label = f"tab:nevts_prefit_{sqrtS}")
                 print(outputs)
                 WriteOutputToText(outputs, f"{outdir}/tables/nevts_prefit_{sqrtS}.tex")
                 print("\n\n\n\n")
+                outputs = FormatTable(nevts_withCut_prefit, caption=f"Event yield at {sqrtS} with cut", label = f"tab:nevts_withCut_prefit_{sqrtS}")
+                print(outputs)
+                WriteOutputToText(outputs, f"{outdir}/tables/nevts_withCut_prefit_{sqrtS}.tex")
+                print("\n\n\n\n")
                 # postfit 
-                outputs = FormatTable(nevts_postfit, caption="Event yield at 13 TeV", label = f"tab:nevts_postfit_{sqrtS}")
+                outputs = FormatTable(nevts_postfit, caption=f"Event yield at {sqrtS}", label = f"tab:nevts_postfit_{sqrtS}")
                 print(outputs)
                 WriteOutputToText(outputs, f"{outdir}/tables/nevts_postfit_{sqrtS}.tex")
+                print("\n\n\n\n")
+                outputs = FormatTable(nevts_withCut_postfit, caption=f"Event yield at {sqrtS} with cut", label = f"tab:nevts_withCut_postfit_{sqrtS}")
+                print(outputs)
+                WriteOutputToText(outputs, f"{outdir}/tables/nevts_withCut_postfit_{sqrtS}.tex")
                 print("\n\n\n\n")
                 # impacts
                 outputs = FormatTable(impacts, caption=f"Systematic uncertainties in percentage at {sqrtS}", label = f"tab:impacts_{sqrtS}", precision=2)
                 print(outputs)
                 WriteOutputToText(outputs, f"{outdir}/tables/impacts_{sqrtS}.tex")
 
-            if doCombineYear:
+            if combineSqrtS:
                 result2json(filename, "sqrtS_Wplus_ratio_ratiometaratio",   f"{outdir}/json/impacts_Wplus_ratio_sqrtS.json", "nuisance_impact_ratiometapois")
                 result2json(filename, "sqrtS_Wminus_ratio_ratiometaratio",  f"{outdir}/json/impacts_Wminus_ratio_sqrtS.json",   "nuisance_impact_ratiometapois")
                 result2json(filename, "sqrtS_Winc_ratio_ratiometaratio",    f"{outdir}/json/impacts_Winc_ratio_sqrtS.json", "nuisance_impact_ratiometapois")

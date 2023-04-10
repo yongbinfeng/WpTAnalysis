@@ -9,6 +9,7 @@ from modules.histProcessor import ProcessHists, CopyandMergeTau
 from modules.Binnings import mass_bins_w, mass_bins_z, mass_bins_test
 from modules.Utils import GetValues
 from collections import OrderedDict
+import argparse
 
 ROOT.gROOT.SetBatch(True)
 
@@ -81,10 +82,25 @@ def RunPreparations(fwsig_input, fwsig_rebin, fwsig_mergeTau, fqcd_input, fqcd_r
 
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Make postfit plots and tables")
+    parser.add_argument("--doInclusive", action="store_true", dest="doInclusive",help="Run on inclusive channel; default is fiducial")
+    parser.add_argument("--do13TeV", action="store_true", dest="do13TeV",help="Run on 13 TeV channel;")
+    parser.add_argument("--do5TeV", action="store_true", dest="do5TeV",help="Run on 5 TeV channel;")
+    
+    args = parser.parse_args()
+    doInclusive = args.doInclusive
+    do13TeV = args.do13TeV
+    do5TeV = args.do5TeV
+    
+    combineSqrtS = (do13TeV and do5TeV)
+    sqrtSs = []
+    if do13TeV:
+        sqrtSs.append("13TeV")
+    if do5TeV:
+        sqrtSs.append("5TeV")
+    
     # apply lepton flavor university
     applyLFU = True
-    # inclusive xsec or fiducial xsec
-    doInclusive = False
 
     # scan fit range
     for key, val in mass_bins_test.items():
@@ -95,9 +111,7 @@ if __name__ == "__main__":
         channels = OrderedDict()
         cards_xsec = OrderedDict()
 
-        for sqrtS in ["13TeV", "5TeV"]:
-            #if sqrtS != "13TeV":
-            #   continue
+        for sqrtS in sqrtSs:
             card_muplus = None
             card_muminus = None
             card_zmumu = None
@@ -184,14 +198,15 @@ if __name__ == "__main__":
             GenerateRunCommand(f"card_e_{sqrtS}", GetValues(cards, f"e_{sqrtS}"), GetValues(channels, f"e_{sqrtS}"), GetValues(
                 cards_xsec, f"e_{sqrtS}"), output_dir=f"forCombine/{odir}/test{key}/commands/scripts/", applyLFU=applyLFU, is5TeV=is5TeV)
 
-        # combine 13 and 5 TeV
-        GenerateRunCommand("card_combined", GetValues(cards, ".*"), GetValues(channels, ".*"), GetValues(cards_xsec, ".*"),
-                           output_dir=f"forCombine/{odir}/test{key}/commands/scripts/", applyLFU=applyLFU, combineAll=True)
+        if combineSqrtS:
+            # combine 13 and 5 TeV
+            GenerateRunCommand("card_combined", GetValues(cards, ".*"), GetValues(channels, ".*"), GetValues(cards_xsec, ".*"),
+                               output_dir=f"forCombine/{odir}/test{key}/commands/scripts/", applyLFU=applyLFU, combineAll=True)
 
-        # mu channel combined fit
-        GenerateRunCommand("card_mu", GetValues(cards, "mu.*"), GetValues(channels, "mu.*"), GetValues(cards_xsec, "mu.*"),
-                           output_dir=f"forCombine/{odir}/test{key}/commands/scripts/", applyLFU=applyLFU, combineAll=True)
+            # mu channel combined fit
+            GenerateRunCommand("card_mu", GetValues(cards, "mu.*"), GetValues(channels, "mu.*"), GetValues(cards_xsec, "mu.*"),
+                               output_dir=f"forCombine/{odir}/test{key}/commands/scripts/", applyLFU=applyLFU, combineAll=True)
 
-        # e channel combined fit
-        GenerateRunCommand("card_e", GetValues(cards, "e.*"), GetValues(channels, "e.*"), GetValues(cards_xsec, "e.*"),
-                           output_dir=f"forCombine/{odir}/test{key}/commands/scripts/", applyLFU=applyLFU, combineAll=True)
+            # e channel combined fit
+            GenerateRunCommand("card_e", GetValues(cards, "e.*"), GetValues(channels, "e.*"), GetValues(cards_xsec, "e.*"),
+                               output_dir=f"forCombine/{odir}/test{key}/commands/scripts/", applyLFU=applyLFU, combineAll=True)
