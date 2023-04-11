@@ -53,7 +53,7 @@ def MakeDataMCPlot(ifilename: str, channel: str, bins: np.array, suffix: str, sh
         elif bool(re.match(fr"expproc_EWK\w*{hsuffix}$", hkey)):
             hnames_ewks.append( hkey )
         # ttbar
-        elif bool(re.match(fr"expproc_tt\w*postfit$", hkey)):
+        elif bool(re.match(fr"expproc_tt\w*{hsuffix}$", hkey)):
             hnames_ttbar.append( hkey )
     assert len(hnames_sig)>=1, "There should be at least one sig histogram in file: {}".format(ifilename)
     print("sig ", hnames_sig)
@@ -94,7 +94,7 @@ def MakeDataMCPlot(ifilename: str, channel: str, bins: np.array, suffix: str, sh
         
     # the combined prediction of all processes,
     # which should have included the correct total postfit uncertainties
-    hexpfull = ifile.Get("expfull_postfit")
+    hexpfull = ifile.Get(f"expfull_{hsuffix}")
 
     # the histograms saved in the root file does not follow the original bining
     # recover the original binning

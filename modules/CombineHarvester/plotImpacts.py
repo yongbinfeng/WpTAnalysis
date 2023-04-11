@@ -31,7 +31,7 @@ def GetRounded(nom, e_hi, e_lo):
     s_lo = rounding.downgradePrec(rounded[1][0][1],rounded[2]) if e_lo != 0.0 else '0'
     return (s_nom, s_hi, s_lo)
 
-def plotImpacts(ifilename, ofilename, blind=True):
+def plotImpacts(ifilename, ofilename, blind=True, poiname = None):
     dirpath = ofilename.rpartition('/')[0]
     if not os.path.exists(dirpath):
         print(f"Make the directory {dirpath}")
@@ -49,6 +49,9 @@ def plotImpacts(ifilename, ofilename, blind=True):
     # We will assume the first POI is the one to plot
     POIs = [ele['name'] for ele in data['POIs']]
     POI = POIs[0]
+    
+    if not poiname:
+        poiname = POI
     
     for ele in data['POIs']:
         if ele['name'] == POI:
@@ -224,7 +227,7 @@ def plotImpacts(ifilename, ofilename, blind=True):
         h_impacts = ROOT.TH2F(
             "impacts", "impacts", 6, -max_impact * 1.1, max_impact * 1.1, n_params, 0, n_params)
         plot.Set(h_impacts.GetXaxis(), LabelSize=0.03, TitleSize=0.04, Ndivisions=505, Title=
-            '#Delta#hat{%s}' % (POI))
+            '#Delta#hat{%s}' % (poiname))
         plot.Set(h_impacts.GetYaxis(), LabelSize=0, TickLength=0.0)
         h_impacts.Draw()
     
@@ -295,7 +298,7 @@ def plotImpacts(ifilename, ofilename, blind=True):
         s_nom, s_hi, s_lo = GetRounded(POI_fit[1], POI_fit[2] - POI_fit[1], POI_fit[1] - POI_fit[0])
         if not blind:
             plot.DrawTitle(pads[1], '#hat{%s} = %s^{#plus%s}_{#minus%s}%s' % (
-                POI, s_nom, s_hi, s_lo,
+                poiname, s_nom, s_hi, s_lo,
                 ''), 3, 0.27)
         extra = ''
         if page == 0:
