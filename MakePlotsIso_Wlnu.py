@@ -441,11 +441,11 @@ def main():
 
     # draw the lepton isolation distribution
     ymax = 5e7 if doMuon else 1e6
-    #for wpt in wptbins:
-    #    for lepeta in etabins:
-    #        strname = f"weight_{wpt}_{lepeta}"
-    #        sampMan.DefineAll(strname, f"weight_WVpt * {wpt} * {lepeta}")
-    #        makeDraws(strname, ymax)
+    for wpt in wptbins:
+        for lepeta in etabins:
+            strname = f"weight_{wpt}_{lepeta}"
+            sampMan.DefineAll(strname, f"weight_WVpt * {wpt} * {lepeta}")
+            makeDraws(strname, ymax)
     #        
     #        for mt in mtbins:
     #            strname = f"weight_{wpt}_{lepeta}_{mt}"

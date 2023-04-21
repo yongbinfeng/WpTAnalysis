@@ -228,18 +228,25 @@ def main():
     theoryMaps = theoryUnc_13TeV_zjets if not is5TeV else theoryUnc_5TeV_zjets
 
     theoryVariations = OrderedDict()
-    for vpt in range(len(Vptbins)-1):
-        ptmin = Vptbins[vpt]
-        ptmax = Vptbins[vpt+1]
-        for var in ["MuRVPTUp", "MuRVPTDown", "MuFVPTUp", "MuFVPTDown", "MuFMuRVPTUp", "MuFMuRVPTDown"]:
-            idx = theoryMaps.getIndex(var.replace("VPT", ""))
+    for var in ["MuRVPTUp", "MuRVPTDown", "MuFVPTUp", "MuFVPTDown", "MuFMuRVPTUp", "MuFMuRVPTDown"]:
+        idx = theoryMaps.getIndex(var.replace("VPT", ""))
+        # pt splited qcd scale variations
+        for vpt in range(len(Vptbins)-1):
+            ptmin = Vptbins[vpt]
+            ptmax = Vptbins[vpt+1]
+            
             sampMan.DefineSpecificMCs(f"{var}".replace("VPT", str(
                 vpt)), f"(VpT >= {ptmin} && VpT < {ptmax}) ? lheweightS_{idx}: 1.0", sampnames=vsamples)
             sampMan.DefineAll(f"{var}".replace(
                 "VPT", str(vpt)), "1.0", excludes=vsamples)
-
             theoryVariations[f"{var}".replace("VPT", str(
                 vpt))] = f"{var}".replace("VPT", str(vpt))
+        
+        # inclusive qcd scale variations    
+        sampMan.DefineSpecificMCs(f"{var}".replace("VPT", ""), f"lheweightS_{idx}", sampnames=vsamples)
+        sampMan.DefineAll(f"{var}".replace("VPT", ""), "1.0", excludes=vsamples)
+        theoryVariations[f"{var}".replace("VPT", "")] = f"{var}".replace("VPT", "") 
+        
     # pdf
     pdfStart = theoryMaps.getIndex("PDFStart")
     for i in range(1, 101):

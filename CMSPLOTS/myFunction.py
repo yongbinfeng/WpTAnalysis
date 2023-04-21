@@ -460,9 +460,9 @@ def DrawHistos(myhistos, mylabels, xmin, xmax, xlabel, ymin, ymax, ylabel, outpu
         ROOT.TGaxis.SetMaxDigits(5)
         
     if ymax == None:
-        ymax = max([h.GetMaximum() for h in myhistos]) * 1.25
+        ymax = max([h.GetMaximum() for h in myhistos]) * 1.60
     if ymin == None:
-        ymin = min([h.GetMinimum() for h in myhistos]) * 0.75
+        ymin = min([h.GetMinimum() for h in myhistos]) * 0.40
 
     H_ref = 500
     W = W_ref

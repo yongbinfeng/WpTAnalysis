@@ -355,18 +355,24 @@ def main():
     theoryMaps = theoryUnc_13TeV_wjets if not is5TeV else theoryUnc_5TeV_wjets
     theoryVariations = OrderedDict()
 
-    for wpt in range(len(Vptbins)-1):
-        ptmin = Vptbins[wpt]
-        ptmax = Vptbins[wpt+1]
-        for var in ["MuRVPTUp", "MuRVPTDown", "MuFVPTUp", "MuFVPTDown", "MuFMuRVPTUp", "MuFMuRVPTDown"]:
-            idx = theoryMaps.getIndex(var.replace("VPT", ""))
+    for var in ["MuRVPTUp", "MuRVPTDown", "MuFVPTUp", "MuFVPTDown", "MuFMuRVPTUp", "MuFMuRVPTDown"]:
+        idx = theoryMaps.getIndex(var.replace("VPT", ""))
+        for wpt in range(len(Vptbins)-1):
+            # pt breaked version of the qcd scale variations
+            ptmin = Vptbins[wpt]
+            ptmax = Vptbins[wpt+1]
+            
             sampMan.DefineSpecificMCs(f"{var}".replace("VPT", str(
                 wpt)), f"(VpT >= {ptmin} && VpT < {ptmax}) ? lheweightS_{idx}: 1.0", sampnames=vsamples)
             sampMan.DefineAll(f"{var}".replace(
                 "VPT", str(wpt)), "1.0", excludes=vsamples)
-
             theoryVariations[f"{var}".replace("VPT", str(
                 wpt))] = f"{var}".replace("VPT", str(wpt))
+        
+        # MuRUp, MuRDown, MuFUp, MuFDown, MuFMuRUp, MuFMuRDown are inclusive QCD scale variations
+        sampMan.DefineSpecificMCs(f"{var}".replace("VPT", ""), f"lheweightS_{idx}", sampnames=vsamples)
+        sampMan.DefineAll(f"{var}".replace("VPT", ""), "1.0", excludes=vsamples)
+        theoryVariations[f"{var}".replace("VPT", "")] = f"{var}".replace("VPT", "") 
 
     # pdf
     pdfStart = theoryMaps.getIndex("PDFStart")

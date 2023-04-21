@@ -30,19 +30,14 @@ def DrawDataMCStack(hdata, hmc, hpred = None, xmin = 0, xmax = 140, xlabel = "m_
     hratiopanel = GetRatioPanel(hsmc) 
     DrawHistos([hdata, hsmc], labels, xmin, xmax, xlabel, 0., None, "Events", f"{outputname}", dology=False, showratio=True, yrmin = 0.89, yrmax = 1.11, ratiobase=1, redrawihist=0, hratiopanel=hratiopanel, is5TeV=is5TeV)
     
-def GetFR(hnums_data, hnums_mc, hdens_data, hdens_mc, projX = False, projY = False, avergeEta = False, suffix = "Clone", scaleNumMC = 1.0, scaleDenMC = 1.0):
+def GetFR(hnums_data, hnums_mc, hdens_data, hdens_mc, projX = False, projY = False, avergeEta = False, suffix = "Clone", scaleNumMC = 1.0, scaleDenMC = 1.0, scaleStat = 1.0):
     hnum_data = LHistos2Hist(hnums_data, f"{hnums_data[0].GetName()}_{suffix}")
     hnum_mc = LHistos2Hist(hnums_mc, f"{hnums_mc[0].GetName()}_{suffix}")
     hden_data = LHistos2Hist(hdens_data, f"{hdens_data[0].GetName()}_{suffix}")
     hden_mc = LHistos2Hist(hdens_mc, f"{hdens_mc[0].GetName()}_{suffix}")
     
-    # scale up/down contributions from MC in the (anti)isolated region
-    # for systematic variations
-    hnum_mc.Scale(scaleNumMC)
-    hden_mc.Scale(scaleDenMC)
-    
-    hnum = GetAbsYield(hnum_data, hnum_mc, f"num_FR_for_{suffix}")
-    hden = GetAbsYield(hden_data, hden_mc, f"den_FR_for_{suffix}")
+    hnum = GetAbsYield(hnum_data, hnum_mc, sData = 1.0, sMC = scaleNumMC, suffix = f"num_FR_for_{suffix}")
+    hden = GetAbsYield(hden_data, hden_mc, sData = 1.0, sMC = scaleDenMC, suffix = f"den_FR_for_{suffix}")
     
     if avergeEta:
         hnum = AverageEta2D(hnum)
@@ -77,6 +72,12 @@ def GetFR(hnums_data, hnums_mc, hdens_data, hdens_mc, projX = False, projY = Fal
         PositiveProtection(hnum)
         PositiveProtection(hden)
         hFR.Divide(hden)
+
+    # scale the stat uncertainty        
+    # e.g., if combining ell plus and ell minus, need to scale the stat uncertainty by 2.0
+    for ix in range(1, hFR.GetNbinsX()+1):
+        for iy in range(1, hFR.GetNbinsY()+1):
+            hFR.SetBinError(ix, iy, hFR.GetBinError(ix, iy) * scaleStat)
     return hFR
 
 def AverageEta2D(h2):
@@ -107,9 +108,10 @@ def StatUnc2SysUnc(h1, prefix = "stat"):
         hs.append(hdn)
     return hs
 
-def GetAbsYield(hdata, hmc, suffix=""):
+def GetAbsYield(hdata, hmc, sData = 1.0, sMC = 1.0, suffix=""):
     habs = hdata.Clone(f"{hdata.GetName()}_{suffix}")
-    habs.Add(hmc, -1)
+    habs.Scale(sData)
+    habs.Add(hmc, -1.0 * sMC)
     return habs
 
 
@@ -135,7 +137,6 @@ def main():
     useQCDMC = args.useQCDMC
     useGenMET = args.useGenMET
 
-    doPtVsDeltaPhi = not doPtVsEta and not doPtVsMet
     lepname = "mu" if not doElectron else "e"
     sqrtS = "13TeV" if not is5TeV else "5TeV"
     
@@ -193,10 +194,6 @@ def main():
         isogroups["CR0"] = ["iso2", "iso3"]
         isogroups["CR1"] = ["iso4", "iso5", "iso6"]
         isogroups["CRAll"] = isogroups["CR0"] + isogroups["CR1"]
-        #isogroups["CR0"] = ["iso4", "iso5", "iso6", "iso7", "iso8"]
-        #isogroups["CR1"] = ["iso9", "iso10", "iso11", "iso12"]
-        #isogroups["CR2"] = ["iso13", "iso14", "iso15", "iso16", "iso17", "iso18"]
-        #isogroups["CRAll"] = isogroups["CR0"] + isogroups["CR1"] + isogroups["CR2"]
     else:
         isogroups["SR"] = ["iso3", "iso4"]
         isogroups["CR0"] = ["iso5", "iso6", "iso7"]
@@ -204,9 +201,7 @@ def main():
         isogroups["CRAll"] = isogroups["CR0"] + isogroups["CR1"]
 
     etabins = ["lepEta_bin0"]
-
     wptbins = ["WpT_bin0"]
-
     chgbins = [lepname+"plus", lepname + "minus"]
     
     if not useTwoPhis:
@@ -249,9 +244,12 @@ def main():
         bname = f"mt{imt}"
         bmin = mtbins[imt]
         if bmin < bmaxs["MTCR1"]:
+            # used to derive FFs
             mass_bins_groups["MTCR1"].append(bname)
             mass_bins["MTCR1"].append(bmin)
         if bmin < bmaxs["MTCR2"]:
+        #if bmin >= bmaxs["MTCR1"] and bmin < bmaxs["MTCR2"]:
+            # used for closure tests
             mass_bins_groups["MTCR2"].append(bname)
             mass_bins["MTCR2"].append(bmin)
         if bmin >= bmaxs["MTCR2"]:
@@ -355,6 +353,9 @@ def main():
 
                 # calculate fake/transfer factor in different mt and iso groups, 
                 # as a function of var1 and var2, or var1 (projX) or var2 (projY)
+    for wpt in wptbins:
+        for lepeta in etabins:
+            for chg in chgbins:
                 for phin in phibins:
                     histos_FR[wpt][lepeta][chg][phin] = OrderedDict()
                     for isog in isogroups: 
@@ -363,17 +364,19 @@ def main():
                         hnums_mc = []
                         hdens_data = []
                         hdens_mc = []
-                        # accumulate all histograms in different mt groups
-                        for mtn in frbins:
-                            hnum_data = histos_count_Data[wpt][lepeta][chg][mtn][phin]["SR"]
-                            hnum_mc = histos_count_MC[wpt][lepeta][chg][mtn][phin]["SR"]
-                            hden_data = histos_count_Data[wpt][lepeta][chg][mtn][phin][isog]
-                            hden_mc = histos_count_MC[wpt][lepeta][chg][mtn][phin][isog]
-                            
-                            hnums_data.append(hnum_data)
-                            hnums_mc.append(hnum_mc)
-                            hdens_data.append(hden_data)
-                            hdens_mc.append(hden_mc)
+                        # combine charge plus and minus
+                        for chgf in chgbins:
+                            # accumulate all histograms in different mt groups
+                            for mtn in frbins:
+                                hnum_data = histos_count_Data[wpt][lepeta][chgf][mtn][phin]["SR"]
+                                hnum_mc = histos_count_MC[wpt][lepeta][chgf][mtn][phin]["SR"]
+                                hden_data = histos_count_Data[wpt][lepeta][chgf][mtn][phin][isog]
+                                hden_mc = histos_count_MC[wpt][lepeta][chgf][mtn][phin][isog]
+
+                                hnums_data.append(hnum_data)
+                                hnums_mc.append(hnum_mc)
+                                hdens_data.append(hden_data)
+                                hdens_mc.append(hden_mc)
 
                         doProjX = False
                         doProjY = False
@@ -381,29 +384,29 @@ def main():
                         suffix = phin
                         suffix += "ProjY" if doProjY else "ProjX" if doProjX else "2D" 
                         
-                        hFR = GetFR(hnums_data, hnums_mc, hdens_data, hdens_mc, projX=doProjX, projY=doProjY, avergeEta=doAverageEta, suffix = f"{wpt}_{lepeta}_{chg}_{iso}_{suffix}")
+                        hFR = GetFR(hnums_data, hnums_mc, hdens_data, hdens_mc, projX=doProjX, projY=doProjY, avergeEta=doAverageEta, suffix = f"{wpt}_{lepeta}_{chg}_{iso}_{suffix}", scaleNumMC=1.0, scaleStat=np.sqrt(2))
                         histos_FR[wpt][lepeta][chg][phin][isog]["central"] = hFR
                        
                         # scale the MC contribution in the anti-isolation region
                         # down by 20% 
-                        hFR_crUp = GetFR(hnums_data, hnums_mc, hdens_data, hdens_mc, projX=doProjX, projY=doProjY, avergeEta=doAverageEta, suffix = f"{wpt}_{lepeta}_{chg}_{iso}_{suffix}", scaleDenMC=0.50) 
+                        hFR_crUp = GetFR(hnums_data, hnums_mc, hdens_data, hdens_mc, projX=doProjX, projY=doProjY, avergeEta=doAverageEta, suffix = f"{wpt}_{lepeta}_{chg}_{iso}_{suffix}", scaleDenMC=1.20, scaleStat=np.sqrt(2)) 
                         histos_FR[wpt][lepeta][chg][phin][isog]["CRUp"] = hFR_crUp
                        
                         # scale the MC contribution in the signal region 
                         # up by 10% 
-                        hFR_srUp = GetFR(hnums_data, hnums_mc, hdens_data, hdens_mc, projX=doProjX, projY=doProjY, avergeEta=doAverageEta, suffix = f"{wpt}_{lepeta}_{chg}_{iso}_{suffix}", scaleNumMC=1.10)
+                        hFR_srUp = GetFR(hnums_data, hnums_mc, hdens_data, hdens_mc, projX=doProjX, projY=doProjY, avergeEta=doAverageEta, suffix = f"{wpt}_{lepeta}_{chg}_{iso}_{suffix}", scaleNumMC=1.10, scaleStat=np.sqrt(2))
                         histos_FR[wpt][lepeta][chg][phin][isog]["SRUp"] = hFR_srUp
 
                         DrawHistos([hFR], [], x1min, x1max, x1label, x2min, x2max, x2label, f"{outdir}/ISO_{isog}/FR/histo_wjets_{var2D}_FR_{chg}_{wpt}_{lepeta}_{isog}{suffix}", False, False, False, dologz=False, doth2=True, drawoptions="COLZ,texte", is5TeV=is5TeV) 
                         
-                        ymax = 0.35 if not doElectron else 6.0
+                        ymax = 1.0 if not doElectron else 7.0
 
                         # Draw FRs in 1D
                         hFRxs, labelsy = TH2ToTH1s(hFR, False, x2label)
-                        DrawHistos(hFRxs, labelsy, x1min, x1max, x1label, 0, ymax, "Fake Factor", f"{outdir}/ISO_{isog}/FR/histo_wjets_{var1}_FR_{chg}_{wpt}_{lepeta}_{isog}{suffix}_ProjX", False, False, False, is5TeV=is5TeV)
+                        DrawHistos(hFRxs, labelsy, x1min, x1max, x1label, 0, ymax, "Fake Factor", f"{outdir}/ISO_{isog}/FR/histo_wjets_{var1}_FR_{chg}_{wpt}_{lepeta}_{isog}{suffix}_ProjX", False, False, False, is5TeV=is5TeV, legendPos=[0.2, 0.65, 0.5, 0.9])
 
                         hFRys, labelsx = TH2ToTH1s(hFR, True, x1label)
-                        DrawHistos(hFRys, labelsx, x2min, x2max, x2label, 0, ymax, "Fake Factor", f"{outdir}/ISO_{isog}/FR/histo_wjets_{var2}_FR_{chg}_{wpt}_{lepeta}_{isog}{suffix}_ProjY", False, False, False, is5TeV=is5TeV)
+                        DrawHistos(hFRys, labelsx, x2min, x2max, x2label, 0, ymax, "Fake Factor", f"{outdir}/ISO_{isog}/FR/histo_wjets_{var2}_FR_{chg}_{wpt}_{lepeta}_{isog}{suffix}_ProjY", False, False, False, is5TeV=is5TeV, legendPos=[0.2, 0.65, 0.5, 0.9])
                         
                 # get the predictions in the SR, 
                 # using the FR/TF in that anti-isolation region
@@ -427,7 +430,9 @@ def main():
                                 # then yield * FR = QCD prediction in the signal region
                                 hdata_cr = histos_count_Data[wpt][lepeta][chg][mtn][phin][isog]
                                 hmc_cr = histos_count_MC[wpt][lepeta][chg][mtn][phin][isog]
-                                hcounts_cr = GetAbsYield(hdata_cr, hmc_cr, f"CR_for_{isog}_with_FR{frsys}")
+                               
+                                sMC = 1.20 if frsys == "CRUp" else 1.0
+                                hcounts_cr = GetAbsYield(hdata_cr, hmc_cr, sMC = sMC, suffix = f"CR_for_{isog}_with_FR{frsys}")
 
                                 h = hcounts_cr.Clone(hcounts_cr.GetName() + "_CT")
                                 PositiveProtection(h)
@@ -438,7 +443,7 @@ def main():
                                 # get the abs yield in the signal region 
                                 hdata_sr = histos_count_Data[wpt][lepeta][chg][mtn][phin]["SR"]
                                 hmc_sr = histos_count_MC[wpt][lepeta][chg][mtn][phin]["SR"]
-                                hcounts_sr = GetAbsYield(hdata_sr, hmc_sr, "SR")
+                                hcounts_sr = GetAbsYield(hdata_sr, hmc_sr, suffix = "SR")
 
                                 for ibinx in range(1, h.GetNbinsX()+1):
                                     for ibiny in range(1, h.GetNbinsY()+1):
