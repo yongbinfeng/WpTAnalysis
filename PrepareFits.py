@@ -13,8 +13,7 @@ import argparse
 
 ROOT.gROOT.SetBatch(True)
 
-
-def RunPreparations(fwsig_input, fwsig_rebin, fwsig_mergeTau, fqcd_input, fqcd_rebin, fqcd_input_scaled, fqcd_rebin_scaled, fqcd_output, lepname="mu", is5TeV=False, mass_bins_w=mass_bins_w, outdir_card="cards", fzsig_input=None, fzsig_output=None, mass_bins_z=mass_bins_z, applyLFU=False):
+def RunPreparations(fwsig_input, fwsig_rebin, fwsig_mergeTau, fqcd_input, fqcd_rebin, fqcd_input_scaled, fqcd_rebin_scaled, fqcd_output, lepname="mu", is5TeV=False, mass_bins_w=mass_bins_w, outdir_card="cards", fzsig_input=None, fzsig_output=None, mass_bins_z=mass_bins_z, applyLFU=False, doInclusive=False):
     """
     rebin the mT hists for sig and qcd bkg,
     merge tau (wx) process to sig (wlnu),
@@ -56,9 +55,9 @@ def RunPreparations(fwsig_input, fwsig_rebin, fwsig_mergeTau, fqcd_input, fqcd_r
 
     # generate card based on the signal and qcd templates
     card_plus = MakeWJetsCards(fwsig_mergeTau, fqcd_output, lepname+"plus", "WpT_bin0", "lepEta_bin0",
-                               rebinned=True, nMTBins=len(mass_bins_w)-1, is5TeV=is5TeV, outdir=outdir_card, applyLFU=applyLFU)
+                               rebinned=True, nMTBins=len(mass_bins_w)-1, is5TeV=is5TeV, outdir=outdir_card, applyLFU=applyLFU, doInclusive=doInclusive)
     card_minus = MakeWJetsCards(fwsig_mergeTau, fqcd_output, lepname+"minus", "WpT_bin0", "lepEta_bin0",
-                                rebinned=True, nMTBins=len(mass_bins_w)-1, is5TeV=is5TeV, outdir=outdir_card, applyLFU=applyLFU)
+                                rebinned=True, nMTBins=len(mass_bins_w)-1, is5TeV=is5TeV, outdir=outdir_card, applyLFU=applyLFU, doInclusive=doInclusive)
 
     # generate xsec hists and cards
     outdir_xsec_root = fwsig_mergeTau.rpartition("/")[0]
@@ -74,7 +73,7 @@ def RunPreparations(fwsig_input, fwsig_rebin, fwsig_mergeTau, fqcd_input, fqcd_r
         ProcessHists(fzsig_input, fzsig_output, mass_bins_z, False, False)
         # generate z card
         card_z = MakeZJetsCards(fzsig_output, lepname+lepname, rebinned=True,
-                                is5TeV=is5TeV, outdir=outdir_card, applyLFU=applyLFU)
+                                is5TeV=is5TeV, outdir=outdir_card, applyLFU=applyLFU, doInclusive=doInclusive)
         card_xsec_z = MakeXSecCard(
             lepname+lepname, is5TeV, outdir_root=outdir_xsec_root, outdir_card=outdir_card, applyLFU=applyLFU)
 
@@ -153,7 +152,7 @@ if __name__ == "__main__":
             fzsig_output = f"forCombine/{odir}/test{key}/root/{sqrtS}/output_shapes_mumu_Rebin" + suffix
 
             card_muplus, card_muminus, card_zmumu, card_xsec_muplus, card_xsec_muminus, card_xsec_mumu = RunPreparations(
-                fwsig_munu_input, fwsig_rebin, fwsig_mergeTau, fqcd_input, fqcd_rebin, fqcd_input_scaled, fqcd_rebin_scaled, fqcd_output, "mu", outdir_card=f"forCombine/{odir}/test{key}/cards/{sqrtS}", mass_bins_w=val, fzsig_input=fzsig_mumu_input, fzsig_output=fzsig_output, applyLFU=applyLFU, is5TeV=is5TeV)
+                fwsig_munu_input, fwsig_rebin, fwsig_mergeTau, fqcd_input, fqcd_rebin, fqcd_input_scaled, fqcd_rebin_scaled, fqcd_output, "mu", outdir_card=f"forCombine/{odir}/test{key}/cards/{sqrtS}", mass_bins_w=val, fzsig_input=fzsig_mumu_input, fzsig_output=fzsig_output, applyLFU=applyLFU, is5TeV=is5TeV, doInclusive=doInclusive)
 
             cards[f"mu_{sqrtS}"] = [card_muplus, card_muminus, card_zmumu]
             cards_xsec[f"mu_{sqrtS}"] = [
@@ -178,7 +177,7 @@ if __name__ == "__main__":
             fzsig_output = f"forCombine/{odir}/test{key}/root/{sqrtS}/output_shapes_ee_Rebin" + suffix
 
             card_eplus, card_eminus, card_zee, card_xsec_eplus, card_xsec_eminus, card_xsec_ee = RunPreparations(
-                fwsig_enu_input, fwsig_rebin, fwsig_mergeTau, fqcd_input, fqcd_rebin, fqcd_input_scaled, fqcd_rebin_scaled, fqcd_output, "e", outdir_card=f"forCombine/{odir}/test{key}/cards/{sqrtS}", mass_bins_w=val, fzsig_input=fzsig_ee_input, fzsig_output=fzsig_output, applyLFU=applyLFU, is5TeV=is5TeV)
+                fwsig_enu_input, fwsig_rebin, fwsig_mergeTau, fqcd_input, fqcd_rebin, fqcd_input_scaled, fqcd_rebin_scaled, fqcd_output, "e", outdir_card=f"forCombine/{odir}/test{key}/cards/{sqrtS}", mass_bins_w=val, fzsig_input=fzsig_ee_input, fzsig_output=fzsig_output, applyLFU=applyLFU, is5TeV=is5TeV, doInclusive=doInclusive)
 
             cards[f"e_{sqrtS}"] = [card_eplus, card_eminus, card_zee]
             cards_xsec[f"e_{sqrtS}"] = [

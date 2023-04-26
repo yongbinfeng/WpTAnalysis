@@ -4,6 +4,7 @@ code to generate the W(lnv) cards for tfCombine.
 
 from collections import OrderedDict
 from modules.Binnings import Vptbins
+from modules.impacts import unc_effstat_w, unc_effstat_z, unc_resumm_w, unc_resumm_z,unc_fsr_w, unc_fsr_z
 import ROOT
 import os
 
@@ -159,24 +160,13 @@ def WriteCard(data, processes, nuisgroups, cardname):
     ofile.close()
     
 
-def MakeWJetsCards(fname_mc, fname_qcd, channel, wptbin, etabin, doWpT = False, rebinned = False, is5TeV = False, nMTBins = 9, outdir = "cards", applyLFU = False):
+def MakeWJetsCards(fname_mc, fname_qcd, channel, wptbin, etabin, doWpT = False, rebinned = False, is5TeV = False, nMTBins = 9, outdir = "cards", applyLFU = False, doInclusive = False):
     # prefix of all histo names
     prefix = ""
     if rebinned:
         prefix = "Rebinned_"
 
     sqrtS = "13TeV" if not is5TeV else "5TeV"
-
-    # from eff calculations
-    unc_effstat = {}
-    unc_effstat['effstat_muplus_13TeV'] = 1.0022
-    unc_effstat['effstat_muminus_13TeV'] = 1.0021
-    unc_effstat['effstat_eplus_13TeV'] = 1.0059
-    unc_effstat['effstat_eminus_13TeV'] = 1.0053
-    unc_effstat['effstat_muplus_5TeV'] = 1.0023
-    unc_effstat['effstat_muminus_5TeV'] = 1.0021
-    unc_effstat['effstat_eplus_5TeV'] = 1.0080
-    unc_effstat['effstat_eminus_5TeV'] = 1.0077
 
     # data
     data = Process(name = "data_obs", fname = fname_mc,
@@ -323,7 +313,7 @@ def MakeWJetsCards(fname_mc, fname_qcd, channel, wptbin, etabin, doWpT = False, 
     for proc in processes:
         if proc.isSignal:
             # only apply eff/sf stat uncertainty to signals for now
-            nuis_effstat[proc.name] = unc_effstat[nuis_effstat.name]
+            nuis_effstat[proc.name] = unc_effstat_w[nuis_effstat.name]
     nuisgroups["effstat"] = [nuis_effstat]
 
     # recoil correction systematics
@@ -376,13 +366,19 @@ def MakeWJetsCards(fname_mc, fname_qcd, channel, wptbin, etabin, doWpT = False, 
     # theory systematics
     # qcd scale
     nuisgroups["qcdscale"] = []
-    for wpt in range(len(Vptbins)-1):
-        for par in ["MuF", "MuR", "MuFMuR"]:
+    for par in ["MuF", "MuR", "MuFMuR"]:
+        for wpt in range(len(Vptbins)-1):
             nuis_QCDScale = Nuisance(name = "QCDScale_" + sqrtS + "_" + par+str(wpt), type = "shape")
             for proc in processes:
                 if proc.isSignal:
                     nuis_QCDScale[proc.name] = 1.0
             nuisgroups["qcdscale"].append(nuis_QCDScale)
+        #nuis_QCDScale = Nuisance(name = "QCDScale_" + sqrtS + "_" + par, type = "shape")
+        #for proc in processes:
+        #    if proc.isSignal:
+        #        nuis_QCDScale[proc.name] = 1.0
+        #nuisgroups["qcdscale"].append(nuis_QCDScale)
+    
 
     # pdf + alphaS variations
     nuisgroups["pdfalphaS"] = []
@@ -402,6 +398,19 @@ def MakeWJetsCards(fname_mc, fname_qcd, channel, wptbin, etabin, doWpT = False, 
         if proc.isSignal:
             nuis_alphaS[proc.name] = 1.0
     nuisgroups["pdfalphaS"].append(nuis_alphaS)
+    
+    if doInclusive:
+        nuis_resumm = Nuisance(name = "resumm_"+ channel + "_" + sqrtS, type = "lnN")
+        for proc in processes:
+            if proc.isSignal:
+                nuis_resumm[proc.name] = unc_resumm_w[nuis_resumm.name]
+        nuisgroups["resummFSR"] = [nuis_resumm]
+        
+        nuis_fsr = Nuisance(name = "fsr_"+ channel + "_" + sqrtS, type = "lnN")
+        for proc in processes:
+            if proc.isSignal:
+                nuis_fsr[proc.name] = unc_fsr_w[nuis_fsr.name]
+        nuisgroups["resummFSR"].append(nuis_fsr)
 
     # tau fraction variation in the signal process
     #nuis_TauFrac = Nuisance(name = "SysTauFrac", type = "shape")
@@ -419,7 +428,7 @@ def MakeWJetsCards(fname_mc, fname_qcd, channel, wptbin, etabin, doWpT = False, 
     return cardname
 
 
-def MakeZJetsCards(fname, channel, rebinned = False, is5TeV = False, outdir = "cards", applyLFU = False):
+def MakeZJetsCards(fname, channel, rebinned = False, is5TeV = False, outdir = "cards", applyLFU = False, doInclusive=False):
     """
     Generate the combine datacard for Z+jets signal region
     """
@@ -429,24 +438,6 @@ def MakeZJetsCards(fname, channel, rebinned = False, is5TeV = False, outdir = "c
         prefix = "Rebinned_"
 
     sqrtS = "5TeV" if is5TeV else "13TeV"
-
-    # from lumi    
-    unc_lumi = {}
-    unc_lumi['lumi_uncor_13TeV'] = 1.015
-    unc_lumi['lumi_cor_13TeV'] = 1.009
-    unc_lumi['lumi_uncor_5TeV'] = 1.017
-    unc_lumi['lumi_cor_5TeV'] = 1.008
-
-    # from eff calculations
-    unc_effstat = {}
-    unc_effstat['effstat_muplus_13TeV'] = 1.0020
-    unc_effstat['effstat_muminus_13TeV'] = 1.0020
-    unc_effstat['effstat_eplus_13TeV'] = 1.0041
-    unc_effstat['effstat_eminus_13TeV'] = 1.0041
-    unc_effstat['effstat_muplus_5TeV'] = 1.0019
-    unc_effstat['effstat_muminus_5TeV'] = 1.0019
-    unc_effstat['effstat_eplus_5TeV'] = 1.0061
-    unc_effstat['effstat_eminus_5TeV'] = 1.0061
 
     # data
     data = Process(name = "data_obs", fname = fname,
@@ -547,20 +538,25 @@ def MakeZJetsCards(fname, channel, rebinned = False, is5TeV = False, outdir = "c
     for proc in processes:
         if proc.isSignal:
             # only apply eff/sf stat uncertainty to signals for now
-            nuis_effstat_plus[proc.name] = unc_effstat[nuis_effstat_plus.name]
-            nuis_effstat_minus[proc.name] = unc_effstat[nuis_effstat_minus.name]
+            nuis_effstat_plus[proc.name] = unc_effstat_z[nuis_effstat_plus.name]
+            nuis_effstat_minus[proc.name] = unc_effstat_z[nuis_effstat_minus.name]
     nuisgroups["effstat"] = [nuis_effstat_plus, nuis_effstat_minus]
 
     # theory systematics
     # qcd scale
     nuisgroups["qcdscale"] = []
-    for wpt in range(len(Vptbins)-1):
-        for par in ["MuF", "MuR", "MuFMuR"]:
+    for par in ["MuF", "MuR", "MuFMuR"]:
+        for wpt in range(len(Vptbins)-1):
             nuis_QCDScale = Nuisance(name = "QCDScale_" + sqrtS + "_" + par+str(wpt), type = "shape")
             for proc in processes:
                 if proc.isSignal:
                     nuis_QCDScale[proc.name] = 1.0
             nuisgroups["qcdscale"].append(nuis_QCDScale)
+        #nuis_QCDScale = Nuisance(name = "QCDScale_" + sqrtS + "_" + par, type = "shape")
+        #for proc in processes:
+        #    if proc.isSignal:
+        #        nuis_QCDScale[proc.name] = 1.0
+        #nuisgroups["qcdscale"].append(nuis_QCDScale)
 
     # pdf + alphaS variations
     nuisgroups["pdfalphaS"] = []
@@ -580,6 +576,19 @@ def MakeZJetsCards(fname, channel, rebinned = False, is5TeV = False, outdir = "c
         if proc.isSignal:
             nuis_alphaS[proc.name] = 1.0
     nuisgroups["pdfalphaS"].append(nuis_alphaS)
+    
+    if doInclusive:
+        nuis_resumm = Nuisance(name = "resumm_"+ channel + "_" + sqrtS, type = "lnN")
+        for proc in processes:
+            if proc.isSignal:
+                nuis_resumm[proc.name] = unc_resumm_z[nuis_resumm.name]
+        nuisgroups["resummFSR"] = [nuis_resumm]
+        
+        nuis_fsr = Nuisance(name = "fsr_"+ channel + "_" + sqrtS, type = "lnN")
+        for proc in processes:
+            if proc.isSignal:
+                nuis_fsr[proc.name] = unc_fsr_z[nuis_fsr.name]
+        nuisgroups["resummFSR"].append(nuis_fsr)
 
     #
     # writing datacards

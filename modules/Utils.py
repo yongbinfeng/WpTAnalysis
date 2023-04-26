@@ -55,6 +55,8 @@ def FormatOutputForWZ(istring: str):
     sysmaps['effsys'] = 'Efficiency Syst.'
     sysmaps['pdfalphaS'] = 'PDF + $\\alpha_\\mathrm{S}$'
     sysmaps['mcsec'] = 'MC Norm'
+    
+    sysmaps['resummFSR'] = "Resum. + FSR"
 
     for key in labelmaps.keys():
         istring = istring.replace(key, labelmaps[key])
