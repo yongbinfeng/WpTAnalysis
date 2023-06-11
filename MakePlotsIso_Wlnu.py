@@ -417,15 +417,17 @@ def main():
         etabins = np.array([-2.4, -2.0, -1.6, -1.2, -0.8, -0.4, 0.0, 0.4, 0.8, 1.2, 1.6, 2.0, 2.4])
         phibins = np.array([0, 0.8, 1.6, 2.4, 3.2])
         
-        sampMan.cacheDraw("RelIso", f"histo_wjets_{lepname}_RelIso_{strname}", 72, 0, 0.72, DrawConfig(xmin=0., xmax=0.75, xlabel="Relative Isolation", ylabel=f"Events / bin", dology=True, ymax=ymax, donormalizebin=False, addOverflow=True, addUnderflow=True, showratio=True, legendPos=[0.94, 0.88, 0.70, 0.68]), weightname=strname)
+        showratio = False
         
-        sampMan.cacheDraw("Lep_pt", f"histo_wjets_{lepname}_Lep_pt_{strname}", ptbins, DrawConfig(xmin=20, xmax=60, xlabel="Lepton p_{T} [GeV]", ylabel=f"Events / bin", dology=True, ymax=ymax, donormalizebin=False, addOverflow=True, addUnderflow=True, showratio=True, legendPos=[0.94, 0.88, 0.70, 0.68]), weightname=strname)
+        sampMan.cacheDraw("RelIso", f"histo_wjets_{lepname}_RelIso_{strname}", 72, 0, 0.72, DrawConfig(xmin=0., xmax=0.75, xlabel="Relative Isolation", ylabel=f"Events / bin", dology=True, ymax=ymax, donormalizebin=False, addOverflow=True, addUnderflow=True, showratio=showratio, legendPos=[0.94, 0.88, 0.70, 0.68]), weightname=strname)
         
-        sampMan.cacheDraw("Lep_eta", f"histo_wjets_{lepname}_Lep_eta_{strname}", etabins, DrawConfig(xmin=-2.5, xmax=2.5, xlabel="Lepton #eta", ylabel=f"Events / bin", dology=True, ymax=ymax, donormalizebin=False, addOverflow=True, addUnderflow=True, showratio=True, legendPos=[0.94, 0.88, 0.70, 0.68]), weightname=strname)
+        sampMan.cacheDraw("Lep_pt", f"histo_wjets_{lepname}_Lep_pt_{strname}", ptbins, DrawConfig(xmin=20, xmax=60, xlabel="Lepton p_{T} [GeV]", ylabel=f"Events / bin", dology=True, ymax=ymax, donormalizebin=False, addOverflow=True, addUnderflow=True, showratio=showratio, legendPos=[0.94, 0.88, 0.70, 0.68]), weightname=strname)
         
-        sampMan.cacheDraw("met_pt", f"histo_wjets_{lepname}_met_pt_{strname}", metbins, DrawConfig(xmin=0, xmax=60, xlabel="MET [GeV]", ylabel=f"Events / bin", dology=True, ymax=ymax, donormalizebin=False, addOverflow=True, addUnderflow=True, showratio=True, legendPos=[0.94, 0.88, 0.70, 0.68]), weightname=strname)
+        sampMan.cacheDraw("Lep_eta", f"histo_wjets_{lepname}_Lep_eta_{strname}", etabins, DrawConfig(xmin=-2.5, xmax=2.5, xlabel="Lepton #eta", ylabel=f"Events / bin", dology=True, ymax=ymax, donormalizebin=False, addOverflow=True, addUnderflow=True, showratio=showratio, legendPos=[0.94, 0.88, 0.70, 0.68]), weightname=strname)
         
-        sampMan.cacheDraw("deltaPhi", f"histo_wjets_{lepname}_deltaPhi_{strname}", phibins, DrawConfig(xmin=0, xmax=3.2, xlabel="#Delta#phi(#mu, MET)", ylabel=f"Events / bin", dology=True, ymax=ymax, donormalizebin=False, addOverflow=True, addUnderflow=True, showratio=True, legendPos=[0.94, 0.88, 0.70, 0.68]), weightname=strname)
+        sampMan.cacheDraw("met_pt", f"histo_wjets_{lepname}_met_pt_{strname}", metbins, DrawConfig(xmin=0, xmax=60, xlabel="MET [GeV]", ylabel=f"Events / bin", dology=True, ymax=ymax, donormalizebin=False, addOverflow=True, addUnderflow=True, showratio=showratio, legendPos=[0.94, 0.88, 0.70, 0.68]), weightname=strname)
+        
+        sampMan.cacheDraw("deltaPhi", f"histo_wjets_{lepname}_deltaPhi_{strname}", phibins, DrawConfig(xmin=0, xmax=3.2, xlabel="#Delta#phi(#mu, MET)", ylabel=f"Events / bin", dology=True, ymax=ymax, donormalizebin=False, addOverflow=True, addUnderflow=True, showratio=showratio, legendPos=[0.94, 0.88, 0.70, 0.68]), weightname=strname)
         
         sampMan.cacheDraw2D("Lep_pt", "Lep_eta", f"histo_wjets_{lepname}_pt_vs_eta_{strname}", ptbins, etabins, DrawConfig(xmin=25, xmax=60, ymin=-2.4, ymax=2.4, xlabel="Lepton p_{T} [GeV]", ylabel="Lepton #eta", zlabel="Events / bin", dology=False, donormalizebin=False, addOverflow=True, addUnderflow=True, showratio=False, legendPos=[0.94, 0.88, 0.70, 0.68]), weightname=strname)
         sampMan.cacheDraw2D("Lep_pt", "met_pt", f"histo_wjets_{lepname}_pt_vs_met_{strname}", ptbins, metbins, DrawConfig(xmin=25, xmax=60, ymin=0, ymax=60, xlabel="Lepton p_{T} [GeV]", ylabel="MET [GeV]", zlabel="Events / bin", dology=False, donormalizebin=False, addOverflow=True, addUnderflow=True, showratio=False, legendPos=[0.94, 0.88, 0.70, 0.68]), weightname=strname)

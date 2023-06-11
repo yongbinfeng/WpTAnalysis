@@ -85,11 +85,13 @@ if __name__ == "__main__":
     parser.add_argument("--doInclusive", action="store_true", dest="doInclusive",help="Run on inclusive channel; default is fiducial")
     parser.add_argument("--do13TeV", action="store_true", dest="do13TeV",help="Run on 13 TeV channel;")
     parser.add_argument("--do5TeV", action="store_true", dest="do5TeV",help="Run on 5 TeV channel;")
+    parser.add_argument("--reweightZpt", action="store_true", dest="reweightZpt", help="use the Z pt reweighted histograms")
     
     args = parser.parse_args()
     doInclusive = args.doInclusive
     do13TeV = args.do13TeV
     do5TeV = args.do5TeV
+    doZptReweight = args.reweightZpt
     
     combineSqrtS = (do13TeV and do5TeV)
     sqrtSs = []
@@ -127,17 +129,23 @@ if __name__ == "__main__":
             suffix_qcd = f"_{sqrtS}.root"
             is5TeV = (sqrtS == "5TeV")
 
-            fzsig_mumu_input = "root/output_shapes_mumu" + suffix
-            fzsig_ee_input = "root/output_shapes_ee" + suffix
-
-            fwsig_munu_input = "root/output_shapes_munu" + suffix
-            fwsig_enu_input = "root/output_shapes_enu" + suffix
+            #fzsig_mumu_input = "root/output_shapes_mumu" + suffix
+            #fzsig_ee_input = "root/output_shapes_ee" + suffix
+            #fwsig_munu_input = "root/output_shapes_munu" + suffix
+            #fwsig_enu_input = "root/output_shapes_enu" + suffix
+            
+            cmb_suffix = "default" if doZptReweight else "noZptReweight"
+                        
+            fzsig_mumu_input = f"root/{sqrtS}/Zmumu/{cmb_suffix}/output_shapes_mumu{suffix}"
+            fzsig_ee_input = f"root/{sqrtS}/Zee/{cmb_suffix}/output_shapes_ee{suffix}"
+            fwsig_munu_input = f"root/{sqrtS}/Wmunu/{cmb_suffix}/output_shapes_munu{suffix}"
+            fwsig_enu_input = f"root/{sqrtS}/Wenu/{cmb_suffix}/output_shapes_enu{suffix}"
 
             odir = "Inclusive" if doInclusive else "Fiducial"
 
             # muon channel
             fwsig_rebin = f"root/{odir}/test{key}/{sqrtS}/output_shapes_munu_Rebin" + suffix
-            fwsig_mergeTau = f"forCombine/{odir}/test{key}/root/{sqrtS}/output_shapes_munu_mergeTau" + suffix
+            fwsig_mergeTau = f"forCombine_{cmb_suffix}/{odir}/test{key}/root/{sqrtS}/output_shapes_munu_mergeTau" + suffix
 
             fqcd_input = "root/output_qcdshape_munu" + suffix_qcd
             fqcd_rebin = f"root/{odir}/test{key}/{sqrtS}/output_qcdshape_munu_Rebin" + suffix_qcd
@@ -146,13 +154,13 @@ if __name__ == "__main__":
             fqcd_input_scaled = None
             fqcd_rebin_scaled = None
             fqcd_input = f"plots/{sqrtS}/FRAndClosure/relIso/mu_pt_vs_eta_TwoPhis/histos_qcdFR_mu_{sqrtS}.root"
-            fqcd_output = f"forCombine/{odir}/test{key}/root/{sqrtS}/qcdshape_extrapolated_munu" + suffix_qcd
-            fqcd_output = f"forCombine/{odir}/test{key}/root/{sqrtS}/histos_qcdFR_mu_{sqrtS}.root"
+            fqcd_output = f"forCombine_{cmb_suffix}/{odir}/test{key}/root/{sqrtS}/qcdshape_extrapolated_munu" + suffix_qcd
+            fqcd_output = f"forCombine_{cmb_suffix}/{odir}/test{key}/root/{sqrtS}/histos_qcdFR_mu_{sqrtS}.root"
 
-            fzsig_output = f"forCombine/{odir}/test{key}/root/{sqrtS}/output_shapes_mumu_Rebin" + suffix
+            fzsig_output = f"forCombine_{cmb_suffix}/{odir}/test{key}/root/{sqrtS}/output_shapes_mumu_Rebin" + suffix
 
             card_muplus, card_muminus, card_zmumu, card_xsec_muplus, card_xsec_muminus, card_xsec_mumu = RunPreparations(
-                fwsig_munu_input, fwsig_rebin, fwsig_mergeTau, fqcd_input, fqcd_rebin, fqcd_input_scaled, fqcd_rebin_scaled, fqcd_output, "mu", outdir_card=f"forCombine/{odir}/test{key}/cards/{sqrtS}", mass_bins_w=val, fzsig_input=fzsig_mumu_input, fzsig_output=fzsig_output, applyLFU=applyLFU, is5TeV=is5TeV, doInclusive=doInclusive)
+                fwsig_munu_input, fwsig_rebin, fwsig_mergeTau, fqcd_input, fqcd_rebin, fqcd_input_scaled, fqcd_rebin_scaled, fqcd_output, "mu", outdir_card=f"forCombine_{cmb_suffix}/{odir}/test{key}/cards/{sqrtS}", mass_bins_w=val, fzsig_input=fzsig_mumu_input, fzsig_output=fzsig_output, applyLFU=applyLFU, is5TeV=is5TeV, doInclusive=doInclusive)
 
             cards[f"mu_{sqrtS}"] = [card_muplus, card_muminus, card_zmumu]
             cards_xsec[f"mu_{sqrtS}"] = [
@@ -162,7 +170,7 @@ if __name__ == "__main__":
 
             # electron channel
             fwsig_rebin = f"root/{odir}/test{key}/{sqrtS}/output_shapes_enu_Rebin" + suffix
-            fwsig_mergeTau = f"forCombine/{odir}/test{key}/root/{sqrtS}/output_shapes_enu_mergeTau" + suffix
+            fwsig_mergeTau = f"forCombine_{cmb_suffix}/{odir}/test{key}/root/{sqrtS}/output_shapes_enu_mergeTau" + suffix
 
             fqcd_input = "root/output_qcdshape_enu" + suffix_qcd
             fqcd_rebin = f"root/{odir}/test{key}/{sqrtS}/output_qcdshape_enu_Rebin" + suffix_qcd
@@ -170,14 +178,14 @@ if __name__ == "__main__":
             fqcd_rebin_scaled = f"root/{odir}/test{key}/{sqrtS}/output_qcdshape_enu_Rebin_applyScaling" + suffix_qcd
             fqcd_input_scaled = None
             fqcd_rebin_scaled = None
-            fqcd_output = f"forCombine/{odir}/test{key}/root/{sqrtS}/qcdshape_extrapolated_enu" + suffix_qcd
+            fqcd_output = f"forCombine_{cmb_suffix}/{odir}/test{key}/root/{sqrtS}/qcdshape_extrapolated_enu" + suffix_qcd
             fqcd_input = f"plots/{sqrtS}/FRAndClosure/relIso/e_pt_vs_eta_TwoPhis/histos_qcdFR_e_{sqrtS}.root"
-            fqcd_output = f"forCombine/{odir}/test{key}/root/{sqrtS}/histos_qcdFR_e_{sqrtS}.root"
+            fqcd_output = f"forCombine_{cmb_suffix}/{odir}/test{key}/root/{sqrtS}/histos_qcdFR_e_{sqrtS}.root"
 
-            fzsig_output = f"forCombine/{odir}/test{key}/root/{sqrtS}/output_shapes_ee_Rebin" + suffix
+            fzsig_output = f"forCombine_{cmb_suffix}/{odir}/test{key}/root/{sqrtS}/output_shapes_ee_Rebin" + suffix
 
             card_eplus, card_eminus, card_zee, card_xsec_eplus, card_xsec_eminus, card_xsec_ee = RunPreparations(
-                fwsig_enu_input, fwsig_rebin, fwsig_mergeTau, fqcd_input, fqcd_rebin, fqcd_input_scaled, fqcd_rebin_scaled, fqcd_output, "e", outdir_card=f"forCombine/{odir}/test{key}/cards/{sqrtS}", mass_bins_w=val, fzsig_input=fzsig_ee_input, fzsig_output=fzsig_output, applyLFU=applyLFU, is5TeV=is5TeV, doInclusive=doInclusive)
+                fwsig_enu_input, fwsig_rebin, fwsig_mergeTau, fqcd_input, fqcd_rebin, fqcd_input_scaled, fqcd_rebin_scaled, fqcd_output, "e", outdir_card=f"forCombine_{cmb_suffix}/{odir}/test{key}/cards/{sqrtS}", mass_bins_w=val, fzsig_input=fzsig_ee_input, fzsig_output=fzsig_output, applyLFU=applyLFU, is5TeV=is5TeV, doInclusive=doInclusive)
 
             cards[f"e_{sqrtS}"] = [card_eplus, card_eminus, card_zee]
             cards_xsec[f"e_{sqrtS}"] = [
@@ -187,25 +195,25 @@ if __name__ == "__main__":
 
             # combined fit
             GenerateRunCommand(f"card_combined_{sqrtS}", GetValues(cards, f".*_{sqrtS}"), GetValues(channels, f".*_{sqrtS}"), GetValues(
-                cards_xsec, f".*_{sqrtS}"), output_dir=f"forCombine/{odir}/test{key}/commands/scripts/", applyLFU=applyLFU, is5TeV=is5TeV)
+                cards_xsec, f".*_{sqrtS}"), output_dir=f"forCombine_{cmb_suffix}/{odir}/test{key}/commands/scripts/", applyLFU=applyLFU, is5TeV=is5TeV)
 
             # mu channel fit
             GenerateRunCommand(f"card_mu_{sqrtS}", GetValues(cards, f"mu_{sqrtS}"), GetValues(channels, f"mu_{sqrtS}"), GetValues(
-                cards_xsec, f"mu_{sqrtS}"), output_dir=f"forCombine/{odir}/test{key}/commands/scripts/", applyLFU=applyLFU, is5TeV=is5TeV)
+                cards_xsec, f"mu_{sqrtS}"), output_dir=f"forCombine_{cmb_suffix}/{odir}/test{key}/commands/scripts/", applyLFU=applyLFU, is5TeV=is5TeV)
 
             # e channel fit
             GenerateRunCommand(f"card_e_{sqrtS}", GetValues(cards, f"e_{sqrtS}"), GetValues(channels, f"e_{sqrtS}"), GetValues(
-                cards_xsec, f"e_{sqrtS}"), output_dir=f"forCombine/{odir}/test{key}/commands/scripts/", applyLFU=applyLFU, is5TeV=is5TeV)
+                cards_xsec, f"e_{sqrtS}"), output_dir=f"forCombine_{cmb_suffix}/{odir}/test{key}/commands/scripts/", applyLFU=applyLFU, is5TeV=is5TeV)
 
         if combineSqrtS:
             # combine 13 and 5 TeV
             GenerateRunCommand("card_combined", GetValues(cards, ".*"), GetValues(channels, ".*"), GetValues(cards_xsec, ".*"),
-                               output_dir=f"forCombine/{odir}/test{key}/commands/scripts/", applyLFU=applyLFU, combineAll=True)
+                               output_dir=f"forCombine_{cmb_suffix}/{odir}/test{key}/commands/scripts/", applyLFU=applyLFU, combineAll=True)
 
             # mu channel combined fit
             GenerateRunCommand("card_mu", GetValues(cards, "mu.*"), GetValues(channels, "mu.*"), GetValues(cards_xsec, "mu.*"),
-                               output_dir=f"forCombine/{odir}/test{key}/commands/scripts/", applyLFU=applyLFU, combineAll=True)
+                               output_dir=f"forCombine_{cmb_suffix}/{odir}/test{key}/commands/scripts/", applyLFU=applyLFU, combineAll=True)
 
             # e channel combined fit
             GenerateRunCommand("card_e", GetValues(cards, "e.*"), GetValues(channels, "e.*"), GetValues(cards_xsec, "e.*"),
-                               output_dir=f"forCombine/{odir}/test{key}/commands/scripts/", applyLFU=applyLFU, combineAll=True)
+                               output_dir=f"forCombine_{cmb_suffix}/{odir}/test{key}/commands/scripts/", applyLFU=applyLFU, combineAll=True)

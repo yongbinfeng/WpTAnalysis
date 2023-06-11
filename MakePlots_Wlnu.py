@@ -1,5 +1,6 @@
 from ast import parse
 import ROOT
+import os
 import numpy as np
 from collections import OrderedDict
 from modules.SampleManager import DrawConfig, Sample, SampleManager
@@ -27,6 +28,8 @@ def main():
                         help="Analyze the electron channel; false runs the muon channel")
     parser.add_argument("--doTheoryNorm", action="store_true",
                         dest="doTheoryNorm", help="Normalize to theory; false runs on data")
+    parser.add_argument("--reweightZpt", action="store_true", dest="reweightZpt",
+                        help="Reweight the V pt according to the dilepton data-MC distribution; false does not reweight")
     args = parser.parse_args()
 
     doMuon = not args.doElectron
@@ -34,18 +37,23 @@ def main():
     doWpT = args.doWpT
     is5TeV = args.is5TeV
     doTheoryNorm = args.doTheoryNorm
+    doZptReweight = args.reweightZpt
     
-    reweightZpt = True
+    #reweightZpt = True
 
     print("doMuon: ", doMuon)
     print("doTest:", doTest)
     print("doWpT:", doWpT)
     print("is5TeV:", is5TeV)
     print("doTheoryNorm", doTheoryNorm)
+    print("doZptReweight", doZptReweight)
+    
+    str_zpt = "default" if doZptReweight else "noZptReweight"
 
-    outdir = "plots/"
+    outdir = ""
     outdir += "5TeV/" if is5TeV else "13TeV/"
     outdir += "Wmunu/" if doMuon else "Wenu/"
+    outdir += str_zpt + "/"
 
     # ROOT.gROOT.ProcessLine('TFile* f_zpt = TFile::Open("results/zpt_weight.root")')
     # ROOT.gROOT.ProcessLine('TH1D* h_zpt_ratio  = (TH1D*)f_zpt->Get("h_zpt_ratio")')
@@ -133,11 +141,11 @@ def main():
         # wjetsnorm = 1.06
         wjetsnorm = 1.0
         Wl0Samp = Sample(input_wl0, isMC=True, name="wl0",
-                         isWSR=True, additionalnorm=wjetsnorm, reweightZpt=reweightZpt)
+                         isWSR=True, additionalnorm=wjetsnorm, reweightZpt=doZptReweight)
         Wl1Samp = Sample(input_wl1, isMC=True, name="wl1",
-                         isWSR=True, additionalnorm=wjetsnorm, reweightZpt=reweightZpt)
+                         isWSR=True, additionalnorm=wjetsnorm, reweightZpt=doZptReweight)
         Wl2Samp = Sample(input_wl2, isMC=True, name="wl2",
-                         isWSR=True, additionalnorm=wjetsnorm, reweightZpt=reweightZpt)
+                         isWSR=True, additionalnorm=wjetsnorm, reweightZpt=doZptReweight)
         # ttbar
         TTbarSamp = Sample(input_ttbar, isMC=True,
                            name="ttbar_dilepton", isWSR=True)
@@ -151,13 +159,13 @@ def main():
         ZZSamp = Sample(input_zz, isMC=True, name="ZZ", isWSR=True)
         # tau
         ZXXSamp = Sample(input_zxx, isMC=True, name="ZXX",
-                         isWSR=True, reweightZpt=reweightZpt)
+                         isWSR=True, reweightZpt=doZptReweight)
         Wx0Samp = Sample(input_wx0, isMC=True, name="wx0",
-                         isWSR=True, reweightZpt=reweightZpt)
+                         isWSR=True, reweightZpt=doZptReweight)
         Wx1Samp = Sample(input_wx1, isMC=True, name="wx1",
-                         isWSR=True, reweightZpt=reweightZpt)
+                         isWSR=True, reweightZpt=doZptReweight)
         Wx2Samp = Sample(input_wx2, isMC=True, name="wx2",
-                         isWSR=True, reweightZpt=reweightZpt)
+                         isWSR=True, reweightZpt=doZptReweight)
 
         if not doTest:
             #sampMan = SampleManager(DataSamp, [Wl0Samp, Wl1Samp, Wl2Samp, TTbarSamp, TT1LepSamp,
@@ -188,7 +196,7 @@ def main():
         wjetsnorm = 1.0
         label = "W#rightarrow#mu#nu" if doMuon else "W#rightarrow e#nu"
         WlSamp = Sample(input_wl, isMC=True, name=signame, color=92,
-                        legend=label, isWSR=True, additionalnorm=wjetsnorm, is5TeV=True, reweightZpt=reweightZpt)
+                        legend=label, isWSR=True, additionalnorm=wjetsnorm, is5TeV=True, reweightZpt=doZptReweight)
         # ttbar
         TTbarSamp = Sample(input_ttbar, isMC=True, name="ttbar",
                            color=86, legend="t#bar{t}", isWSR=True, is5TeV=True)
@@ -203,9 +211,9 @@ def main():
                           isWSR=True, is5TeV=True)
         # tau
         ZXXSamp = Sample(input_zxx, isMC=True, name="ZXX",
-                         isWSR=True, is5TeV=True, reweightZpt=reweightZpt)
+                         isWSR=True, is5TeV=True, reweightZpt=doZptReweight)
         WxSamp = Sample(input_wx, isMC=True, name="wx",
-                        color=216, legend="wx", isWSR=True, is5TeV=True, reweightZpt=reweightZpt)
+                        color=216, legend="wx", isWSR=True, is5TeV=True, reweightZpt=doZptReweight)
 
         sampMan = SampleManager(DataSamp, [
                                 WlSamp, TTbarSamp, WWSamp, WZSamp, ZZ2LSamp, ZZ4LSamp, ZXXSamp, WxSamp], is5TeV=True)
@@ -219,7 +227,7 @@ def main():
     print(("signal sample names: ", signalSampnames))
     h_sigs = OrderedDict()
 
-    sampMan.outdir = outdir
+    sampMan.outdir = "plots/"+outdir
 
     #sampMan.ApplyCutAll("relIso > 0.05")
 
@@ -523,6 +531,7 @@ def main():
                     sampMan.cacheDraw("mT_1", f"histo_wjets_{chg}_mtcorr_weight_{var}_{wpt}_{lepeta}", mass_bins, DrawConfig(
                         xmin=xmin, xmax=xmax, xlabel="m_{T} [GeV]", dology=False, ymax=ymaxs[chg] * 5.0, donormalizebin=False, addOverflow=False, addUnderflow=False), weightname=f"weight_{chg}_{var}_{wpt}_{lepeta}")
 
+
     # Draw all these histograms
     sampMan.launchDraw()
 
@@ -548,8 +557,7 @@ def main():
                     val.SetLineColor(icolor)
                     val.SetMarkerColor(icolor)
                     icolor += 1
-                DrawHistos(hists, labels, xmin, xmax, "m_{T} [GeV]", 0., 0.24, "A.U.", "Comparison_mTShape_wjets_{}_mT_1_{}_{}".format(
-                    chg, wpt, lepeta), dology=False, addOverflow=True, addUnderflow=True, donormalize=True, is5TeV=is5TeV, legendPos=[0.30, 0.92, 0.90, 0.72], legendNCols=4, legendoptions="LE", drawoptions="LE", outdir=outdir)
+                DrawHistos(hists, labels, xmin, xmax, "m_{T} [GeV]", 0., 0.24, "A.U.", "Comparison_mTShape_wjets_{}_mT_1_{}_{}".format(chg, wpt, lepeta), dology=False, addOverflow=True, addUnderflow=True, donormalize=True, is5TeV=is5TeV, legendPos=[0.30, 0.92, 0.90, 0.72], legendNCols=4, legendoptions="LE", drawoptions="LE", outdir="plots/" + outdir)
 
     #
     # merge the signal MC histograms in different samples
@@ -571,6 +579,11 @@ def main():
     #
     # preparing the outputs
     #
+    dirpath = "root/" + outdir     
+    if not os.path.exists(dirpath):
+        print(f"Make the directory {dirpath}")
+        os.makedirs(dirpath)
+        
     sqrtS = "5TeV" if is5TeV else "13TeV"
     output_suffix = lepname + "nu"
     if doWpT:
@@ -584,7 +597,7 @@ def main():
     #
     # write out mT histograms for combine
     #
-    outfile = ROOT.TFile.Open("root/output_shapes_"+output_suffix, "recreate")
+    outfile = ROOT.TFile.Open(dirpath + "/output_shapes_"+output_suffix, "recreate")
 
     # Data
     # odir = outfile.mkdir("Data")

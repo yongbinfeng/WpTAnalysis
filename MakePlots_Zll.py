@@ -1,4 +1,5 @@
 from xml import dom
+import os
 import ROOT
 import numpy as np
 from collections import OrderedDict
@@ -28,21 +29,28 @@ def main():
                         help="Analyze the electron channel; false runs the muon channel")
     parser.add_argument("--doTheoryNorm", action="store_true", dest="doTheoryNorm",
                         help="Normalize the theory uncertainties to the nominal; false does not normalize")
+    parser.add_argument("--reweightZpt", action="store_true", dest="reweightZpt",
+                        help="Reweight the V pt according to the dilepton data-MC distribution; false does not reweight")
     args = parser.parse_args()
 
     doTest = args.doTest
     is5TeV = args.is5TeV
     doMuon = not args.doElectron
     doTheoryNorm = args.doTheoryNorm
+    doZptReweight = args.reweightZpt
 
     print("doMuon: ", doMuon)
     print("doTest:", doTest)
     print("is5TeV:", is5TeV)
     print("doTheoryNorm:", doTheoryNorm)
+    print("doZptReweight:", doZptReweight)
+    
+    str_zpt = "default" if doZptReweight else "noZptReweight"
 
-    outdir = "plots/"
+    outdir = ""
     outdir += "5TeV/" if is5TeV else "13TeV/"
     outdir += "Zmumu/" if doMuon else "Zee/"
+    outdir += str_zpt + "/"
 
     # ROOT.gROOT.ProcessLine('TFile* f_zpt = TFile::Open("data/zpt_ratio_amc2data.root")')
     # ROOT.gROOT.ProcessLine('TH1D* h_zpt_ratio  = (TH1D*)f_zpt->Get("hc")')
@@ -123,12 +131,12 @@ def main():
                            legend="t#bar{t}", name="ttbar2lep")
         if not doTest:
             DYSamp = Sample(input_dy,    color=92,
-                            legend=lepchannel, name="DY", reweightZpt=True)
+                            legend=lepchannel, name="DY", reweightZpt=doZptReweight)
             WWSamp = Sample(input_ww,  color=38,  legend="WW2L",     name="WW")
             WZSamp = Sample(input_wz,  color=39,  legend="WZ3L",     name="WZ")
             ZZSamp = Sample(input_zz,  color=37,  legend="ZZ2L",     name="ZZ")
             ZXXSamp = Sample(input_zxx, color=40,
-                             legend="ZXX",      name="ZXX", reweightZpt=True)
+                             legend="ZXX",      name="ZXX", reweightZpt=doZptReweight)
             TT1LepSamp = Sample(input_ttbar_1lep,  color=47,
                                 legend="t#bar{t}", name="ttbar1lep")
             TT0LepSamp = Sample(input_ttbar_0lep,  color=48,
@@ -147,7 +155,7 @@ def main():
         # 5TeV dataset
         #
         DYSamp = Sample(input_dy,    color=92,
-                        legend=lepchannel, name="DY",    is5TeV=True, reweightZpt=True)
+                        legend=lepchannel, name="DY",    is5TeV=True, reweightZpt=doZptReweight)
         TTbarSamp = Sample(input_ttbar, color=96,
                            legend="t#bar{t}", name="ttbar", is5TeV=True)
         WWSamp = Sample(input_ww,    color=38, legend="WW2L",
@@ -159,14 +167,14 @@ def main():
         ZZ4LSamp = Sample(input_zz4l,  color=37, legend="ZZ4L",
                           name="ZZ4L",  is5TeV=True)
         ZXXSamp = Sample(input_zxx,   color=40, legend="ZXX",
-                         name="ZXX",   is5TeV=True, reweightZpt=True)
+                         name="ZXX",   is5TeV=True, reweightZpt=doZptReweight)
 
         sampMan = SampleManager(DataSamp, [
                                 DYSamp, TTbarSamp, WWSamp, WZSamp, ZZ2LSamp, ZZ4LSamp, ZXXSamp], is5TeV=True)
         sampMan.groupMCs(["WW", "WZ", "ZZ2L", "ZZ4L", "ZXX"],
                          "EWK", 216, "EWK")
 
-    sampMan.outdir = outdir
+    sampMan.outdir = "plots/"+outdir
 
     sampMan.DefineAll("zpt", "Z.Pt()")
     sampMan.DefineAll("zmass", "ZMass")
@@ -444,11 +452,16 @@ def main():
         hratio_zpt.Write()
 
         outfile.Close()
+   
+    dirpath = "root/" + outdir     
+    if not os.path.exists(dirpath):
+        print(f"Make the directory {dirpath}")
+        os.makedirs(dirpath)
 
     output_suffix = f"{lepname}_{sqrtS}_noTheoryNorm.root"
     if doTheoryNorm:
         output_suffix = f"{lepname}_{sqrtS}_TheoryNormed.root"
-    outfile = ROOT.TFile.Open("root/output_shapes_"+output_suffix, "recreate")
+    outfile = ROOT.TFile.Open(dirpath + "/output_shapes_" + output_suffix, "recreate")
 
     # Data
     hdata = sampMan.hdatas["histo_zjets_zmass_{}_weight_0".format(lepname)]
