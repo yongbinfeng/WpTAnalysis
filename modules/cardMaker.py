@@ -207,7 +207,7 @@ def MakeWJetsCards(fname_mc, fname_qcd, channel, wptbin, etabin, doWpT = False, 
                     isMC = True,
                     isV = False,
                     isQCD = False,
-                    xsecUnc = "1.10"
+                    xsecUnc = "1.05"
                 )
     # Z bkg
     sname = "zxx8" if not is5TeV else "zxx6"
@@ -229,7 +229,7 @@ def MakeWJetsCards(fname_mc, fname_qcd, channel, wptbin, etabin, doWpT = False, 
                    isMC = True,
                    isV = True,
                    isQCD = False,
-                   xsecUnc = "1.10"
+                   xsecUnc = "1.05"
                 )
     # VV bkg
     sname = "vv5" if not is5TeV else "vv2"
@@ -240,7 +240,7 @@ def MakeWJetsCards(fname_mc, fname_qcd, channel, wptbin, etabin, doWpT = False, 
                  isMC = True,
                  isV = False,
                  isQCD = False,
-                 xsecUnc = "1.10"
+                 xsecUnc = "1.05"
                  )
     # QCD bkg
     lepname = "mu" if "mu" in channel else "e" 
@@ -465,7 +465,7 @@ def MakeZJetsCards(fname, channel, rebinned = False, is5TeV = False, outdir = "c
                     isMC = True,
                     isV = False,
                     isQCD = False,
-                    xsecUnc = "1.10"
+                    xsecUnc = "1.05"
                 )
     # EWK bkg
     sname = "EWK2" if not is5TeV else "EWK2"
@@ -476,7 +476,7 @@ def MakeZJetsCards(fname, channel, rebinned = False, is5TeV = False, outdir = "c
                  isMC = True,
                  isV = False,
                  isQCD = False,
-                 xsecUnc = "1.10"
+                 xsecUnc = "1.05"
                  )
 
     # list of all processes

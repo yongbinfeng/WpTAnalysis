@@ -18,6 +18,7 @@ parser.add_argument("--do5TeV", action="store_true", dest="do5TeV",help="Run on 
 parser.add_argument("--combineSqrtS", action="store_true", dest="combineSqrtS",help="Combine the results of 5TeV and 13TeV; false runs on each year separately.")
 parser.add_argument("--doElectron", action="store_true", dest="doElectron",help="Run on electron channel;")
 parser.add_argument("--doMuon", action="store_true", dest="doMuon",help="Run on muon channel;")
+parser.add_argument("--reweightZpt", action="store_true", dest="reweightZpt", help="use the Z pt reweighted histograms")
 
 args = parser.parse_args()
 
@@ -30,6 +31,9 @@ doInclusive = args.doInclusive
 do13TeV = args.do13TeV
 do5TeV = args.do5TeV
 combineSqrtS = args.combineSqrtS
+
+doZptReweight = args.reweightZpt
+cmb_suffix = "default" if doZptReweight else "noZptReweight"
 
 doElectron = args.doElectron
 doMuon = args.doMuon
@@ -87,7 +91,7 @@ if not doDifferential:
                 is5TeV = (sqrtS == "5TeV")
                 lumi_unc = 0.017 if not is5TeV else 0.019
 
-                workdir = f"forCombine/{idir}/test{idx}/commands/scripts/"
+                workdir = f"forCombine_{cmb_suffix}/{idir}/test{idx}/commands/scripts/"
                 suffix = "combined" if doCombineChannel else "mu" if doMuon else "e"
                 if combineSqrtS:
                     filename = workdir + f"card_{suffix}"
@@ -98,7 +102,7 @@ if not doDifferential:
                     filename += "_asimov"
                 filename += ".root"
 
-                outdir = f"forCombine/{idir}/test{idx}/results_{suffix}"
+                outdir = f"forCombine_{cmb_suffix}/{idir}/test{idx}/results_{suffix}"
                 if fits == "asimov":
                     outdir += "_asimov"
 

@@ -247,8 +247,8 @@ def main():
             # used to derive FFs
             mass_bins_groups["MTCR1"].append(bname)
             mass_bins["MTCR1"].append(bmin)
-        if bmin < bmaxs["MTCR2"]:
-        #if bmin >= bmaxs["MTCR1"] and bmin < bmaxs["MTCR2"]:
+        #if bmin < bmaxs["MTCR2"]:
+        if bmin >= bmaxs["MTCR1"] and bmin < bmaxs["MTCR2"]:
             # used for closure tests
             mass_bins_groups["MTCR2"].append(bname)
             mass_bins["MTCR2"].append(bmin)
