@@ -6,8 +6,8 @@ import numpy as np
 import sys
 import argparse
 from collections import OrderedDict
-from modules.Binnings import mass_bins_forqcd
-from CMSPLOTS.myFunction import DrawHistos, MultiplyH2, PositiveProtection, IntegralAndError2D, CombineOneBin2D, GetRatioPanel, LHistos2Hist, IncludeOverflow2D, TH2ToTH1s, SymmetrizeHisto
+from modules.Binnings import mass_bins_forqcd,mass_bins_forqcd_output
+from CMSPLOTS.myFunction import DrawHistos, MultiplyH2, PositiveProtection, IntegralAndError2D, CombineOneBin2D, GetRatioPanel, LHistos2Hist, IncludeOverflow2D, TH2ToTH1s, SymmetrizeHisto, RebinHisto
 
 ROOT.gROOT.SetBatch(True)
 
@@ -572,6 +572,10 @@ def main():
 
     ofile = ROOT.TFile.Open(f"{outdir}/histos_qcdFR_{lepname}_{sqrtS}.root", "RECREATE")
     for h in histos_ToSave:
+        # rebin the output histograms
+        print("before rebin, integral: ", h.Integral())
+        h = RebinHisto(h, mass_bins_forqcd_output, h.GetName())
+        print("after rebin, integral: ", h.Integral())
         h.SetDirectory(ofile)
         h.Write()
     ofile.Close()
