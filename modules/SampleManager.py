@@ -123,12 +123,16 @@ class Sample(object):
                     nevts = self.nmcevt
                 self.nmcevts_varied.append(nevts)
                 self.fnorms_varied.append(self.calculateNorm(nevts))
-
+                
         # do preprocessing
         self.prepareVars()
         self.select()
 
         self.DoZptReweighting()
+        
+        self.xsecVal = None
+        if self.isMC:
+            self.__GetXSec()
 
         self._garbagerdfs = []
 
@@ -336,6 +340,18 @@ class Sample(object):
         else:
             self.rdf = self.rdf.Define("ZptWeight", "1.")
         self.rdf = self.rdf.Define("weight_WVpt", "ZptWeight * weight_WoVpt")
+
+    def __GetXSec(self):
+        """
+        return the cross section after the selections
+        """
+        if self.xsecVal is None:
+            print(colored(f'Calculating cross section for sample {self.name}', 'blue'))
+            self.rdf = self.rdf.Define("scale1fbNorm", f"scale1fb / {self.nmcevt}") 
+            self.xsecVal = self.rdf.Sum("scale1fbNorm")
+            self.xsecValV = self.rdf.Sum("scale1fb")
+        else:
+            print(colored(f'Cross section already calcuated for sample {self.name}', 'red'))
 
 
 class SampleManager(object):
