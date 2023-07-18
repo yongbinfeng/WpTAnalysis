@@ -60,6 +60,7 @@ def CMS_lumi(pad,  iPeriod,  iPosX, plotCMS = True):
     pad.cd()
 
     lumiText = ""
+    print("iPeriod: ", iPeriod)
     if( iPeriod==1 ):
         lumiText += lumi_7TeV
         lumiText += " (7 TeV)"
@@ -78,7 +79,16 @@ def CMS_lumi(pad,  iPeriod,  iPosX, plotCMS = True):
         lumiText += " (13 TeV)"
     elif ( iPeriod==5 ):
         lumiText += lumi_5TeV
-        lumiText += " (5 TeV)"
+        lumiText += " (5.02 TeV)"
+    elif ( iPeriod==6) :
+        print("iPerioud == 6")
+        lumiText += "#scale[0.85]{"
+        lumiText += lumi_13TeV
+        lumiText += " (13 TeV)"
+        lumiText += " + "
+        lumiText += lumi_5TeV
+        lumiText += " (5.02 TeV)"
+        lumiText += "}"
     elif ( iPeriod==7 ):
         if( outOfFrame ):lumiText += "#scale[0.85]{"
         lumiText += lumi_13TeV 
@@ -165,3 +175,5 @@ def CMS_lumi(pad,  iPeriod,  iPosX, plotCMS = True):
         latex.DrawLatex(posX_, posY_, extraText)      
 
     pad.Update()
+    
+    print("lumi text: ", lumiText)

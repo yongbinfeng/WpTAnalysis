@@ -2,6 +2,7 @@ import json
 import ROOT
 from collections import OrderedDict
 import math
+from CMSPLOTS.myFunction import DrawHistos
 
 f_xsecs_MC = "data/xsecs.json"
 
@@ -171,7 +172,7 @@ for ch in ["WchgRatio", "WZRatio"]:
         
 outdir = "plots/xsecResults/"
     
-from modules.Utils import FormatTable
+from modules.Utils import FormatTable, FormatROOTInput
 from modules.postFitScripts import WriteOutputToText
 outputs = FormatTable(results['13TeV'])
 print(outputs)
@@ -196,3 +197,43 @@ WriteOutputToText(outputs, f"{outdir}/tables/results_sqrtS_ratios.tex")
 outputs = FormatTable(results['sqrtS_double_ratios'], precision = 4)
 print(outputs)
 WriteOutputToText(outputs, f"{outdir}/tables/results_sqrtS_double_ratios.tex")
+
+def DrawCompGraph(xsecs_diffs, outputname, ymin = -5.0, ymax = 5.0, is5TeV = False, doCombineYear = False):
+    markers = [2, 3, 4, 5, 25, 26, 27]
+    colors = [3, 7, 4, 6, 9, 46]
+    tgraphs = OrderedDict()
+    
+    tgraphs["Measured"] = ROOT.TGraphErrors()
+    tgraphs["Measured"].SetFillColorAlpha(15, 0.5)
+    
+    for j,pdf in enumerate(pdfsets):
+        pdf = pdf.upper()
+        tgraphs[pdf] = ROOT.TGraphErrors()
+        tgraphs[pdf].SetMarkerStyle(markers[j])
+        tgraphs[pdf].SetMarkerSize(2.0)
+        tgraphs[pdf].SetMarkerColor(colors[j])
+    
+    i = 0    
+    binlabels = []
+    for ch in xsecs_diffs:
+        if "diff" not in ch: 
+            continue
+        tgraphs["Measured"].SetPoint(i, i + 1, 0.)
+        tgraphs["Measured"].SetPointError(i, 0.5, xsecs_diffs[ch]["Measured"])
+        binlabels.append(FormatROOTInput(ch.replace("_diff", "")))
+        for j, pdf in enumerate(pdfsets):
+            pdf = pdf.upper()
+            tgraphs[pdf].SetPoint(i, i + 1 + j * 0.1, xsecs_diffs[ch][pdf])
+            tgraphs[pdf].SetPointError(i, 0., 0.)
+        i += 1
+            
+    DrawHistos(list(tgraphs.values()), list(tgraphs.keys()), 0.5, len(binlabels) + 0.5, "POIs", ymin, ymax, "(Theory / Measured - 1) x 100%", outputname, dology=False, binlabels = binlabels, drawoptions = ["E2"] + ["P"] * len(pdfsets), legendoptions = ["F"] + ["P"] * len(pdfsets), legendPos = [0.67, 0.7, 0.87, 0.9], is5TeV = is5TeV, doCombineYear = doCombineYear)
+    
+DrawCompGraph(results['13TeV'], f"{outdir}/plots/results_13TeV_xsecs", -7.0, 7.0)
+DrawCompGraph(results['5TeV'], f"{outdir}/plots/results_5TeV_xsecs", -7.0, 7.0, is5TeV = True)
+DrawCompGraph(results['13TeV_ratios'], f"{outdir}/plots/results_13TeV_ratios", -3.0, 3.0)
+DrawCompGraph(results['5TeV_ratios'], f"{outdir}/plots/results_5TeV_ratios", -3.0, 3.0, is5TeV = True)
+DrawCompGraph(results['sqrtS_ratios'], f"{outdir}/plots/results_sqrtS_ratios", -7.0, 7.0, doCombineYear = True)
+DrawCompGraph(results['sqrtS_double_ratios'], f"{outdir}/plots/results_sqrtS_double_ratios", -3.0, 3.0, doCombineYear = True)
+            
+    

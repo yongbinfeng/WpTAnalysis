@@ -410,7 +410,7 @@ def TH2ToTH1s(h2, projY = False, label = "X"):
             labels.append(f"{xmin: .2f}<{label}<{xmax: .2f}")
     return hs, labels
 
-def DrawHistos(myhistos, mylabels, xmin, xmax, xlabel, ymin, ymax, ylabel, outputname, dology=True, showratio=False, dologx=False, lheader=None, donormalize=False, binomialratio=False, yrmax=2.0, yrmin=0.0, yrlabel=None, MCOnly=False, leftlegend=False, mycolors=None, legendPos=None, legendNCols=1, linestyles=None, markerstyles=None, showpull=False, doNewman=False, doPearson=False, ignoreHistError=False, ypullmin=-3.99, ypullmax=3.99, drawashist=False, padsize=(2, 0.9, 1.1), setGridx=False, setGridy=False, drawoptions=None, legendoptions=None, ratiooptions=None, dologz=False, doth2=False, ratiobase=0, redrawihist=-1, extraText=None, noCMS=False, noLumi=False, nMaxDigits=None, addOverflow=False, addUnderflow=False, plotdiff=False, hratiopanel=None, doratios=None, hpulls=None, W_ref=600, is5TeV=False, outdir="plots", savepdf=True,zmin=0,zmax=2):
+def DrawHistos(myhistos, mylabels, xmin, xmax, xlabel, ymin, ymax, ylabel, outputname, dology=True, showratio=False, dologx=False, lheader=None, donormalize=False, binomialratio=False, yrmax=2.0, yrmin=0.0, yrlabel=None, MCOnly=False, leftlegend=False, mycolors=None, legendPos=None, legendNCols=1, linestyles=None, markerstyles=None, showpull=False, doNewman=False, doPearson=False, ignoreHistError=False, ypullmin=-3.99, ypullmax=3.99, drawashist=False, padsize=(2, 0.9, 1.1), setGridx=False, setGridy=False, drawoptions=None, legendoptions=None, ratiooptions=None, dologz=False, doth2=False, ratiobase=0, redrawihist=-1, extraText=None, noCMS=False, noLumi=False, nMaxDigits=None, addOverflow=False, addUnderflow=False, plotdiff=False, hratiopanel=None, doratios=None, hpulls=None, W_ref=600, is5TeV=False, outdir="plots", savepdf=True,zmin=0,zmax=2, binlabels = None, doCombineYear = False):
     """
     draw histograms with the CMS tdr style
     """
@@ -553,7 +553,12 @@ def DrawHistos(myhistos, mylabels, xmin, xmax, xlabel, ymin, ymax, ylabel, outpu
             pad1.SetLogx()
 
     if not doth2:
-        h1 = ROOT.TH1F("h1" + outputname, "h1", 80, xmin, xmax)
+        if binlabels:
+            h1 = ROOT.TH1F("h1" + outputname, "h1", len(binlabels), xmin, xmax) 
+            for ibin in range(1, len(binlabels)+1):
+                h1.GetXaxis().SetBinLabel(ibin, binlabels[ibin-1])
+        else:
+            h1 = ROOT.TH1F("h1" + outputname, "h1", 80, xmin, xmax)
         h1.SetMinimum(ymin)
         h1.SetMaximum(ymax)    
     else:
@@ -684,7 +689,7 @@ def DrawHistos(myhistos, mylabels, xmin, xmax, xlabel, ymin, ymax, ylabel, outpu
                 ileg += 1
 
     # print("draw options ", drawoptions)
-    # print("legend options ", legendoptions)
+    print("legend options ", legendoptions)
 
     if redrawihist >= 0:
         myhistos_clone[redrawihist].Draw(
@@ -702,6 +707,8 @@ def DrawHistos(myhistos, mylabels, xmin, xmax, xlabel, ymin, ymax, ylabel, outpu
         iPeriod = 4
     else:
         iPeriod = 5
+    if doCombineYear:
+        iPeriod = 6
     if MCOnly:
         iPeriod = 0
     if showratio or showpull:

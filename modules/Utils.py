@@ -19,6 +19,30 @@ def GetValues(pdict: OrderedDict, key: str):
             results += val
     return results
 
+def FormatROOTInput(istring: str):
+    labelmaps = {}
+    
+    labelmaps = {}
+    labelmaps['lepplus']  = 'W^{+}#rightarrow l^{+}#nu'
+    labelmaps['lepminus'] = 'W^{-}#rightarrow l^{-}#bar{#nu}'
+    labelmaps['leplep']   = 'Z#rightarrow l^{+} l^{-}'
+    labelmaps['lepinc']   = 'W^{#pm}#rightarrow l^{#pm}#nu'
+    
+    labelmaps["WOverZ"] = "W^{#pm}/Z"
+    labelmaps["WchgRatio"] = "W^{+}/W^{-}"
+    labelmaps['WpOverWm'] = labelmaps['WchgRatio']
+    labelmaps['WZRatio'] = labelmaps['WOverZ']
+    
+    labelmaps['Wplus'] = labelmaps['lepplus']
+    labelmaps['Wminus'] = labelmaps['lepminus']
+    labelmaps['Zinc'] = labelmaps['leplep']
+    
+    for key in labelmaps.keys():
+        istring = istring.replace(key, labelmaps[key])
+        
+    return istring
+    
+
 def FormatOutputForWZ(istring: str):
     labelmaps = {}
     labelmaps['muplus'] = '$\\mathrm{W}^{+}\\rightarrow\\mu^{+}\\nu$'
