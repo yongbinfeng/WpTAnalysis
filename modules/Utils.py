@@ -33,6 +33,9 @@ def FormatOutputForWZ(istring: str):
     labelmaps['Winc'] = '$\\mathrm{W}^{\\pm}\\rightarrow \\ell^{\\pm}\\nu$'
     labelmaps['WOverZ'] = '$\\mathrm{W}^{\pm}/\\mathrm{Z}$'
     labelmaps['WpOverWm'] = '$\\mathrm{W}^{+}/\\mathrm{W}^{-}$'
+    labelmaps['WZRatio'] = '$\\mathrm{W}^{\pm}/\\mathrm{Z}$'
+    labelmaps['WchgRatio'] = '$\\mathrm{W}^{+}/\\mathrm{W}^{-}$'
+    
     labelmaps['Wplus'] = labelmaps['lepplus']
     labelmaps['Wminus'] = labelmaps['lepminus']
     labelmaps['Zinc'] = labelmaps['leplep']
@@ -57,7 +60,21 @@ def FormatOutputForWZ(istring: str):
     sysmaps['mcsec'] = 'MC Norm'
     
     sysmaps['resummFSR'] = "Resum. + FSR"
-
+    
+    xsecNames = {}
+    xsecNames['xsec'] = '$\\sigma$'
+    
+    hacks = {}
+    hacks['lepplus\_diff'] = 'Diff $[\%]$'
+    hacks['lepminus\_diff'] = 'Diff $[\%]$'
+    hacks['leplep\_diff'] = 'Diff $[\%]$'
+    hacks['lepinc\_diff'] = 'Diff $[\%]$'
+    hacks['WchgRatio\_diff'] = 'Diff $[\%]$'
+    hacks['WZRatio\_diff'] = 'Diff $[\%]$'
+    
+    for key in hacks.keys():
+        istring = istring.replace(key, hacks[key])
+        
     for key in labelmaps.keys():
         istring = istring.replace(key, labelmaps[key])
     
@@ -66,11 +83,14 @@ def FormatOutputForWZ(istring: str):
 
     for key in sysmaps.keys():
         istring = istring.replace(key, sysmaps[key])
+        
+    for key in xsecNames.keys():
+        istring = istring.replace(key, xsecNames[key])
 
     return istring
 
 
-def FormatTable(pdict: str, columns: list = None, caption: str = None, label: str = None, precision: int=1):
+def FormatTable(pdict: str, columns: list = None, caption: str = None, label: str = None, precision: int=1, escape: bool = True):
     """
     given a dictionary, print the latex version of the table
     """
@@ -78,7 +98,7 @@ def FormatTable(pdict: str, columns: list = None, caption: str = None, label: st
     df = df.round(precision)
     #output = df.to_latex(float_format="{:.1f}".format, caption = caption, label = label)
     #output = df.to_latex(caption = caption, label = label)
-    output = df.to_latex()
+    output = df.to_latex(escape = escape)
     output = output.replace('\\toprule', '\\hline').replace('\\midrule', '\\hline').replace('\\bottomrule','\\hline')
 
     output = FormatOutputForWZ(output)
