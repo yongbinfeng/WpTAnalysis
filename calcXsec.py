@@ -102,7 +102,7 @@ print("results xsecs ratios: ", xsecs_ratios)
 print("results xs ratios sqrtS: ", xsecs_ratios_sqrtS)
 print("results xs ratios sqrtS ratios: ", xsecs_ratios_sqrtS_ratios)
 
-pdfsets = ["nnpdf4.0", "nnpdf3.1", "ct14", "msht20"]
+pdfsets = ["nnpdf4.0", "nnpdf3.1", "ct18", "msht20"]
     
 # compare the theory predictions with the measured values
 from theoryResults import *        

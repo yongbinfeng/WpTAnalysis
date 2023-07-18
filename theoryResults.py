@@ -53,7 +53,7 @@ xsec_fid = OrderedDict()
 
 xsec_fid['nnpdf4.0'] = XSecResults()
 xsec_fid['nnpdf3.1'] = XSecResults()
-xsec_fid['ct14'] = XSecResults()
+xsec_fid['ct18'] = XSecResults()
 xsec_fid['msht20'] = XSecResults()
 
 
@@ -71,12 +71,12 @@ xsec_fid['nnpdf3.1'].xsec_fid_wp_5 =  2468.2
 xsec_fid['nnpdf3.1'].xsec_fid_wm_5 =  1521.7
 xsec_fid['nnpdf3.1'].xsec_fid_z0_5 =   319.0
 
-xsec_fid['ct14'].xsec_fid_wp_13 =  4977.0
-xsec_fid['ct14'].xsec_fid_wm_13 =  3825.0
-xsec_fid['ct14'].xsec_fid_z0_13 =   717.1
-xsec_fid['ct14'].xsec_fid_wp_5 = 2419.0
-xsec_fid['ct14'].xsec_fid_wm_5 = 1509.0
-xsec_fid['ct14'].xsec_fid_z0_5 =  309.0
+xsec_fid['ct18'].xsec_fid_wp_13 =  4977.0
+xsec_fid['ct18'].xsec_fid_wm_13 =  3825.0
+xsec_fid['ct18'].xsec_fid_z0_13 =   717.1
+xsec_fid['ct18'].xsec_fid_wp_5 = 2419.0
+xsec_fid['ct18'].xsec_fid_wm_5 = 1509.0
+xsec_fid['ct18'].xsec_fid_z0_5 =  309.0
 
 xsec_fid['msht20'].xsec_fid_wp_13 =  4967.0
 xsec_fid['msht20'].xsec_fid_wm_13 =  3840.0

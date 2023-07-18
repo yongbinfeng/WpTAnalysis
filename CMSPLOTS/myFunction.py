@@ -616,6 +616,7 @@ def DrawHistos(myhistos, mylabels, xmin, xmax, xlabel, ymin, ymax, ylabel, outpu
     legend.SetTextSize(0.04)
     legend.SetTextFont(42)
     legend.SetFillColor(0)
+    legend.SetFillStyle(0)
 
     myf = []
 
