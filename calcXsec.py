@@ -4,7 +4,9 @@ from collections import OrderedDict
 import math
 from CMSPLOTS.myFunction import DrawHistos
 
-f_xsecs_MC = "data/xsecs.json"
+doFiducial = False
+
+f_xsecs_MC = "data/xsecs_fid.json" if doFiducial else "data/xsecs_inc.json"
 
 with open(f_xsecs_MC) as f:
     xsecs_MC = json.load(f)
@@ -23,7 +25,10 @@ lumiUncs = {
     "sqrtS": math.sqrt(0.015**2 + 0.017**2)
 }
 
-f_fit = "forCombine_WithVpT/Fiducial/test0/commands/scripts/card_combined.root"
+if doFiducial:
+    f_fit = "forCombine_WithVpT/Fiducial/test0/commands/scripts/card_combined.root"
+else:
+    f_fit = "forCombine_WithVpT/Inclusive/test0/commands/scripts/card_combined.root"
 
 f_root = ROOT.TFile(f_fit)
 tree = f_root.Get("fitresults")
@@ -106,6 +111,10 @@ pdfsets = ["nnpdf4.0", "nnpdf3.1", "ct18", "msht20"]
     
 # compare the theory predictions with the measured values
 from theoryResults import *        
+if doFiducial:
+    xsec_th = xsec_fid 
+else:
+    xsec_th = xsec_inc
 results = OrderedDict()
 for sqrtS in ["13TeV", "5TeV"]:
     results[sqrtS] = OrderedDict()
@@ -115,12 +124,12 @@ for sqrtS in ["13TeV", "5TeV"]:
         
         results[sqrtS][ch]['Measured'] = xsecs[sqrtS][ch][0]
         for pdf in pdfsets:
-            results[sqrtS][ch][pdf.upper()] = xsec_fid[pdf].GetXsec(ch, sqrtS)
+            results[sqrtS][ch][pdf.upper()] = xsec_th[pdf].GetXsec(ch, sqrtS)
             
         results[sqrtS][f"{ch}_diff"] = OrderedDict()
         results[sqrtS][f"{ch}_diff"]['Measured'] = math.sqrt((xsecs[sqrtS][ch][1]/xsecs[sqrtS][ch][0])**2 + (xsecs[sqrtS][ch][2]/xsecs[sqrtS][ch][0])**2) * 100.0
         for pdf in pdfsets:
-            results[sqrtS][f"{ch}_diff"][pdf.upper()] = (xsec_fid[pdf].GetXsec(ch, sqrtS) / xsecs[sqrtS][ch][0] - 1.) * 100.0
+            results[sqrtS][f"{ch}_diff"][pdf.upper()] = (xsec_th[pdf].GetXsec(ch, sqrtS) / xsecs[sqrtS][ch][0] - 1.) * 100.0
     
     # measure the V/V ratios at the same sqrtS
     results[f"{sqrtS}_ratios"] = OrderedDict()
@@ -129,13 +138,13 @@ for sqrtS in ["13TeV", "5TeV"]:
         
         results[f"{sqrtS}_ratios"][ch]['Measured'] = xsecs_ratios[sqrtS][ch][0]
         for pdf in pdfsets:
-            results[f"{sqrtS}_ratios"][ch][pdf.upper()] = getattr(xsec_fid[pdf], f"Get{ch}")(sqrtS == "13TeV")
+            results[f"{sqrtS}_ratios"][ch][pdf.upper()] = getattr(xsec_th[pdf], f"Get{ch}")(sqrtS == "13TeV")
             
         results[f"{sqrtS}_ratios"][f"{ch}_diff"] = OrderedDict()
         results[f"{sqrtS}_ratios"][f"{ch}_diff"]['Measured'] = math.sqrt((xsecs_ratios[sqrtS][ch][1]/xsecs_ratios[sqrtS][ch][0])**2 + (xsecs_ratios[sqrtS][ch][2]/xsecs_ratios[sqrtS][ch][0])**2) * 100.0
         
         for pdf in pdfsets:
-            results[f"{sqrtS}_ratios"][f"{ch}_diff"][pdf.upper()] = (getattr(xsec_fid[pdf], f"Get{ch}")(sqrtS == "13TeV") / xsecs_ratios[sqrtS][ch][0] - 1.) * 100.0
+            results[f"{sqrtS}_ratios"][f"{ch}_diff"][pdf.upper()] = (getattr(xsec_th[pdf], f"Get{ch}")(sqrtS == "13TeV") / xsecs_ratios[sqrtS][ch][0] - 1.) * 100.0
             
 # measure the V xsec ratios between sqrtS
 results["sqrtS_ratios"] = OrderedDict()
@@ -145,13 +154,13 @@ for ch in ["lepplus", "lepminus", "leplep"]:
     results['sqrtS_ratios'][ch]['Measured'] = xsecs_ratios_sqrtS[ch][0]
     
     for pdf in pdfsets:
-        results['sqrtS_ratios'][ch][pdf.upper()] = xsec_fid[pdf].GetSqrtSRatio(ch)
+        results['sqrtS_ratios'][ch][pdf.upper()] = xsec_th[pdf].GetSqrtSRatio(ch)
     
     results['sqrtS_ratios'][f"{ch}_diff"] = OrderedDict()
     results['sqrtS_ratios'][f"{ch}_diff"]['Measured'] = math.sqrt((xsecs_ratios_sqrtS[ch][1]/xsecs_ratios_sqrtS[ch][0])**2 + (xsecs_ratios_sqrtS[ch][2]/xsecs_ratios_sqrtS[ch][0])**2) * 100.0
     
     for pdf in pdfsets:
-        results['sqrtS_ratios'][f"{ch}_diff"][pdf.upper()] = (xsec_fid[pdf].GetSqrtSRatio(ch) / xsecs_ratios_sqrtS[ch][0] - 1.) * 100.0
+        results['sqrtS_ratios'][f"{ch}_diff"][pdf.upper()] = (xsec_th[pdf].GetSqrtSRatio(ch) / xsecs_ratios_sqrtS[ch][0] - 1.) * 100.0
         
 # measure the V/V ratios between sqrtS
 results["sqrtS_double_ratios"] = OrderedDict()
@@ -161,16 +170,16 @@ for ch in ["WchgRatio", "WZRatio"]:
     results['sqrtS_double_ratios'][ch]['Measured'] = xsecs_ratios_sqrtS_ratios[ch][0]
     
     for pdf in pdfsets:
-        results['sqrtS_double_ratios'][ch][pdf.upper()] = xsec_fid[pdf].GetSqrtSDoubleRatio(ch)
+        results['sqrtS_double_ratios'][ch][pdf.upper()] = xsec_th[pdf].GetSqrtSDoubleRatio(ch)
     
     results['sqrtS_double_ratios'][f"{ch}_diff"] = OrderedDict()
     results['sqrtS_double_ratios'][f"{ch}_diff"]['Measured'] = math.sqrt((xsecs_ratios_sqrtS_ratios[ch][1]/xsecs_ratios_sqrtS_ratios[ch][0])**2 + (xsecs_ratios_sqrtS_ratios[ch][2]/xsecs_ratios_sqrtS_ratios[ch][0])**2) * 100.0
     
     for pdf in pdfsets:
-        results['sqrtS_double_ratios'][f"{ch}_diff"][pdf.upper()] = (xsec_fid[pdf].GetSqrtSDoubleRatio(ch) / xsecs_ratios_sqrtS_ratios[ch][0] - 1.) * 100.0
+        results['sqrtS_double_ratios'][f"{ch}_diff"][pdf.upper()] = (xsec_th[pdf].GetSqrtSDoubleRatio(ch) / xsecs_ratios_sqrtS_ratios[ch][0] - 1.) * 100.0
         
         
-outdir = "plots/xsecResults/"
+outdir = "plots/xsecResults_fid/" if doFiducial else "plots/xsecResults_inc/"
     
 from modules.Utils import FormatTable, FormatROOTInput
 from modules.postFitScripts import WriteOutputToText

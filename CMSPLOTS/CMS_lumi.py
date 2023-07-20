@@ -81,7 +81,6 @@ def CMS_lumi(pad,  iPeriod,  iPosX, plotCMS = True):
         lumiText += lumi_5TeV
         lumiText += " (5.02 TeV)"
     elif ( iPeriod==6) :
-        print("iPerioud == 6")
         lumiText += "#scale[0.85]{"
         lumiText += lumi_13TeV
         lumiText += " (13 TeV)"
@@ -175,5 +174,3 @@ def CMS_lumi(pad,  iPeriod,  iPosX, plotCMS = True):
         latex.DrawLatex(posX_, posY_, extraText)      
 
     pad.Update()
-    
-    print("lumi text: ", lumiText)
