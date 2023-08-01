@@ -27,7 +27,10 @@ class XSecResults(object):
         
     def GetXsec(self, ch, sqrtS):
         era = "13" if sqrtS == "13TeV" else "5"
-        ch = "wp" if ch == "lepplus" else "wm" if ch == "lepminus" else "z0"
+        channelMaps = {"lepplus": "wp", "lepminus": "wm", "leplep": "z0", "lepinc": "winc"}
+        assert ch in ["wp", "wm", "winc","z0", "lepplus", "lepminus", "winc", "leplep"], "channel must be wp, wm, winc, z0, or lepplus, lepminus, winc, leplep"
+        if ch in channelMaps:
+            ch = channelMaps[ch]
         return getattr(self, f"xsec_{ch}_{era}")
         
     def GetWchgRatio(self, is13TeV=True):
@@ -51,11 +54,11 @@ class XSecResults(object):
             return self.xsec_WZRatio_5
     
     def GetSqrtSRatio(self, channel = "wp"):
-        channelMaps = {"lepplus": "wp", "lepminus": "wm", "leplep": "z0"}
+        channelMaps = {"lepplus": "wp", "lepminus": "wm", "leplep": "z0", "lepinc": "winc"}
         if channel in channelMaps:
             channel = channelMaps[channel]
-        assert channel in ["wp", "wm", "z0"], "channel must be wp, wm, z0, or lepplus, lepminus, leplep"
-        print("sqrts ratio ", getattr(self, f"xsec_{channel}_13o5"))
+        assert channel in ["wp", "wm", "winc","z0"], "channel must be wp, wm, winc, z0, or lepplus, lepminus, winc, leplep"
+        #print("sqrts ratio ", getattr(self, f"xsec_{channel}_13o5"))
         if getattr(self, f"xsec_{channel}_13o5")[0] == 0:
             num = getattr(self, f"xsec_{channel}_13")
             den = getattr(self, f"xsec_{channel}_5")
@@ -170,7 +173,7 @@ for poi in ["fid", "inc"]:
         for sqrtS in ["13", "5"]:
             if sqrtS+"tev" in results[0]:
                 for key, val in results[0][sqrtS+"tev"].items():
-                    print("key", key, "val", val, "poi", poi)
+                    #print("key", key, "val", val, "poi", poi)
                     if poi == "fid":
                         setattr(xsec_results[pdfMaps[pdf]], f"xsec_{key}_{sqrtS}", (val[0] / 1e3, 0., 0.))
                     else:
@@ -184,7 +187,7 @@ for poi in ["fid", "inc"]:
                         setattr(xsec_results[pdfMaps[pdf]], f"xsec_{key}_{sqrtS}", (val[0], val[1], val[2]))
     
         # ratio
-        print("results 2", results[2])
+        #print("results 2", results[2])
         for key, val in results[2].items():
             #print("key ", ch, " val", val)
             if poi == "fid":
@@ -193,7 +196,7 @@ for poi in ["fid", "inc"]:
                 setattr(xsec_results[pdfMaps[pdf]], f"xsec_{key}_13o5", (val[0], val[1], val[2]))
     
         # double ratio
-        print("results 3", results[3])
+        #print("results 3", results[3])
         for key, val in results[3].items():
             #print("key ", key, " val ", val)
             if poi == "fid":

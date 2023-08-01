@@ -714,8 +714,8 @@ def DrawHistos(myhistos, mylabels, xmin, xmax, xlabel, ymin, ymax, ylabel, outpu
                     mylabels[ileg]), legendoptions[idx])
                 ileg += 1
 
-    print("draw options ", drawoptions)
-    print("legend options ", legendoptions)
+    #print("draw options ", drawoptions)
+    #print("legend options ", legendoptions)
 
     if redrawihist >= 0:
         myhistos_clone[redrawihist].Draw(

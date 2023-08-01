@@ -6,6 +6,28 @@ import pandas as pd
 from collections import OrderedDict
 import re
 import copy
+import math
+
+def roundToError(values):
+    err = max(values[1:])
+    if err!= 0:
+        precision = int(math.log10(float(f"{err:.2g}")))-1
+    else:
+        precision = 0
+    isInt = False
+    if precision < 0:
+        # err < 1.0
+        precision = precision -1
+    else:
+        isInt = True 
+    values_new = []
+    for val in values:
+        if not isInt:
+            values_new.append(f"{round(val, -precision):.{-precision}f}")
+        else:
+            #values_new.append(f"{round(val, -precision):0f}")
+            values_new.append(str(int(round(val, -precision))))
+    return tuple(values_new)
 
 
 def GetValues(pdict: OrderedDict, key: str):
@@ -34,6 +56,8 @@ def FormatROOTInput(istring: str):
     labelmaps['WpOverWm'] = labelmaps['WchgRatio']
     labelmaps['WZRatio'] = labelmaps['WOverZ']
     
+    labelmaps['winc'] = labelmaps['lepinc']
+    labelmaps['Winc'] = labelmaps['lepinc']
     labelmaps['Wplus'] = labelmaps['lepplus']
     labelmaps['Wminus'] = labelmaps['lepminus']
     labelmaps['Zinc'] = labelmaps['leplep']
@@ -64,6 +88,7 @@ def FormatOutputForWZ(istring: str):
     labelmaps['Wplus'] = labelmaps['lepplus']
     labelmaps['Wminus'] = labelmaps['lepminus']
     labelmaps['Zinc'] = labelmaps['leplep']
+    labelmaps['winc'] = labelmaps['Winc']
 
     procmaps = {}
     procmaps['Measured'] = 'Data'
@@ -116,22 +141,33 @@ def FormatOutputForWZ(istring: str):
     return istring
 
 
-def FormatTable(pdict: str, columns: list = None, caption: str = None, label: str = None, precision: int=1, escape: bool = False):
+def FormatTable(pdict: str, columns: list = None, precision: int=1, escape: bool = False, doTranspose = False):
     """
     given a dictionary, print the latex version of the table
     """
     results = copy.deepcopy(pdict)
     for bkey, bval in results.items():
+        print("bkey ", bkey)
         for key, val in bval.items():
+            print("key ", key)
             if type(val) is tuple:
-                if len (val) == 3:
-                    val = f"$ {val[0]:.4g}^{{+{val[2]:.4g}}}_{{-{ val[1]:.4g}}}$"
+                rval = roundToError(val)
+                if key == 'Measured':
+                    if not "Ratio" in bkey and "Over" not in bkey:
+                        val = f"{rval[0]}\pm{rval[1]}_\mathrm{{stat}}\pm{rval[2]}_\mathrm{{syst}}\pm{rval[3]}_\mathrm{{lum}}"
+                    else:
+                        val = f"{rval[0]}\pm{rval[1]}_\mathrm{{stat}}\pm{rval[2]}_\mathrm{{syst}}"
                 else:
-                    val = ' \pm '.join([f"{vval:.4g}" for vval in val])
-                    val = "$" + val +"$"
+                    val = f"{rval[0]}^{{+{rval[2]}}}_{{-{rval[1]}}}"
+                val = "$" + val +"$"
                 bval[key] = val
+        print("bval ", bval)
         results[bkey] = bval
+        
+    pd.set_option('display.max_colwidth', None)
     df = pd.DataFrame(results, columns=columns)
+    if doTranspose:
+        df = df.transpose()
     df = df.round(precision)
     #output = df.to_latex(float_format="{:.1f}".format, caption = caption, label = label)
     #output = df.to_latex(caption = caption, label = label)

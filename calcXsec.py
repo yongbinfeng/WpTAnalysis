@@ -4,17 +4,18 @@ from collections import OrderedDict
 import math
 from CMSPLOTS.myFunction import DrawHistos
 from modules.postFitScripts import GetPOIValue
+from modules.Utils import roundToError
 from copy import deepcopy
 import sys
 
-doFiducial = False
+doFiducial = True
 
 f_xsecs_MC = "data/xsecs_fid.json" if doFiducial else "data/xsecs_inc.json"
 
 with open(f_xsecs_MC) as f:
     xsecs_MC = json.load(f)
     
-print(xsecs_MC)
+#print(xsecs_MC)
 
 maps = {
     "lepplus": "wmp",
@@ -37,12 +38,10 @@ f_fit_fid = "forCombine_WithVpT/Fiducial/test0/commands/scripts/card_combined.ro
 f_root = ROOT.TFile(f_fit)
 tree = f_root.Get("fitresults")
 tree.GetEntry(0)
-print(tree)
 
 f_root_fid = ROOT.TFile(f_fit_fid)
 tree_fid = f_root.Get("fitresults")
 tree_fid.GetEntry(0)
-print(tree_fid)
 
 xsecs = OrderedDict()
 xsecs_ratios = OrderedDict()
@@ -95,28 +94,28 @@ for sqrtS in ["13TeV", "5TeV"]:
     
     for ch in ["lepplus", "lepminus", "leplep"]:
         mu, mu_err = GetPOIValue(f_fit, f"{ch}_{sqrtS}_sig_mu")
-        print("mu value for", ch, sqrtS, " is ", mu, " +/- ", mu_err)
+        #print("mu value for", ch, sqrtS, " is ", mu, " +/- ", mu_err)
 
         if not doFiducial:
             # use the fiducial central val as the inclusive central value
             mu, _ = GetPOIValue(f_fit_fid, f"{ch}_{sqrtS}_sig_mu")
         
         xsec_MC = xsecs_MC[sqrtS]['born'][maps[ch]]
-        print("xsec value for", ch, sqrtS, "is", xsec_MC)
+        #print("xsec value for", ch, sqrtS, "is", xsec_MC)
         
         #xsecs[sqrtS][ch] = (mu * xsec_MC, math.sqrt(mu_err**2 + lumiUncs[sqrtS]**2) * xsec_MC)
         
         mu_stat_err, mu_syst_err = getRelStatSystError(f_fit, f"{ch}_{sqrtS}_sig_mu", "nuisance_group_impact_mu")
         xsecs[sqrtS][ch] = (mu * xsec_MC, mu_stat_err * xsec_MC, mu_syst_err * xsec_MC, lumiUncs[sqrtS] * xsec_MC)
-        print("xsec fit value for", ch, sqrtS, "is", xsecs[sqrtS][ch])
-        print("stat, syst unc ", mu_stat_err, mu_syst_err)
+        #print("xsec fit value for", ch, sqrtS, "is", xsecs[sqrtS][ch])
+        #print("stat, syst unc ", mu_stat_err, mu_syst_err)
         
     #sys.exit(0)
         
     mu_err = getRelError(f_fit, f"Winc_{sqrtS}_sig_sumxsec")
     mu_stat_err, mu_syst_err = getRelStatSystError(f_fit, f"Winc_{sqrtS}_sig_sumxsec", "nuisance_group_impact_sumpois")
     xsec_tot_W = xsecs[sqrtS]["lepplus"][0] + xsecs[sqrtS]["lepminus"][0]
-    xsecs[sqrtS]["Winc"] = (xsec_tot_W, mu_stat_err * xsec_tot_W, mu_syst_err * xsec_tot_W, lumiUncs[sqrtS] * xsec_tot_W)
+    xsecs[sqrtS]["winc"] = (xsec_tot_W, mu_stat_err * xsec_tot_W, mu_syst_err * xsec_tot_W, lumiUncs[sqrtS] * xsec_tot_W)
     #xsecs[sqrtS]["Winc"] = (xsec_tot_W, math.sqrt(mu_err**2 + lumiUncs[sqrtS]**2) * xsec_tot_W)
         
     # cross section ratios
@@ -130,7 +129,7 @@ for sqrtS in ["13TeV", "5TeV"]:
     # W / Z
     mu_err = getRelError(f_fit, f"WZRatio_{sqrtS}_ratiometaratio")
     mu_stat_err, mu_syst_err = getRelStatSystError(f_fit, f"WZRatio_{sqrtS}_ratiometaratio", "nuisance_group_impact_ratiometapois")
-    xsec_ratio_WZ = xsecs[sqrtS]["Winc"][0] / xsecs[sqrtS]["leplep"][0]
+    xsec_ratio_WZ = xsecs[sqrtS]["winc"][0] / xsecs[sqrtS]["leplep"][0]
     #xsecs_ratios[sqrtS]["WZRatio"] = (xsec_ratio_WZ, mu_err * xsec_ratio_WZ, 0.)
     xsecs_ratios[sqrtS]["WZRatio"] = (xsec_ratio_WZ, mu_stat_err * xsec_ratio_WZ, mu_syst_err * xsec_ratio_WZ, 0.0 * xsec_ratio_WZ)
     
@@ -155,9 +154,9 @@ xsecs_ratios_sqrtS["leplep"] = (xsec_ratio_sqrtS_Z, mu_stat_err * xsec_ratio_sqr
 
 mu_err = getRelError(f_fit, "sqrtS_Winc_ratio_ratiometaratio")
 mu_stat_err, mu_syst_err = getRelStatSystError(f_fit, "sqrtS_Winc_ratio_ratiometaratio", "nuisance_group_impact_ratiometapois")
-xsec_ratio_sqrtS_Winc = xsecs["13TeV"]["Winc"][0] / xsecs["5TeV"]["Winc"][0]
-xsecs_ratios_sqrtS["lepinc"] = (xsec_ratio_sqrtS_Winc, mu_stat_err * xsec_ratio_sqrtS_Winc, mu_syst_err * xsec_ratio_sqrtS_Winc, lumiUncs["sqrtS"] * xsec_ratio_sqrtS_Winc)
-#xsecs_ratios_sqrtS["lepinc"] = (xsec_ratio_sqrtS_Winc, math.sqrt(mu_err**2 + lumiUncs["sqrtS"]**2) * xsec_ratio_sqrtS_Winc)
+xsec_ratio_sqrtS_Winc = xsecs["13TeV"]["winc"][0] / xsecs["5TeV"]["winc"][0]
+xsecs_ratios_sqrtS["winc"] = (xsec_ratio_sqrtS_Winc, mu_stat_err * xsec_ratio_sqrtS_Winc, mu_syst_err * xsec_ratio_sqrtS_Winc, lumiUncs["sqrtS"] * xsec_ratio_sqrtS_Winc)
+#xsecs_ratios_sqrtS["winc"] = (xsec_ratio_sqrtS_Winc, math.sqrt(mu_err**2 + lumiUncs["sqrtS"]**2) * xsec_ratio_sqrtS_Winc)
 
 
 # double ratios between sqrtS
@@ -192,7 +191,7 @@ results = OrderedDict()
 for sqrtS in ["13TeV", "5TeV"]:
     results[sqrtS] = OrderedDict()
     
-    for ch in ["lepplus", "lepminus", "leplep"]:
+    for ch in ["lepplus", "lepminus", "winc", "leplep"]:
         results[sqrtS][ch] = OrderedDict()
         
         results[sqrtS][ch]['Measured'] = xsecs[sqrtS][ch]
@@ -223,14 +222,14 @@ for sqrtS in ["13TeV", "5TeV"]:
             
 # measure the V xsec ratios between sqrtS
 results["sqrtS_ratios"] = OrderedDict()
-for ch in ["lepplus", "lepminus", "leplep"]:
+for ch in ["lepplus", "lepminus", "winc", "leplep"]:
     results["sqrtS_ratios"][ch] = OrderedDict()
     
     results['sqrtS_ratios'][ch]['Measured'] = xsecs_ratios_sqrtS[ch]
     
     for pdf in pdfsets:
         results['sqrtS_ratios'][ch][pdf.upper()] = xsec_th[pdf].GetSqrtSRatio(ch)
-        print("sqrtS ratios", results['sqrtS_ratios'][ch][pdf.upper()])
+        #print("sqrtS ratios", results['sqrtS_ratios'][ch][pdf.upper()])
     
     results['sqrtS_ratios'][f"{ch}_diff"] = OrderedDict()
     #results['sqrtS_ratios'][f'{ch}_diff']['Measured'] = (1., xsecs_ratios_sqrtS[ch][1] / xsecs_ratios_sqrtS[ch][0])
@@ -271,15 +270,15 @@ def dict2Table(list_results):
             results_new[key] = val
     return results_new
 
-outputs = FormatTable(dict2Table([results['13TeV'],results['13TeV_ratios']]))
+outputs = FormatTable(dict2Table([results['13TeV'],results['13TeV_ratios']]), doTranspose=True)
 print(outputs)
 WriteOutputToText(outputs, f"{outdir}/tables/results_13TeV_all.tex")
 
-outputs = FormatTable(dict2Table([results['5TeV'],results['5TeV_ratios']]))
+outputs = FormatTable(dict2Table([results['5TeV'],results['5TeV_ratios']]), doTranspose=True)
 print(outputs)
 WriteOutputToText(outputs, f"{outdir}/tables/results_5TeV_all.tex")
 
-outputs = FormatTable(dict2Table([results['sqrtS_ratios'], results['sqrtS_double_ratios']]))
+outputs = FormatTable(dict2Table([results['sqrtS_ratios'], results['sqrtS_double_ratios']]), doTranspose=True)
 print(outputs)
 WriteOutputToText(outputs, f"{outdir}/tables/results_sqrtS_all.tex")
 
@@ -299,7 +298,6 @@ def DrawCompGraph(xsecs_diffs, outputname, ymin = -0.95, ymax = 1.05, is5TeV = F
         tgraphs[pdf].SetMarkerColor(colors[j])
         tgraphs[pdf].SetLineColor(colors[j])
         tgraphs[pdf].SetLineWidth(2)
-        
     
     i = 0    
     binlabels = []
@@ -323,7 +321,7 @@ def DrawCompGraph(xsecs_diffs, outputname, ymin = -0.95, ymax = 1.05, is5TeV = F
     DrawHistos(list(tgraphs.values()), list(tgraphs.keys()), 0.5, len(binlabels) + 0.5, "POIs", ymin, ymax, "ratio (Theory / Measured)", outputname, dology=False, binlabels = binlabels, drawoptions = ["E2"] + ["PE1"] * len(pdfsets), legendoptions = ["F"] + ["P"] * len(pdfsets), legendPos = [0.67, 0.7, 0.87, 0.9], is5TeV = is5TeV, doCombineYear = doCombineYear, canH = canH, canW = canW)
     
 
-def DrawHorizontalCompGraph(xsecs_diffs, outputname, xmin = 0.95, xmax = 1.05, is5TeV = False, doCombineYear = False, canH = 600, canW=800, showXsecs = True, pdfsets_plot = ["NNPDF4.0"]):
+def DrawHorizontalCompGraph(xsecs_diffs, outputname, xmin = 0.95, xmax = 1.05, is5TeV = False, doCombineYear = False, canH = 600, canW=800, showXsecs = True, pdfsets_plot = ["NNPDF4.0"], poiname = "#sigma^{tot}"):
     markers = [21, 22, 23, 24, 25, 26, 27]
     colors = [4, 3, 7, 6, 9, 46]
     tgraphs = OrderedDict()
@@ -378,7 +376,7 @@ def DrawHorizontalCompGraph(xsecs_diffs, outputname, xmin = 0.95, xmax = 1.05, i
         splitLines.append(splitLine)
         
         procName = ROOT.TPaveText(0.09, (counts - i - 0.18) / (counts + 1.5) * 0.81 + .08, 0.29, (counts - i + 0.18) / (counts+1.5)*0.81+0.08, "NDC")
-        print("y1, y2", (counts - i - 0.2) / (counts + 1) - .05, (counts - i + 0.2) / (counts + 1) - 0.05)
+        #print("y1, y2", (counts - i - 0.2) / (counts + 1) - .05, (counts - i + 0.2) / (counts + 1) - 0.05)
         procName.SetFillStyle(0)
         procName.SetBorderSize(0)
         procName.SetTextAlign(12)
@@ -388,15 +386,19 @@ def DrawHorizontalCompGraph(xsecs_diffs, outputname, xmin = 0.95, xmax = 1.05, i
         procNames.append(procName)
         
         if showXsecs:
-            unit = " pb" if not ("Over" in ch or "Ratio" in ch) else ""
+            unit = " pb" if (not ("Over" in ch or "Ratio" in ch) and not doCombineYear) else ""
         
             valMeasured = ROOT.TPaveText(0.52, (counts - i ) / (counts + 1.5) * 0.81 + .07, 0.89, (counts - i +0.38) / (counts+1.5)*0.81+0.07, "NDC")
             valMeasured.SetFillStyle(0)
             valMeasured.SetBorderSize(0)
             valMeasured.SetTextAlign(12)
             val = xsecs_diffs[ch.replace("_diff","")]["Measured"]
-            print("measured : ", val)
-            valMeasured.AddText(f"{val[0]:.2f}#pm{val[1]:.2f}_{{stat.}}#pm{val[2]:.2f}_{{syst.}}#pm{val[3]:.2f}_{{lum.}}{unit}")
+            rval = roundToError(val)
+            #print("measured : ", val)
+            if not "Ratio" in ch and "Over" not in ch:
+                valMeasured.AddText(f"{rval[0]}#pm{rval[1]}_{{stat}}#pm{rval[2]}_{{syst}}#pm{rval[3]}_{{lum}}{unit}")
+            else:
+                valMeasured.AddText(f"{rval[0]}#pm{rval[1]}_{{stat}}#pm{rval[2]}_{{syst}}{unit}")
             valMeasured.SetTextColor(ROOT.kBlack)
             valMeasured.SetTextSize(0.03)
             valMeasureds.append(valMeasured)
@@ -406,8 +408,9 @@ def DrawHorizontalCompGraph(xsecs_diffs, outputname, xmin = 0.95, xmax = 1.05, i
             valTheory.SetBorderSize(0)
             valTheory.SetTextAlign(12)
             val = xsecs_diffs[ch.replace("_diff","")][pdfsets_plot[0]]
-            print("theory ", val)
-            valTheory.AddText(f"{val[0]:.2f}^{{+{val[2]:.2f}}}_{{-{val[1]:.2f}}}{unit}")
+            rval = roundToError(val)
+            #print("theory ", val)
+            valTheory.AddText(f"{rval[0]}^{{+{rval[2]}}}_{{-{rval[1]}}}{unit}")
             valTheory.SetTextColor(colors[0])
             valTheory.SetTextSize(0.03)
             valTheorys.append(valTheory)
@@ -427,19 +430,23 @@ def DrawHorizontalCompGraph(xsecs_diffs, outputname, xmin = 0.95, xmax = 1.05, i
     #headerText.SetTextColor(ROOT.kBlack)
     #headerText.SetTextSize(0.035)
             
-    DrawHistos(list(tgraphs.values()), list(tgraphs.keys()), xmin, xmax, "ratio (Theory / Measured)", 0.5, len(procNames) + 0.5 + 1.5, "", outputname, dology=False, drawoptions = ["E2"] + ["1PE"] * len(pdfsets_plot), legendoptions = ["F"] + ["PLF"] * len(pdfsets_plot), legendPos = [0.20, 0.75, 0.80, 0.9], is5TeV = is5TeV, doCombineYear = doCombineYear, canH = canH, canW = canW, yndivisions=0, additionalToDraw=[theoLine]+splitLines+procNames+valMeasureds+valTheorys, legendNCols = 3, leftmargin=0.05)
+    DrawHistos(list(tgraphs.values()), list(tgraphs.keys()), xmin, xmax, "Ratio (Theory / Measured) of " + poiname, 0.5, len(procNames) + 0.5 + 1.5, "", outputname, dology=False, drawoptions = ["E2"] + ["1PE"] * len(pdfsets_plot), legendoptions = ["F"] + ["PLF"] * len(pdfsets_plot), legendPos = [0.10, 0.80, 0.90, 0.9], is5TeV = is5TeV, doCombineYear = doCombineYear, canH = canH, canW = canW, yndivisions=0, additionalToDraw=[theoLine]+splitLines+procNames+valMeasureds+valTheorys, legendNCols = 5, leftmargin=0.05)
     
+if doFiducial:
+    poiname = "#sigma^{fid}"
+else:
+    poiname = "#sigma^{tot}"
 toplot = deepcopy(results['13TeV'])
 toplot.update(results['13TeV_ratios'])
 #DrawHorizontalCompGraph(toplot, f"{outdir}/plots/results_13TeV", 0.85, 1.15)
-DrawHorizontalCompGraph(toplot, f"{outdir}/plots/results_13TeV", 0.85, 1.20, pdfsets_plot=["NNPDF3.1", "NNPDF4.0", "CT18", "MSHT20"], showXsecs = True)
+DrawHorizontalCompGraph(toplot, f"{outdir}/plots/results_13TeV", 0.85, 1.20, pdfsets_plot=["NNPDF3.1", "NNPDF4.0", "CT18", "MSHT20"], showXsecs = True, poiname = poiname)
 
 
 toplot = deepcopy(results['5TeV'])
 toplot.update(results['5TeV_ratios'])
-DrawHorizontalCompGraph(toplot, f"{outdir}/plots/results_5TeV", 0.85, 1.20, is5TeV = True, pdfsets_plot=["NNPDF3.1", "NNPDF4.0", "CT18", "MSHT20"], showXsecs = True)
+DrawHorizontalCompGraph(toplot, f"{outdir}/plots/results_5TeV", 0.85, 1.20, is5TeV = True, pdfsets_plot=["NNPDF3.1", "NNPDF4.0", "CT18", "MSHT20"], showXsecs = True, poiname = poiname)
 
 toplot = deepcopy(results['sqrtS_ratios'])
 toplot.update(results['sqrtS_double_ratios'])
-DrawHorizontalCompGraph(toplot, f"{outdir}/plots/results_sqrtS", 0.85, 1.20, doCombineYear = True, pdfsets_plot=["NNPDF3.1", "NNPDF4.0", "CT18", "MSHT20"], showXsecs = True)
+DrawHorizontalCompGraph(toplot, f"{outdir}/plots/results_sqrtS", 0.85, 1.20, doCombineYear = True, pdfsets_plot=["NNPDF3.1", "NNPDF4.0", "CT18", "MSHT20"], showXsecs = True, poiname = poiname)
             
