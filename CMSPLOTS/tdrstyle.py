@@ -46,9 +46,9 @@ def setTDRStyle():
   #tdrStyle.SetLegoInnerR(Float_t rad = 0.5)
   #tdrStyle.SetNumberContours(Int_t number = 20)
 
-  tdrStyle.SetEndErrorSize(2)
+  tdrStyle.SetEndErrorSize(28)
   #tdrStyle.SetErrorMarker(20)
-  tdrStyle.SetErrorX(0.5)
+  #tdrStyle.SetErrorX(0.5)
   
   tdrStyle.SetMarkerStyle(20)
   

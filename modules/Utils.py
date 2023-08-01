@@ -5,6 +5,7 @@ collecting some util scripts here
 import pandas as pd
 from collections import OrderedDict
 import re
+import copy
 
 
 def GetValues(pdict: OrderedDict, key: str):
@@ -28,8 +29,8 @@ def FormatROOTInput(istring: str):
     labelmaps['leplep']   = 'Z#rightarrow l^{+} l^{-}'
     labelmaps['lepinc']   = 'W^{#pm}#rightarrow l^{#pm}#nu'
     
-    labelmaps["WOverZ"] = "W^{#pm}/Z"
-    labelmaps["WchgRatio"] = "W^{+}/W^{-}"
+    labelmaps["WOverZ"] = "W^{#pm}#rightarrow l^{#pm}#nu / Z#rightarrow l^{+} l^{-}"
+    labelmaps["WchgRatio"] = "W^{+}#rightarrow l^{+}#nu / W^{-}#rightarrow l^{-}#bar{#nu}"
     labelmaps['WpOverWm'] = labelmaps['WchgRatio']
     labelmaps['WZRatio'] = labelmaps['WOverZ']
     
@@ -65,6 +66,7 @@ def FormatOutputForWZ(istring: str):
     labelmaps['Zinc'] = labelmaps['leplep']
 
     procmaps = {}
+    procmaps['Measured'] = 'Data'
     procmaps['data'] = 'Data'
     procmaps['sig'] = "Signal"
     procmaps['ewk'] = "EWK"
@@ -114,16 +116,27 @@ def FormatOutputForWZ(istring: str):
     return istring
 
 
-def FormatTable(pdict: str, columns: list = None, caption: str = None, label: str = None, precision: int=1, escape: bool = True):
+def FormatTable(pdict: str, columns: list = None, caption: str = None, label: str = None, precision: int=1, escape: bool = False):
     """
     given a dictionary, print the latex version of the table
     """
-    df = pd.DataFrame(pdict, columns=columns)
+    results = copy.deepcopy(pdict)
+    for bkey, bval in results.items():
+        for key, val in bval.items():
+            if type(val) is tuple:
+                if len (val) == 3:
+                    val = f"$ {val[0]:.4g}^{{+{val[2]:.4g}}}_{{-{ val[1]:.4g}}}$"
+                else:
+                    val = ' \pm '.join([f"{vval:.4g}" for vval in val])
+                    val = "$" + val +"$"
+                bval[key] = val
+        results[bkey] = bval
+    df = pd.DataFrame(results, columns=columns)
     df = df.round(precision)
     #output = df.to_latex(float_format="{:.1f}".format, caption = caption, label = label)
     #output = df.to_latex(caption = caption, label = label)
     output = df.to_latex(escape = escape)
-    output = output.replace('\\toprule', '\\hline').replace('\\midrule', '\\hline').replace('\\bottomrule','\\hline')
+    output = output.replace('\\toprule', '\\hline').replace('\\midrule', '\\hline').replace('\\bottomrule','\\hline').replace('\\textbackslash pm', '\\pm').replace("\$", "$")
 
     output = FormatOutputForWZ(output)
 
