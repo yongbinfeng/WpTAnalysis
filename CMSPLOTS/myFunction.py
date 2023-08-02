@@ -410,7 +410,7 @@ def TH2ToTH1s(h2, projY = False, label = "X"):
             labels.append(f"{xmin: .2f}<{label}<{xmax: .2f}")
     return hs, labels
 
-def DrawHistos(myhistos, mylabels, xmin, xmax, xlabel, ymin, ymax, ylabel, outputname, dology=True, showratio=False, dologx=False, lheader=None, donormalize=False, binomialratio=False, yrmax=2.0, yrmin=0.0, yrlabel=None, MCOnly=False, leftlegend=False, mycolors=None, legendPos=None, legendNCols=1, linestyles=None, markerstyles=None, showpull=False, doNewman=False, doPearson=False, ignoreHistError=False, ypullmin=-3.99, ypullmax=3.99, drawashist=False, padsize=(2, 0.9, 1.1), setGridx=False, setGridy=False, drawoptions=None, legendoptions=None, ratiooptions=None, dologz=False, doth2=False, ratiobase=0, redrawihist=-1, extraText=None, noCMS=False, noLumi=False, nMaxDigits=None, addOverflow=False, addUnderflow=False, plotdiff=False, hratiopanel=None, doratios=None, hpulls=None, W_ref=600, is5TeV=False, outdir="plots", savepdf=True,zmin=0,zmax=2, binlabels = None, ybinlabels = None, doCombineYear = False, canH=None, canW=None, yndivisions = 5, xndivisions = 5, additionalToDraw = None, leftmargin = 0.15):
+def DrawHistos(myhistos, mylabels, xmin, xmax, xlabel, ymin, ymax, ylabel, outputname, dology=True, showratio=False, dologx=False, lheader=None, donormalize=False, binomialratio=False, yrmax=2.0, yrmin=0.0, yrlabel=None, MCOnly=False, leftlegend=False, mycolors=None, legendPos=None, legendNCols=1, linestyles=None, markerstyles=None, showpull=False, doNewman=False, doPearson=False, ignoreHistError=False, ypullmin=-3.99, ypullmax=3.99, drawashist=False, padsize=(2, 0.9, 1.1), setGridx=False, setGridy=False, drawoptions=None, legendoptions=None, ratiooptions=None, dologz=False, doth2=False, ratiobase=0, redrawihist=-1, extraText=None, noCMS=False, noLumi=False, nMaxDigits=None, addOverflow=False, addUnderflow=False, plotdiff=False, hratiopanel=None, doratios=None, hpulls=None, W_ref=600, H_ref = 500, is5TeV=False, outdir="plots", savepdf=True,zmin=0,zmax=2, binlabels = None, ybinlabels = None, doCombineYear = False, canH=None, canW=None, yndivisions = 5, xndivisions = 5, additionalToDraw = None, leftmargin = 0.15, nolabel = False, legendTextSize = 0.04):
     """
     draw histograms with the CMS tdr style
     """
@@ -465,7 +465,6 @@ def DrawHistos(myhistos, mylabels, xmin, xmax, xlabel, ymin, ymax, ylabel, outpu
     if ymin == None:
         ymin = min([h.GetMinimum() for h in myhistos]) * 0.40
 
-    H_ref = 500
     W = W_ref
     H = H_ref
 
@@ -610,6 +609,9 @@ def DrawHistos(myhistos, mylabels, xmin, xmax, xlabel, ymin, ymax, ylabel, outpu
         h1.GetXaxis().SetLabelSize(0)
     else:
         h1.GetXaxis().SetTitle("%s" % xlabel)
+        
+    if nolabel:
+        h1.GetXaxis().SetLabelSize(0)
 
     h1.Draw()
 
@@ -640,8 +642,9 @@ def DrawHistos(myhistos, mylabels, xmin, xmax, xlabel, ymin, ymax, ylabel, outpu
         legend.SetHeader(lheader)
     legend.SetNColumns(legendNCols)
     legend.SetBorderSize(0)
-    legend.SetTextSize(0.04)
+    legend.SetTextSize(legendTextSize)
     legend.SetTextFont(42)
+    legend.SetMargin(0.18)
     legend.SetFillColor(0)
     legend.SetFillStyle(0)
 
@@ -710,8 +713,8 @@ def DrawHistos(myhistos, mylabels, xmin, xmax, xlabel, ymin, ymax, ylabel, outpu
                         hist, str(mylabels[ileg]), legendoptions[idx])
                     ileg += 1
             else:
-                legend.AddEntry(myhistos_clone[idx], str(
-                    mylabels[ileg]), legendoptions[idx])
+                if mylabels[ileg] != None and mylabels[ileg] != "":
+                    legend.AddEntry(myhistos_clone[idx], str(mylabels[ileg]), legendoptions[idx])
                 ileg += 1
 
     #print("draw options ", drawoptions)
