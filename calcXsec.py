@@ -179,7 +179,8 @@ print("results xsecs ratios: ", xsecs_ratios)
 print("results xs ratios sqrtS: ", xsecs_ratios_sqrtS)
 print("results xs ratios sqrtS ratios: ", xsecs_ratios_sqrtS_ratios)
 
-pdfsets = ["nnpdf4.0", "nnpdf3.1", "ct18", "msht20"]
+#pdfsets = ["nnpdf4.0", "nnpdf3.1", "ct18", "msht20"]
+pdfsets = ["nnpdf3.1", "nnpdf4.0", "ct18", "msht20"]
     
 # compare the theory predictions with the measured values
 from theoryResults import *        
@@ -356,6 +357,32 @@ def DrawHorizontalCompGraph(xsecs_diffs, outputname, xmin = 0.95, xmax = 1.05, i
     splitLine.SetLineWidth(1)
     splitLines.append(splitLine)
     
+    if showXsecs:
+        #splitline = ROOT.TLine(0.58, counts - i + 0.5, 0.58, 0.96)
+        #splitline.SetLineColor(ROOT.kBlack)
+        #splitline.SetLineStyle(1)
+        #splitline.SetLineWidth(1)
+        #splitLines.append(splitline)
+        
+        # draw the labels of cross sections and theory predictions
+        valMeasured = ROOT.TPaveText(0.58, (counts + 1 ) / (counts + 1.5) * 0.81 + .10, 0.94, (counts +1 +0.48) / (counts+1.5)*0.81+0.10, "NDC")
+        valMeasured.SetFillStyle(0)
+        valMeasured.SetBorderSize(0)
+        valMeasured.SetTextAlign(12)
+        valMeasured.AddText("Measured #pm unc")
+        valMeasured.SetTextColor(ROOT.kBlack)
+        valMeasured.SetTextSize(0.03)
+        valMeasureds.append(valMeasured)
+        
+        valTheory = ROOT.TPaveText(0.58, (counts +1 - 0.48) / (counts + 1.5) * 0.81 + .10, 0.94, (counts +1 ) / (counts+1.5)*0.81+0.10, "NDC")
+        valTheory.SetFillStyle(0)
+        valTheory.SetBorderSize(0)
+        valTheory.SetTextAlign(12)
+        valTheory.AddText("Theory #pm unc (NNPDF3.1)")
+        valTheory.SetTextColor(colors[0])
+        valTheory.SetTextSize(0.03)
+        valTheorys.append(valTheory)
+    
     for ch in xsecs_diffs:
         if "diff" not in ch: 
             continue
@@ -388,7 +415,7 @@ def DrawHorizontalCompGraph(xsecs_diffs, outputname, xmin = 0.95, xmax = 1.05, i
         if showXsecs:
             unit = " pb" if (not ("Over" in ch or "Ratio" in ch) and not doCombineYear) else ""
         
-            valMeasured = ROOT.TPaveText(0.52, (counts - i ) / (counts + 1.5) * 0.81 + .07, 0.89, (counts - i +0.38) / (counts+1.5)*0.81+0.07, "NDC")
+            valMeasured = ROOT.TPaveText(0.58, (counts - i ) / (counts + 1.5) * 0.81 + .07, 0.94, (counts - i +0.38) / (counts+1.5)*0.81+0.07, "NDC")
             valMeasured.SetFillStyle(0)
             valMeasured.SetBorderSize(0)
             valMeasured.SetTextAlign(12)
@@ -403,7 +430,7 @@ def DrawHorizontalCompGraph(xsecs_diffs, outputname, xmin = 0.95, xmax = 1.05, i
             valMeasured.SetTextSize(0.03)
             valMeasureds.append(valMeasured)
         
-            valTheory = ROOT.TPaveText(0.52, (counts - i - 0.38) / (counts + 1.5) * 0.81 + .07, 0.89, (counts - i ) / (counts+1.5)*0.81+0.07, "NDC")
+            valTheory = ROOT.TPaveText(0.58, (counts - i - 0.38) / (counts + 1.5) * 0.81 + .07, 0.94, (counts - i ) / (counts+1.5)*0.81+0.07, "NDC")
             valTheory.SetFillStyle(0)
             valTheory.SetBorderSize(0)
             valTheory.SetTextAlign(12)
@@ -430,7 +457,7 @@ def DrawHorizontalCompGraph(xsecs_diffs, outputname, xmin = 0.95, xmax = 1.05, i
     #headerText.SetTextColor(ROOT.kBlack)
     #headerText.SetTextSize(0.035)
             
-    DrawHistos(list(tgraphs.values()), list(tgraphs.keys()), xmin, xmax, "Ratio (Theory / Measured) of " + poiname, 0.5, len(procNames) + 0.5 + 1.5, "", outputname, dology=False, drawoptions = ["E2"] + ["1PE"] * len(pdfsets_plot), legendoptions = ["F"] + ["PLF"] * len(pdfsets_plot), legendPos = [0.10, 0.80, 0.90, 0.9], is5TeV = is5TeV, doCombineYear = doCombineYear, canH = canH, canW = canW, yndivisions=0, additionalToDraw=[theoLine]+splitLines+procNames+valMeasureds+valTheorys, legendNCols = 5, leftmargin=0.05)
+    DrawHistos(list(tgraphs.values()), list(tgraphs.keys()), xmin, xmax, "Ratio (Theory / Measured) of " + poiname, 0.5, len(procNames) + 0.5 + 1.5, "", outputname, dology=False, drawoptions = ["E2"] + ["1PE"] * len(pdfsets_plot), legendoptions = ["F"] + ["PLF"] * len(pdfsets_plot), legendPos = [0.06, 0.80, 0.57, 0.9], is5TeV = is5TeV, doCombineYear = doCombineYear, canH = canH, canW = canW, yndivisions=0, additionalToDraw=[theoLine]+splitLines+procNames+valMeasureds+valTheorys, legendNCols = 3, leftmargin=0.05, tickx=0)
     
 if doFiducial:
     poiname = "#sigma^{fid}"
@@ -439,14 +466,14 @@ else:
 toplot = deepcopy(results['13TeV'])
 toplot.update(results['13TeV_ratios'])
 #DrawHorizontalCompGraph(toplot, f"{outdir}/plots/results_13TeV", 0.85, 1.15)
-DrawHorizontalCompGraph(toplot, f"{outdir}/plots/results_13TeV", 0.85, 1.20, pdfsets_plot=["NNPDF3.1", "NNPDF4.0", "CT18", "MSHT20"], showXsecs = True, poiname = poiname)
+DrawHorizontalCompGraph(toplot, f"{outdir}/plots/results_13TeV", 0.85, 1.18, pdfsets_plot=["NNPDF3.1", "NNPDF4.0", "CT18", "MSHT20"], showXsecs = True, poiname = poiname)
 
 
 toplot = deepcopy(results['5TeV'])
 toplot.update(results['5TeV_ratios'])
-DrawHorizontalCompGraph(toplot, f"{outdir}/plots/results_5TeV", 0.85, 1.20, is5TeV = True, pdfsets_plot=["NNPDF3.1", "NNPDF4.0", "CT18", "MSHT20"], showXsecs = True, poiname = poiname)
+DrawHorizontalCompGraph(toplot, f"{outdir}/plots/results_5TeV", 0.85, 1.18, is5TeV = True, pdfsets_plot=["NNPDF3.1", "NNPDF4.0", "CT18", "MSHT20"], showXsecs = True, poiname = poiname)
 
 toplot = deepcopy(results['sqrtS_ratios'])
 toplot.update(results['sqrtS_double_ratios'])
-DrawHorizontalCompGraph(toplot, f"{outdir}/plots/results_sqrtS", 0.85, 1.20, doCombineYear = True, pdfsets_plot=["NNPDF3.1", "NNPDF4.0", "CT18", "MSHT20"], showXsecs = True, poiname = poiname)
+DrawHorizontalCompGraph(toplot, f"{outdir}/plots/results_sqrtS", 0.85, 1.18, doCombineYear = True, pdfsets_plot=["NNPDF3.1", "NNPDF4.0", "CT18", "MSHT20"], showXsecs = True, poiname = poiname)
             
