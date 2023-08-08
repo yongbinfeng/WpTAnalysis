@@ -117,7 +117,7 @@ xsecs_UA1 = XsecMeasurements(0.63, 0.4)
 xsecs_UA1['winc'].SetXsec(630,   40, 100,  0., 0.)
 xsecs_UA1['z']   .SetXsec(71.,   11,  11,  0., 0.)
 
-xsecs_CMS_13TeV = XsecMeasurements(13, 200.0)
+xsecs_CMS_13TeV = XsecMeasurements(13, 200.9)
 xsecs_CMS_13TeV['wp']   .SetXsec( 12130.0,  10.0,  100.0,  0.0,  200.0)
 xsecs_CMS_13TeV['wm']   .SetXsec(  8910.0, 10.0, 80.0, 0.0, 150.0)
 xsecs_CMS_13TeV['winc'] .SetXsec( 21040.0, 10.0, 180.0, 360.0)

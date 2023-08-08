@@ -9,6 +9,8 @@ from copy import deepcopy
 import sys
 
 doFiducial = True
+doElectron = False
+doMuon = True
 
 f_xsecs_MC = "data/xsecs_fid.json" if doFiducial else "data/xsecs_inc.json"
 
@@ -31,6 +33,11 @@ lumiUncs = {
 
 if doFiducial:
     f_fit = "forCombine_WithVpT/Fiducial/test0/commands/scripts/card_combined.root"
+    #f_fit = "forCombine_default/Fiducial/test0/commands/scripts/card_combined.root"
+    if doElectron:
+        f_fit = "forCombine_default/Fiducial/test0/commands/scripts/card_e.root"
+    elif doMuon:
+        f_fit = "forCombine_default/Fiducial/test0/commands/scripts/card_mu.root"
 else:
     f_fit = "forCombine_WithVpT/Inclusive/test0/commands/scripts/card_combined.root"
 f_fit_fid = "forCombine_WithVpT/Fiducial/test0/commands/scripts/card_combined.root"
@@ -76,6 +83,7 @@ def getRelStatSystError(ifilename, poiname, hname):
     err_stat = himpact_grouped.GetBinContent(ibinX, ibinY)
     
     val_poi, err_poi = GetPOIValue(ifilename, poiname)
+    #print(f"err_stat: {err_stat} for POI {poiname} in {ifilename}; val_poi {val_poi}; err_stat / val_poi: {err_stat / val_poi}")
     
     err_syst = math.sqrt(err_poi**2 - err_stat**2)
     
@@ -116,6 +124,7 @@ for sqrtS in ["13TeV", "5TeV"]:
     mu_stat_err, mu_syst_err = getRelStatSystError(f_fit, f"Winc_{sqrtS}_sig_sumxsec", "nuisance_group_impact_sumpois")
     xsec_tot_W = xsecs[sqrtS]["lepplus"][0] + xsecs[sqrtS]["lepminus"][0]
     xsecs[sqrtS]["winc"] = (xsec_tot_W, mu_stat_err * xsec_tot_W, mu_syst_err * xsec_tot_W, lumiUncs[sqrtS] * xsec_tot_W)
+    print("Winc result", xsecs[sqrtS]["winc"])
     #xsecs[sqrtS]["Winc"] = (xsec_tot_W, math.sqrt(mu_err**2 + lumiUncs[sqrtS]**2) * xsec_tot_W)
         
     # cross section ratios
@@ -257,7 +266,11 @@ for ch in ["WchgRatio", "WZRatio"]:
         results['sqrtS_double_ratios'][f"{ch}_diff"][pdf.upper()] = ((xsec_th[pdf].GetSqrtSDoubleRatio(ch)[0] / xsecs_ratios_sqrtS_ratios[ch][0]),  (xsec_th[pdf].GetSqrtSDoubleRatio(ch)[1] / xsecs_ratios_sqrtS_ratios[ch][0]), (xsec_th[pdf].GetSqrtSDoubleRatio(ch)[2] / xsecs_ratios_sqrtS_ratios[ch][0]))
         
         
-outdir = "plots/xsecResults_fid/" if doFiducial else "plots/xsecResults_inc/"
+outdir = "plots/xsecResults_fid" if doFiducial else "plots/xsecResults_inc"
+if doMuon:
+    outdir += "_mu"
+elif doElectron:
+    outdir += "_e"
     
 from modules.Utils import FormatTable, FormatROOTInput
 from modules.postFitScripts import WriteOutputToText
@@ -271,6 +284,7 @@ def dict2Table(list_results):
             results_new[key] = val
     return results_new
 
+print(results['13TeV'])
 outputs = FormatTable(dict2Table([results['13TeV'],results['13TeV_ratios']]), doTranspose=True)
 print(outputs)
 WriteOutputToText(outputs, f"{outdir}/tables/results_13TeV_all.tex")

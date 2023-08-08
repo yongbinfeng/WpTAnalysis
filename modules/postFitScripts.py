@@ -13,7 +13,7 @@ from modules.SampleManager import DrawConfig
 
 ROOT.gROOT.SetBatch(True)
 
-def MakeDataMCPlot(ifilename: str, channel: str, bins: np.array, suffix: str, showpull: bool = False, is5TeV: bool = False, startbin: int = 1, outdir: str = "plots", doPostfit = True, mTCut = 40.0):
+def MakeDataMCPlot(ifilename: str, channel: str, bins: np.array, suffix: str, showpull: bool = False, is5TeV: bool = False, startbin: int = 1, outdir: str = "plots", doPostfit = True, mTCut = 40.0, yrmin = 0.95, yrmax = 1.05, dology=False):
     """
     compare the unrolled pre/post-fit of data and templates
     """
@@ -206,9 +206,15 @@ def MakeDataMCPlot(ifilename: str, channel: str, bins: np.array, suffix: str, sh
         # z's
         xlabel = "m_{ll} [GeV]"
         outputname = f"histo_zjets_{channel}_{suffix}"
-    yrmin = 0.95 if doPostfit else 0.89
-    yrmax = 1.05 if doPostfit else 1.11
+    yrmin = yrmin if doPostfit else 0.89
+    yrmax = yrmax if doPostfit else 1.11
     drawconfigs = DrawConfig(xmin = bins.min(), xmax = bins.max(), xlabel = xlabel, ymin = 0, ymax = ymaxs[channel] / (int(nbins/36)+1), ylabel = "Events / GeV", outputname = outdir + "/" + outputname, dology=False, addOverflow=False, addUnderflow=False, yrmin=yrmin, yrmax=yrmax, yrlabel = "Data / Pred")
+
+    if dology:
+        drawconfigs.dology = True
+        drawconfigs.ymin = 1.0
+        drawconfigs.ymax = drawconfigs.ymax * 1e2
+
     DrawHistos( [hdata, hs_gmc], ["Data", siglabels[channel], "EWK", "t#bar{t}", "QCD"], drawconfigs.xmin, drawconfigs.xmax, drawconfigs.xlabel, drawconfigs.ymin, drawconfigs.ymax, drawconfigs.ylabel, drawconfigs.outputname, dology=drawconfigs.dology, dologx=drawconfigs.dologx, showratio=drawconfigs.showratio, yrmax = drawconfigs.yrmax, yrmin = drawconfigs.yrmin, yrlabel = drawconfigs.yrlabel, donormalize=drawconfigs.donormalize, ratiobase=drawconfigs.ratiobase, legendPos = drawconfigs.legendPos, redrawihist = drawconfigs.redrawihist, extraText = drawconfigs.extraText, noCMS = drawconfigs.noCMS, addOverflow = drawconfigs.addOverflow, addUnderflow = drawconfigs.addUnderflow, nMaxDigits = drawconfigs.nMaxDigits, hratiopanel=hratio, drawoptions=['PE', 'HIST same'], showpull=showpull, hpulls=[hpull], W_ref = 600 * int(nbins/36+1), is5TeV = is5TeV) 
 
     return nevts, nevts_withCut

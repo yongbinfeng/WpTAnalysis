@@ -174,32 +174,32 @@ for poi in ["fid", "inc"]:
             if sqrtS+"tev" in results[0]:
                 for key, val in results[0][sqrtS+"tev"].items():
                     #print("key", key, "val", val, "poi", poi)
-                    if poi == "fid":
-                        setattr(xsec_results[pdfMaps[pdf]], f"xsec_{key}_{sqrtS}", (val[0] / 1e3, 0., 0.))
-                    else:
+                    #if poi == "fid":
+                    #    setattr(xsec_results[pdfMaps[pdf]], f"xsec_{key}_{sqrtS}", (val[0] / 1e3, 0., 0.))
+                    #else:
                         setattr(xsec_results[pdfMaps[pdf]], f"xsec_{key}_{sqrtS}", (val[0] / 1e3, val[1] / 1e3, val[2] / 1e3))
             if sqrtS+"tev" in results[1]:
                 for key, val in results[1][sqrtS+"tev"].items():
                     #print("key", key, "val", val)
-                    if poi == "fid":
-                        setattr(xsec_results[pdfMaps[pdf]], f"xsec_{key}_{sqrtS}", (val[0], 0., 0.))
-                    else:
+                    #if poi == "fid":
+                    #    setattr(xsec_results[pdfMaps[pdf]], f"xsec_{key}_{sqrtS}", (val[0], 0., 0.))
+                    #else:
                         setattr(xsec_results[pdfMaps[pdf]], f"xsec_{key}_{sqrtS}", (val[0], val[1], val[2]))
     
         # ratio
         #print("results 2", results[2])
         for key, val in results[2].items():
             #print("key ", ch, " val", val)
-            if poi == "fid":
-                setattr(xsec_results[pdfMaps[pdf]], f"xsec_{key}_13o5", (val[0], 0., 0.))
-            else:
+            #if poi == "fid":
+            #    setattr(xsec_results[pdfMaps[pdf]], f"xsec_{key}_13o5", (val[0], 0., 0.))
+            #else:
                 setattr(xsec_results[pdfMaps[pdf]], f"xsec_{key}_13o5", (val[0], val[1], val[2]))
     
         # double ratio
         #print("results 3", results[3])
         for key, val in results[3].items():
             #print("key ", key, " val ", val)
-            if poi == "fid":
-                setattr(xsec_results[pdfMaps[pdf]], f"xsec_{key}_13o5", (val[0], 0., 0.))
-            else:
+            #if poi == "fid":
+            #    setattr(xsec_results[pdfMaps[pdf]], f"xsec_{key}_13o5", (val[0], 0., 0.))
+            #else:
                 setattr(xsec_results[pdfMaps[pdf]], f"xsec_{key}_13o5", (val[0], val[1], val[2]))

@@ -176,7 +176,7 @@ legendoptions += ["P", "P"]
 legends += [f"UA2, {xsecs_UA2.GetLegend()}", f"UA1, {xsecs_UA1.GetLegend()}"]
 
 Theory = ROOT.TPaveText(2., 40, 24., 80)
-Theory.AddText("Theory: NNLO, FEWZ and NNPDF 3.0 PDFs")
+Theory.AddText("Theory: NNLO, DYTURBO and NNPDF 3.1 PDFs")
 Theory.SetTextAlign(12)
 Theory.SetFillColor(4000)
 Theory.SetTextColor(4)

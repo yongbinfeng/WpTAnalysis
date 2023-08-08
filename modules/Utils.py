@@ -15,10 +15,11 @@ def roundToError(values):
     else:
         precision = 0
     isInt = False
-    if precision < 0:
+    if precision < 0 and err < 1.0:
         # err < 1.0
         precision = precision -1
-    else:
+    elif precision >= 0:
+        # err > 10.0
         isInt = True 
     values_new = []
     for val in values:
