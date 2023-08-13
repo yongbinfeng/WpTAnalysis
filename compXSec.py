@@ -1,5 +1,6 @@
 import numpy as np
 from collections import OrderedDict
+
 """
 theory results
 
@@ -129,7 +130,7 @@ drawoptions = ["PL", "PL", "PL", "PL", "PL", "PL"]
 legends = ["" for i in range(len(toDraws))]
 legendoptions = ["L", "L", "L", "L", "L", "L"]
 
-from expXsecResults import *
+from data.expXsecResults import *
 g_CMS_13TeV = ExpXsec2TGraph(xsecs_CMS_13TeV, color = 2, markerstyle = 43)
 g_CMS_5TeV = ExpXsec2TGraph(xsecs_CMS_5TeV, color = 2, markerstyle = 45)
 
@@ -222,8 +223,46 @@ for pos, ch in ylabels.items():
     txts.append(txt_)
 
 
-DrawHistos(toDraws, legends, 0.3, 48, "Center-of-mass energy [TeV]", 20, 2e5, "#sigma x B [pb]", "xsec", dologx=True, W_ref = 800, H_ref = 600, noCMS=True, noLumi=True, additionalToDraw = [Theory, ppbar, pp] + txts, drawoptions = drawoptions, legendoptions = legendoptions, legendPos = [0.18, 0.59, 0.5, 0.91], legendTextSize = 0.028, nolabel = True)
+DrawHistos(toDraws, legends, 0.3, 48, "Center-of-mass energy [TeV]", 20, 2e5, "#sigma x B [pb]", "xsec", dologx=True, W_ref = 800, H_ref = 600, noCMSLumi=True, additionalToDraw = [Theory, ppbar, pp] + txts, drawoptions = drawoptions, legendoptions = legendoptions, legendPos = [0.18, 0.59, 0.5, 0.91], legendTextSize = 0.028, nolabel = True)
 
 
+# CMS only
+toDraws = toDraws[2:-4]
+drawoptions = drawoptions[2:-4]
+legends = legends[2:-4]
+legends = [legend.replace("CMS, ", "") for legend in legends]
+legendoptions = legendoptions[2:-4]
 
+txts2 = []
+for energy in [2, 5, 7, 10, 20]:
+    txt_ = ROOT.TLatex()
+    xlab_ = 40.
+    ytxt_ = 88.
+    txt_.SetTextAngle(0)
+    txt_.SetTextAlign(23)
+    txt_.SetTextFont(42)
+    txt_.SetTextSize(xlab_ * scale1_)
+    txt_.SetText(energy, ytxt_, str(energy))
+    txts2.append(txt_)
+    
+ylabels = {40000: "W^{#pm}", 23000: "W^{+}", 14000: "W^{-}", 3500: "Z"}
+for pos, ch in ylabels.items():
+    txt_ = ROOT.TLatex()
+    xlab_ = 40.
+    ytxt_ = pos
+    txt_.SetTextAngle(0)
+    txt_.SetTextAlign(23)
+    txt_.SetTextFont(42)
+    txt_.SetTextSize(xlab_ * scale1_)
+    txt_.SetText(23, ytxt_, ch)
+    txts2.append(txt_)
+    
+Theory2 = ROOT.TPaveText(5.2, 5e4, 27., 3e5)
+Theory2.AddText("Theory: NNLO, DYTURBO and NNPDF 3.1 PDFs")
+Theory2.SetTextAlign(12)
+Theory2.SetFillColor(4000)
+Theory2.SetTextColor(4)
+Theory2.SetFillColor(0)
+Theory2.SetBorderSize(0)
 
+DrawHistos(toDraws, legends, 2, 29, "Center-of-mass energy [TeV]", 1.1e2, 3e5, "#sigma x B [pb]", "xsec_CMS_Only_PAS", dologx=True, W_ref = 800, H_ref = 600, noLumi=True, additionalToDraw = [Theory2] + txts2, drawoptions = drawoptions, legendoptions = legendoptions, legendPos = [0.18, 0.69, 0.5, 0.91], legendTextSize = 0.028, doPAS = True, nolabel = True, noSqrtS=True)

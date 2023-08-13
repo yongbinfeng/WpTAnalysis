@@ -410,7 +410,7 @@ def TH2ToTH1s(h2, projY = False, label = "X"):
             labels.append(f"{xmin: .2f}<{label}<{xmax: .2f}")
     return hs, labels
 
-def DrawHistos(myhistos, mylabels, xmin, xmax, xlabel, ymin, ymax, ylabel, outputname, dology=True, showratio=False, dologx=False, lheader=None, donormalize=False, binomialratio=False, yrmax=2.0, yrmin=0.0, yrlabel=None, MCOnly=False, leftlegend=False, mycolors=None, legendPos=None, legendNCols=1, linestyles=None, markerstyles=None, showpull=False, doNewman=False, doPearson=False, ignoreHistError=False, ypullmin=-3.99, ypullmax=3.99, drawashist=False, padsize=(2, 0.9, 1.1), setGridx=False, setGridy=False, drawoptions=None, legendoptions=None, ratiooptions=None, dologz=False, doth2=False, ratiobase=0, redrawihist=-1, extraText=None, noCMS=False, noLumi=False, nMaxDigits=None, addOverflow=False, addUnderflow=False, plotdiff=False, hratiopanel=None, doratios=None, hpulls=None, W_ref=600, H_ref = 500, is5TeV=False, outdir="plots", savepdf=True,zmin=0,zmax=2, binlabels = None, ybinlabels = None, doCombineYear = False, canH=None, canW=None, yndivisions = 5, xndivisions = 5, additionalToDraw = None, leftmargin = 0.15, nolabel = False, legendTextSize = 0.04, tickx=True, ticky=True):
+def DrawHistos(myhistos, mylabels, xmin, xmax, xlabel, ymin, ymax, ylabel, outputname, dology=True, showratio=False, dologx=False, lheader=None, donormalize=False, binomialratio=False, yrmax=2.0, yrmin=0.0, yrlabel=None, MCOnly=False, leftlegend=False, mycolors=None, legendPos=None, legendNCols=1, linestyles=None, markerstyles=None, showpull=False, doNewman=False, doPearson=False, ignoreHistError=False, ypullmin=-3.99, ypullmax=3.99, drawashist=False, padsize=(1.8, 0.9, 1.1), setGridx=False, setGridy=False, drawoptions=None, legendoptions=None, ratiooptions=None, dologz=False, doth2=False, ratiobase=0, redrawihist=-1, extraText=None, noCMS=False, noLumi=False, noCMSLumi=False, nMaxDigits=None, addOverflow=False, addUnderflow=False, plotdiff=False, hratiopanel=None, doratios=None, hpulls=None, W_ref=600, H_ref = 500, is5TeV=False, outdir="plots", savepdf=True,zmin=0,zmax=2, binlabels = None, ybinlabels = None, doCombineYear = False, canH=None, canW=None, yndivisions = 5, xndivisions = 5, additionalToDraw = None, leftmargin = 0.15, nolabel = False, legendTextSize = 0.04, tickx=True, ticky=True, doPAS = False, noSqrtS = False, outofFrame = True):
     """
     draw histograms with the CMS tdr style
     """
@@ -444,7 +444,7 @@ def DrawHistos(myhistos, mylabels, xmin, xmax, xlabel, ymin, ymax, ylabel, outpu
     # change the CMS_lumi variables (see CMS_lumi.py)
     # used with iPeriod = 0, e.g. for simulation-only plots (default is an empty string)
     CMS_lumi.lumi_sqrtS = "(13 TeV)"
-    CMS_lumi.relPosX = 0.12
+    #CMS_lumi.relPosX = 0.12
     # CMS_lumi.extraText = "Internal"
     # if MCOnly:
     #    CMS_lumi.extraText = "Simulation"
@@ -452,6 +452,8 @@ def DrawHistos(myhistos, mylabels, xmin, xmax, xlabel, ymin, ymax, ylabel, outpu
         CMS_lumi.extraText = extraText
     if extraText == None:
         CMS_lumi.extraText = ""
+    if doPAS:
+        CMS_lumi.extraText = "Preliminary"
 
     if nMaxDigits:
         #print(f"set the maximum number of digits {nMaxDigits}")
@@ -716,6 +718,9 @@ def DrawHistos(myhistos, mylabels, xmin, xmax, xlabel, ymin, ymax, ylabel, outpu
                 if mylabels[ileg] != None and mylabels[ileg] != "":
                     legend.AddEntry(myhistos_clone[idx], str(mylabels[ileg]), legendoptions[idx])
                 ileg += 1
+                
+    if showratio and hratiopanel:
+        legend.AddEntry(hratiopanel, "Postfit Unc.", "F")
 
     #print("draw options ", drawoptions)
     #print("legend options ", legendoptions)
@@ -729,11 +734,13 @@ def DrawHistos(myhistos, mylabels, xmin, xmax, xlabel, ymin, ymax, ylabel, outpu
             it.Draw("same")
 
     iPosX = 0
+    if not outofFrame:
+        iPosX = 1
     plotCMS = True
     if noCMS:
         # do not draw CMS, only lumi info and extraText
         plotCMS = False
-        CMS_lumi.cmsText = ""
+        #CMS_lumi.cmsText = ""
         # CMS_lumi.extraText = ""
         # iPosX = 11
     if not is5TeV:
@@ -742,10 +749,14 @@ def DrawHistos(myhistos, mylabels, xmin, xmax, xlabel, ymin, ymax, ylabel, outpu
         iPeriod = 5
     if doCombineYear:
         iPeriod = 6
-    if MCOnly:
+    if MCOnly or noLumi:
         iPeriod = 0
+    if noSqrtS:
+        iPeriod = 0
+        CMS_lumi.lumi_sqrtS = ""
+    print("noCMS: ", noCMS, "plotCMS: ", plotCMS, " iPeriod: ", iPeriod, " iPosX: ", iPosX, " cmsText ", CMS_lumi.cmsText)
     if showratio or showpull:
-        if not noLumi:
+        if not noCMSLumi:
             CMS_lumi.CMS_lumi(pad1, iPeriod, iPosX, plotCMS=plotCMS)
         pad1.Update()
         pad1.RedrawAxis()
@@ -756,7 +767,7 @@ def DrawHistos(myhistos, mylabels, xmin, xmax, xlabel, ymin, ymax, ylabel, outpu
         pad1.Update()
 
     else:
-        if not noLumi:
+        if not noCMSLumi:
             CMS_lumi.CMS_lumi(canvas, iPeriod, iPosX, plotCMS=plotCMS)
         canvas.cd()
         canvas.Update()
@@ -815,8 +826,8 @@ def DrawHistos(myhistos, mylabels, xmin, xmax, xlabel, ymin, ymax, ylabel, outpu
         h2 = ROOT.TH1F("h2", "h2", 80, xmin, xmax)
         h2.GetXaxis().SetTitleSize(0.050/(padsize2+0.3*padsize3))
         h2.GetXaxis().SetLabelSize(0.045/(padsize2+0.3*padsize3))
-        h2.GetYaxis().SetTitleSize(0.050/(padsize2+0.3*padsize3))
-        h2.GetYaxis().SetLabelSize(0.045/(padsize2+0.3*padsize3))
+        h2.GetYaxis().SetTitleSize(0.043/(padsize2+0.3*padsize3))
+        h2.GetYaxis().SetLabelSize(0.040/(padsize2+0.3*padsize3))
         h2.GetYaxis().SetTitleOffset(1.35*(padsize2+0.35*padsize3)*(600.0/W))
 
         h2.GetYaxis().SetNdivisions(8)
@@ -845,7 +856,7 @@ def DrawHistos(myhistos, mylabels, xmin, xmax, xlabel, ymin, ymax, ylabel, outpu
                 #print("draw hratiopanel")
                 # hratiopanel.SetFillColor(15)
                 hratiopanel.SetFillColorAlpha(15, 0.5)
-                hratiopanel.SetLineColor(2)
+                hratiopanel.SetLineColor(0)
                 hratiopanel.SetMarkerSize(0)
                 hratiopanel.Draw("E2 same")
                 # hratiopanel.Draw("HIST same")

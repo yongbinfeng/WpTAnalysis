@@ -25,7 +25,7 @@ args = parser.parse_args()
 doDifferential = False
 # boolean flag to config if the pull
 # distribution should be included in the plots
-showPULL = True
+showPULL = False
 
 doInclusive = args.doInclusive
 do13TeV = args.do13TeV
@@ -131,7 +131,12 @@ if not doDifferential:
                     # postfit
                     nevts_postfit['muplus'], nevts_withCut_postfit["muplus"]   = MakeDataMCPlot(filename, "muplus",  mass_bins, f"_mT{idx}_{sqrtS}", showPULL, startbin = binBase, is5TeV=is5TeV, outdir = f"{outdir}/postfits")
                     nevts_postfit['muminus'], nevts_withCut_postfit["muminus"] = MakeDataMCPlot(filename, "muminus", mass_bins, f"_mT{idx}_{sqrtS}", showPULL, startbin = binBase + len(mass_bins) - 1, is5TeV=is5TeV, outdir = f"{outdir}/postfits")
-                    nevts_postfit['mumu'], nevts_withCut_postfit["mumu"]       = MakeDataMCPlot(filename, "mumu", mass_bins_z,  f"_mT{idx}_{sqrtS}", showPULL, startbin = binBase + len(mass_bins)*2 - 2, is5TeV=is5TeV, outdir = f"{outdir}/postfits")
+                    nevts_postfit['mumu'], nevts_withCut_postfit["mumu"]       = MakeDataMCPlot(filename, "mumu", mass_bins_z,  f"_mT{idx}_{sqrtS}", showPULL, startbin = binBase + len(mass_bins)*2 - 2, is5TeV=is5TeV, outdir = f"{outdir}/postfits", yrmin = 0.86, yrmax = 1.14)
+
+                    # postfit log
+                    MakeDataMCPlot(filename, "muplus",  mass_bins, f"_mT{idx}_{sqrtS}", showPULL, startbin = binBase, is5TeV=is5TeV, outdir = f"{outdir}/postfits_log", dology=True)
+                    MakeDataMCPlot(filename, "muminus", mass_bins, f"_mT{idx}_{sqrtS}", showPULL, startbin = binBase + len(mass_bins) - 1, is5TeV=is5TeV, outdir = f"{outdir}/postfits_log", dology=True)
+                    MakeDataMCPlot(filename, "mumu", mass_bins_z,  f"_mT{idx}_{sqrtS}", showPULL, startbin = binBase + len(mass_bins)*2 - 2, is5TeV=is5TeV, outdir = f"{outdir}/postfits_log", dology=True, yrmin = 0.86, yrmax = 1.14)
 
                     binBase = binBase + len(mass_bins)*2 + len(mass_bins_z) - 3
 
@@ -143,7 +148,11 @@ if not doDifferential:
                     # postfit
                     nevts_postfit['eplus'], nevts_withCut_postfit['eplus']   = MakeDataMCPlot(filename, "eplus",  mass_bins,  f"_mT{idx}_{sqrtS}", showPULL, startbin = binBase, is5TeV=is5TeV, outdir = f"{outdir}/postfits")
                     nevts_postfit['eminus'], nevts_withCut_postfit['eminus'] = MakeDataMCPlot(filename, "eminus", mass_bins,  f"_mT{idx}_{sqrtS}", showPULL, startbin = binBase + len(mass_bins) - 1, is5TeV=is5TeV, outdir = f"{outdir}/postfits")
-                    nevts_postfit['ee'], nevts_withCut_postfit['ee']         = MakeDataMCPlot(filename, "ee",   mass_bins_z,  f"_mT{idx}_{sqrtS}", showPULL, startbin = binBase + len(mass_bins)*2 - 2, is5TeV=is5TeV, outdir = f"{outdir}/postfits")
+                    nevts_postfit['ee'], nevts_withCut_postfit['ee']         = MakeDataMCPlot(filename, "ee",   mass_bins_z,  f"_mT{idx}_{sqrtS}", showPULL, startbin = binBase + len(mass_bins)*2 - 2, is5TeV=is5TeV, outdir = f"{outdir}/postfits", yrmin = 0.86, yrmax = 1.14)
+
+                    MakeDataMCPlot(filename, "eplus",  mass_bins,  f"_mT{idx}_{sqrtS}", showPULL, startbin = binBase, is5TeV=is5TeV, outdir = f"{outdir}/postfits_log", dology=True)
+                    MakeDataMCPlot(filename, "eminus", mass_bins,  f"_mT{idx}_{sqrtS}", showPULL, startbin = binBase + len(mass_bins) - 1, is5TeV=is5TeV, outdir = f"{outdir}/postfits_log", dology=True)
+                    MakeDataMCPlot(filename, "ee",   mass_bins_z,  f"_mT{idx}_{sqrtS}", showPULL, startbin = binBase + len(mass_bins)*2 - 2, is5TeV=is5TeV, outdir = f"{outdir}/postfits_log", yrmin = 0.86, yrmax = 1.14, dology=True)
 
                     binBase = binBase + len(mass_bins)*2 + len(mass_bins_z) - 3
 
@@ -173,25 +182,25 @@ if not doDifferential:
 
                 ## print out the nevts pre and post fit information
                 # prefit
-                outputs = FormatTable(nevts_prefit, caption=f"Event yield at {sqrtS}", label = f"tab:nevts_prefit_{sqrtS}")
+                outputs = FormatTable(nevts_prefit)
                 print(outputs)
                 WriteOutputToText(outputs, f"{outdir}/tables/nevts_prefit_{sqrtS}.tex")
                 print("\n\n\n\n")
-                outputs = FormatTable(nevts_withCut_prefit, caption=f"Event yield at {sqrtS} with cut", label = f"tab:nevts_withCut_prefit_{sqrtS}")
+                outputs = FormatTable(nevts_withCut_prefit)
                 print(outputs)
                 WriteOutputToText(outputs, f"{outdir}/tables/nevts_withCut_prefit_{sqrtS}.tex")
                 print("\n\n\n\n")
                 # postfit 
-                outputs = FormatTable(nevts_postfit, caption=f"Event yield at {sqrtS}", label = f"tab:nevts_postfit_{sqrtS}")
+                outputs = FormatTable(nevts_postfit)
                 print(outputs)
                 WriteOutputToText(outputs, f"{outdir}/tables/nevts_postfit_{sqrtS}.tex")
                 print("\n\n\n\n")
-                outputs = FormatTable(nevts_withCut_postfit, caption=f"Event yield at {sqrtS} with cut", label = f"tab:nevts_withCut_postfit_{sqrtS}")
+                outputs = FormatTable(nevts_withCut_postfit)
                 print(outputs)
                 WriteOutputToText(outputs, f"{outdir}/tables/nevts_withCut_postfit_{sqrtS}.tex")
                 print("\n\n\n\n")
                 # impacts
-                outputs = FormatTable(impacts, caption=f"Systematic uncertainties in percentage at {sqrtS}", label = f"tab:impacts_{sqrtS}", precision=2)
+                outputs = FormatTable(impacts, precision=2)
                 print(outputs)
                 WriteOutputToText(outputs, f"{outdir}/tables/impacts_{sqrtS}.tex")
 
@@ -219,7 +228,7 @@ if not doDifferential:
                 impacts['WOverZ']   = DumpGroupImpacts(filename, "sqrtS_WZRatio_ratio_doubleratiometaratio",     "nuisance_group_impact_doubleratiometapois")
                 impacts['WpOverWm'] = DumpGroupImpacts(filename, "sqrtS_WchgRatio_ratio_doubleratiometaratio",   "nuisance_group_impact_doubleratiometapois")
 
-                outputs = FormatTable(impacts, caption=f"Systematic uncertainties in percentage for the cross section ratios between 13TeV and 5TeV", label = f"tab:impacts_sqrtS_mT{idx}", precision=2)
+                outputs = FormatTable(impacts, precision=2)
                 print(outputs)
                 WriteOutputToText(outputs, f"{outdir}/tables/impacts_sqrtS_mT{idx}.tex")
 

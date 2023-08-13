@@ -103,14 +103,15 @@ def FormatOutputForWZ(istring: str):
     sysmaps['lumi'] = 'Lumi'
     sysmaps['recoil'] = 'Recoil'
     sysmaps['QCDbkg'] = 'Bkg QCD'
-    sysmaps['effstat'] = 'Efficiency Stat.'
+    sysmaps['effstat'] = 'Efficiency stat'
     sysmaps['prefire'] = 'Prefire'
-    sysmaps['QCDscale'] = 'QCD Scale'
-
-    sysmaps['effsys'] = 'Efficiency Syst.'
+    sysmaps['QCDscale'] = 'QCD scale'
+    sysmaps['effsys'] = 'Efficiency syst'
     sysmaps['pdfalphaS'] = 'PDF + $\\alpha_\\mathrm{S}$'
-    sysmaps['mcsec'] = 'MC Norm'
-    
+    sysmaps['mcsec'] = 'EWK+t$\\bar{\\mathrm{t}}$ cross section'
+    sysmaps['QCDsys'] = 'QCD multijet syst'
+    sysmaps['QCDstat'] = 'QCD multijet stat'
+    sysmaps['binByBinStat'] = 'MC sim. stat'
     sysmaps['resummFSR'] = "Resum. + FSR"
     
     xsecNames = {}

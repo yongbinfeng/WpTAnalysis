@@ -24,11 +24,14 @@ relPosX    = 0.045
 relPosY    = 0.035
 relExtraDY = 1.2
 
-extraOverCmsTextSize  = 0.72/0.75
+#extraOverCmsTextSize  = 0.72/0.75
+extraOverCmsTextSize = 0.76
 
 #lumi_13TeV = "20.1 fb^{-1}"
 lumi_13TeV = "200.9 pb^{-1}"
+lumi_13TeV = "201 pb^{-1}"
 lumi_5TeV = "298.0 pb^{-1}"
+lumi_5TeV = "298 pb^{-1}"
 lumi_8TeV  = "19.7 fb^{-1}" 
 lumi_7TeV  = "5.1 fb^{-1}"
 lumi_sqrtS = ""
@@ -116,6 +119,8 @@ def CMS_lumi(pad,  iPeriod,  iPosX, plotCMS = True):
     latex.SetTextFont(42)
     latex.SetTextAlign(31) 
     latex.SetTextSize(lumiTextSize*t)    
+    
+    print("cmsText ", cmsText)
 
     latex.DrawLatex(1-r,1-t+lumiTextOffset*t,lumiText)
 
@@ -123,19 +128,22 @@ def CMS_lumi(pad,  iPeriod,  iPosX, plotCMS = True):
         latex.SetTextFont(cmsTextFont)
         latex.SetTextAlign(11) 
         latex.SetTextSize(cmsTextSize*t)    
+        print("l, t, lumitextoffset*t: ", l, t, lumiTextOffset*t)
+        print("l, 1-t+lumiTextOffset*t, cmsText: ", l, 1-t+lumiTextOffset*t, cmsText)
         latex.DrawLatex(l,1-t+lumiTextOffset*t,cmsText)
   
     pad.cd()
 
     posX_ = 0
     if( iPosX%10<=1 ):
-        posX_ =   l + relPosX*(1-l-r)
+        posX_ =   l + relPosX*(1+l+r) + 0.01
     elif( iPosX%10==2 ):
         posX_ =  l + 0.5*(1-l-r)
     elif( iPosX%10==3 ):
         posX_ =  1-r - relPosX*(1-l-r)
 
     posY_ = 1-t - relPosY*(1-t-b)
+    print("out of frame: ", outOfFrame)
 
     if( not outOfFrame ):
         if( drawLogo ):
@@ -161,16 +169,23 @@ def CMS_lumi(pad,  iPeriod,  iPosX, plotCMS = True):
             latex.SetTextFont(extraTextFont)
             latex.SetTextAlign(align_)
             latex.SetTextSize(extraTextSize*t)
-            latex.DrawLatex(posX_, posY_- relExtraDY*cmsTextSize*t, extraText)
+            print("Draw extra Text")
+            #latex.DrawLatex(posX_, posY_- relExtraDY*cmsTextSize*t, extraText)
+            latex.DrawLatex(posX_ + relPosX*(1+l+r) * 2 + 0.02, posY_-0.015, extraText)            
     elif( writeExtraText ):
         if( iPosX==0):
             #posX_ =   l +  relPosX*(1-l-r)
-            posX_ = l 
+            posX_ =  l +  relPosX*(1+l + r) + 0.02
+            #posX_ = l 
             posY_ =   1-t+lumiTextOffset*t
 
         latex.SetTextFont(extraTextFont)
         latex.SetTextSize(extraTextSize*t)
         latex.SetTextAlign(align_)
+        print("l, relPosX, r: ", l, relPosX, r)
+        print("posX_, posY_, extraText: ", posX_, posY_, extraText)
+        #latex.DrawLatex(posX_, posY_, extraText)
+        print("Draw extra Text!!!! Out of frame")
         latex.DrawLatex(posX_, posY_, extraText)      
 
     pad.Update()

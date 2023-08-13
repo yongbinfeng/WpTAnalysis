@@ -208,14 +208,14 @@ def MakeDataMCPlot(ifilename: str, channel: str, bins: np.array, suffix: str, sh
         outputname = f"histo_zjets_{channel}_{suffix}"
     yrmin = yrmin if doPostfit else 0.89
     yrmax = yrmax if doPostfit else 1.11
-    drawconfigs = DrawConfig(xmin = bins.min(), xmax = bins.max(), xlabel = xlabel, ymin = 0, ymax = ymaxs[channel] / (int(nbins/36)+1), ylabel = "Events / GeV", outputname = outdir + "/" + outputname, dology=False, addOverflow=False, addUnderflow=False, yrmin=yrmin, yrmax=yrmax, yrlabel = "Data / Pred")
+    drawconfigs = DrawConfig(xmin = bins.min(), xmax = bins.max(), xlabel = xlabel, ymin = 0, ymax = ymaxs[channel] / (int(nbins/36)+1), ylabel = "Events / GeV", outputname = outdir + "/" + outputname, dology=False, addOverflow=False, addUnderflow=False, yrmin=yrmin, yrmax=yrmax, yrlabel = "Data / Pred", legendPos = [0.92, 0.87, 0.67, 0.54])
 
     if dology:
         drawconfigs.dology = True
         drawconfigs.ymin = 1.0
         drawconfigs.ymax = drawconfigs.ymax * 1e2
 
-    DrawHistos( [hdata, hs_gmc], ["Data", siglabels[channel], "EWK", "t#bar{t}", "QCD"], drawconfigs.xmin, drawconfigs.xmax, drawconfigs.xlabel, drawconfigs.ymin, drawconfigs.ymax, drawconfigs.ylabel, drawconfigs.outputname, dology=drawconfigs.dology, dologx=drawconfigs.dologx, showratio=drawconfigs.showratio, yrmax = drawconfigs.yrmax, yrmin = drawconfigs.yrmin, yrlabel = drawconfigs.yrlabel, donormalize=drawconfigs.donormalize, ratiobase=drawconfigs.ratiobase, legendPos = drawconfigs.legendPos, redrawihist = drawconfigs.redrawihist, extraText = drawconfigs.extraText, noCMS = drawconfigs.noCMS, addOverflow = drawconfigs.addOverflow, addUnderflow = drawconfigs.addUnderflow, nMaxDigits = drawconfigs.nMaxDigits, hratiopanel=hratio, drawoptions=['PE', 'HIST same'], showpull=showpull, hpulls=[hpull], W_ref = 600 * int(nbins/36+1), is5TeV = is5TeV) 
+    DrawHistos( [hdata, hs_gmc], ["Data", siglabels[channel], "Electroweak", "t#bar{t}", "QCD multijet"], drawconfigs.xmin, drawconfigs.xmax, drawconfigs.xlabel, drawconfigs.ymin, drawconfigs.ymax, drawconfigs.ylabel, drawconfigs.outputname, dology=drawconfigs.dology, dologx=drawconfigs.dologx, showratio=drawconfigs.showratio, yrmax = drawconfigs.yrmax, yrmin = drawconfigs.yrmin, yrlabel = drawconfigs.yrlabel, donormalize=drawconfigs.donormalize, ratiobase=drawconfigs.ratiobase, legendPos = drawconfigs.legendPos, redrawihist = drawconfigs.redrawihist, extraText = drawconfigs.extraText, addOverflow = drawconfigs.addOverflow, addUnderflow = drawconfigs.addUnderflow, nMaxDigits = drawconfigs.nMaxDigits, hratiopanel=hratio, drawoptions=['PE', 'HIST same'], showpull=showpull, hpulls=[hpull], W_ref = 600 * int(nbins/36+1), is5TeV = is5TeV, doPAS = True, outofFrame=False) 
 
     return nevts, nevts_withCut
 
