@@ -35,48 +35,59 @@ Energy              Z                                 W-                        
 
 """
 xsecs_Z_ppbar = OrderedDict()
-xsecs_Z_ppbar[500] = (49.0, 0., 0.)
-xsecs_Z_ppbar[700] = (81.3, 0., 0.)
-xsecs_Z_ppbar[1000] = (123.0, 0., 0.)
-xsecs_Z_ppbar[1400] = (176.0, 0., 0.)
-xsecs_Z_ppbar[3000] = (393.0, 0., 0.)
+xsecs_Z_ppbar[500] = (50.7, 0., 0.)
+xsecs_Z_ppbar[700] = (84.1, 0., 0.)
+xsecs_Z_ppbar[1000] = (128.8, 0., 0.)
+xsecs_Z_ppbar[1400] = (184.0, 0., 0.)
+xsecs_Z_ppbar[2000] = (268.0, 0., 0.)
+xsecs_Z_ppbar[3000] = (412.5, 0., 0.)
 
 xsecs_Winc_ppbar = OrderedDict()
-xsecs_Winc_ppbar[500] = (509.0, 0., 0.)
-xsecs_Winc_ppbar[700] = (839.0, 0., 0.)
-xsecs_Winc_ppbar[1000] = (1290.0, 0., 0.)
-xsecs_Winc_ppbar[1400] = (1870.0, 0., 0.)
-xsecs_Winc_ppbar[3000] = (4270.0, 0., 0.)
+xsecs_Winc_ppbar[500] = (253.59 * 2.0, 0., 0.)
+xsecs_Winc_ppbar[700] = (421*2, 0., 0.)
+xsecs_Winc_ppbar[1000] = (652.4*2, 0., 0.)
+xsecs_Winc_ppbar[1400] = (949.2*2, 0., 0.)
+xsecs_Winc_ppbar[2000] = (1393*2, 0., 0.)
+xsecs_Winc_ppbar[3000] = (2155.0*2, 0., 0.)
 
 xsecs_Z_pp = OrderedDict()
-xsecs_Z_pp[3000] = (338.0, 0., 0.)
-xsecs_Z_pp[5000] = (639.0, 0., 0.)
-xsecs_Z_pp[7000] = (946.0, 0., 0.)
-xsecs_Z_pp[8000] = (1100.0, 0., 0.)
-xsecs_Z_pp[10000] = (1410.0, 0., 0.)
-xsecs_Z_pp[13000] = (1870.0, 0., 0.)
-xsecs_Z_pp[14000] = (2020.0, 0., 0.)
-xsecs_Z_pp[20000] = (2920.0, 0., 0.)
+xsecs_Z_pp[2000] = (205.3, 0., 0.)
+xsecs_Z_pp[3000] = (356.9, 0., 0.)
+xsecs_Z_pp[4000] = (513.3, 0., 0.)
+xsecs_Z_pp[5000] = (671.8, 0., 0.)
+xsecs_Z_pp[6000] = (831.4, 0., 0.)
+xsecs_Z_pp[7000] = (991.2, 0., 0.)
+xsecs_Z_pp[8000] = (1151.0, 0., 0.)
+xsecs_Z_pp[10000] = (1470.0, 0., 0.)
+xsecs_Z_pp[13000] = (1946.0, 0., 0.)
+xsecs_Z_pp[14000] = (2100.0, 0., 0.)
+xsecs_Z_pp[20000] = (3026.0, 0., 0.)
 
 xsecs_Wp_pp = OrderedDict()
-xsecs_Wp_pp[3000] = (2390.0, 0., 0.)
-xsecs_Wp_pp[5000] = (4540.0, 0., 0.)
-xsecs_Wp_pp[7000] = (6070.0, 0., 0.)
-xsecs_Wp_pp[8000] = (6960.0, 0., 0.)
-xsecs_Wp_pp[10000] = (8730.0, 0., 0.)
-xsecs_Wp_pp[13000] = (11330.0, 0., 0.)
-xsecs_Wp_pp[14000] = (12170.0, 0., 0.)
-xsecs_Wp_pp[20000] = (17180.0, 0., 0.)
+xsecs_Wp_pp[2000] = (1523.0, 0., 0.)
+xsecs_Wp_pp[3000] = (2347.0, 0., 0.)
+xsecs_Wp_pp[4000] = (3433.0, 0., 0.)
+xsecs_Wp_pp[5000] = (4375.0, 0., 0.)
+xsecs_Wp_pp[6000] = (5307.0, 0., 0.)
+xsecs_Wp_pp[7000] = (6228.0, 0., 0.)
+xsecs_Wp_pp[8000] = (7139.0, 0., 0.)
+xsecs_Wp_pp[10000] = (8937.0, 0., 0.)
+xsecs_Wp_pp[13000] = (11614.0, 0., 0.)
+xsecs_Wp_pp[14000] = (12460.0, 0., 0.)
+xsecs_Wp_pp[20000] = (17387.0, 0., 0.)
 
 xsecs_Wm_pp = OrderedDict()
-xsecs_Wm_pp[3000] = (1450.0, 0., 0.)
-xsecs_Wm_pp[5000] = (2810.0, 0., 0.)
-xsecs_Wm_pp[7000] = (4190.0, 0., 0.)
-xsecs_Wm_pp[8000] = (4890.0, 0., 0.)
-xsecs_Wm_pp[10000] = (6290.0, 0., 0.)
-xsecs_Wm_pp[13000] = (8370.0, 0., 0.)
-xsecs_Wm_pp[14000] = (9060.0, 0., 0.)
-xsecs_Wm_pp[20000] = (13150.0, 0., 0.)
+xsecs_Wm_pp[2000] = (832.3, 0., 0.)
+xsecs_Wm_pp[3000] = (1485.0, 0., 0.)
+xsecs_Wm_pp[4000] = (2171.0, 0., 0.)
+xsecs_Wm_pp[5000] = (2871.0, 0., 0.)
+xsecs_Wm_pp[6000] = (3577.0, 0., 0.)
+xsecs_Wm_pp[7000] = (4287.0, 0., 0.)
+xsecs_Wm_pp[8000] = (4999.0, 0., 0.)
+xsecs_Wm_pp[10000] = (6411.0, 0., 0.)
+xsecs_Wm_pp[13000] = (8537.0, 0., 0.)
+xsecs_Wm_pp[14000] = (9252.0, 0., 0.)
+xsecs_Wm_pp[20000] = (13413.0, 0., 0.)
 
 xsecs_Winc_pp = OrderedDict()
 for key in xsecs_Wp_pp:
@@ -107,7 +118,7 @@ def ExpXsec2TGraph(xsecs, markerstyle = 20, color = 1):
     errs = np.array(errs, dtype='d')
     g = ROOT.TGraphErrors(n, sqrtSs, vals, np.zeros(n, dtype='d'), errs)
     g.SetMarkerColor(color)
-    g.SetLineWidth(2)
+    g.SetLineWidth(1)
     g.SetLineColor(color)
     g.SetMarkerStyle(markerstyle)
     g.SetMarkerSize(1.5)
@@ -135,7 +146,7 @@ g_CMS_13TeV = ExpXsec2TGraph(xsecs_CMS_13TeV, color = 2, markerstyle = 43)
 g_CMS_5TeV = ExpXsec2TGraph(xsecs_CMS_5TeV, color = 2, markerstyle = 45)
 
 toDraws += [g_CMS_13TeV]
-drawoptions += ["PE"]
+drawoptions += ["PZ"]
 legends += [f"CMS, {xsecs_CMS_13TeV.GetLegend()}"]
 legendoptions += ["P"]
 
@@ -143,7 +154,7 @@ g_CMS_8TeV = ExpXsec2TGraph(xsecs_CMS_8TeV)
 g_CMS_7TeV = ExpXsec2TGraph(xsecs_CMS_7TeV, color = 1, markerstyle = 24)
 
 toDraws += [g_CMS_8TeV, g_CMS_7TeV]
-drawoptions += ["PE", "PE"]
+drawoptions += ["PZ", "PZ"]
 legendoptions += ["P", "P"]
 legends += [f"CMS, {xsecs_CMS_8TeV.GetLegend()}", f"CMS, {xsecs_CMS_7TeV.GetLegend()}"]
 
@@ -152,15 +163,27 @@ g_ATLAS_7TeV = ExpXsec2TGraph(xsecs_ATLAS_7TeV, color = 1, markerstyle = 41)
 
 g_CMS_5TeV = ExpXsec2TGraph(xsecs_CMS_5TeV, color = 2, markerstyle = 45)
 toDraws += [g_CMS_5TeV]
-drawoptions += ["PE"]
+drawoptions += ["PZ"]
 legends += [f"CMS, {xsecs_CMS_5TeV.GetLegend()}"]
+legendoptions += ["P"]
+
+g_CMS_2760GeV_2 = ExpXsec2TGraph(xsecs_CMS_2760GeV_2, color = 1, markerstyle = 47)
+toDraws += [g_CMS_2760GeV_2]
+drawoptions += ["PZ"]
+legends += [f"CMS, {xsecs_CMS_2760GeV_2.GetLegend()}"]
+legendoptions += ["P"]
+
+g_CMS_2760GeV = ExpXsec2TGraph(xsecs_CMS_2760GeV, color = 1, markerstyle = 46)
+toDraws += [g_CMS_2760GeV]
+drawoptions += ["PZ"]
+legends += [f"CMS, {xsecs_CMS_2760GeV.GetLegend()}"]
 legendoptions += ["P"]
 
 g_CDF_Run2 = ExpXsec2TGraph(xsecs_CDF_Run2, color = 1, markerstyle = 21)
 g_D0_Run1 = ExpXsec2TGraph(xsecs_D0_Run1, color = 1, markerstyle = 25)
 
 toDraws += [g_CDF_Run2, g_D0_Run1]
-drawoptions += ["PE", "PE"]
+drawoptions += ["PZ", "PZ"]
 legendoptions += ["P", "P"]
 legends += [f"CDF, {xsecs_CDF_Run2.GetLegend()}", f"D0, {xsecs_D0_Run1.GetLegend()}"]
 
@@ -172,7 +195,7 @@ g_UA1 = ExpXsec2TGraph(xsecs_UA1, color = 1, markerstyle = 32)
 xsecs_UA1.sqrts = xsecs_UA1.sqrts + 0.035
 
 toDraws += [g_UA2, g_UA1]
-drawoptions += ["PE", "PE"]
+drawoptions += ["PZ", "PZ"]
 legendoptions += ["P", "P"]
 legends += [f"UA2, {xsecs_UA2.GetLegend()}", f"UA1, {xsecs_UA1.GetLegend()}"]
 
@@ -223,7 +246,7 @@ for pos, ch in ylabels.items():
     txts.append(txt_)
 
 
-DrawHistos(toDraws, legends, 0.3, 48, "Center-of-mass energy [TeV]", 20, 2e5, "#sigma x B [pb]", "xsec", dologx=True, W_ref = 800, H_ref = 600, noCMSLumi=True, additionalToDraw = [Theory, ppbar, pp] + txts, drawoptions = drawoptions, legendoptions = legendoptions, legendPos = [0.18, 0.59, 0.5, 0.91], legendTextSize = 0.028, nolabel = True)
+DrawHistos(toDraws, legends, 0.3, 48, "Center-of-mass energy [TeV]", 20, 3e5, "#sigma x B [pb]", "xsec", dologx=True, W_ref = 800, H_ref = 600, noCMSLumi=True, additionalToDraw = [Theory, ppbar, pp] + txts, drawoptions = drawoptions, legendoptions = legendoptions, legendPos = [0.18, 0.55, 0.5, 0.91], legendTextSize = 0.028, nolabel = True)
 
 
 # CMS only
@@ -257,7 +280,7 @@ for pos, ch in ylabels.items():
     txt_.SetText(23, ytxt_, ch)
     txts2.append(txt_)
     
-Theory2 = ROOT.TPaveText(5.2, 5e4, 27., 3e5)
+Theory2 = ROOT.TPaveText(4.6, 5e4, 27., 3e5)
 Theory2.AddText("Theory: NNLO, DYTURBO and NNPDF 3.1 PDFs")
 Theory2.SetTextAlign(12)
 Theory2.SetFillColor(4000)
@@ -265,4 +288,4 @@ Theory2.SetTextColor(4)
 Theory2.SetFillColor(0)
 Theory2.SetBorderSize(0)
 
-DrawHistos(toDraws, legends, 2, 29, "Center-of-mass energy [TeV]", 1.1e2, 3e5, "#sigma x B [pb]", "xsec_CMS_Only_PAS", dologx=True, W_ref = 800, H_ref = 600, noLumi=True, additionalToDraw = [Theory2] + txts2, drawoptions = drawoptions, legendoptions = legendoptions, legendPos = [0.18, 0.69, 0.5, 0.91], legendTextSize = 0.028, doPAS = True, nolabel = True, noSqrtS=True)
+DrawHistos(toDraws, legends, 1.5, 29, "Center-of-mass energy [TeV]", 1.1e2, 3e5, "#sigma x B [pb]", "xsec_CMS_Only_PAS", dologx=True, W_ref = 800, H_ref = 600, noLumi=True, additionalToDraw = [Theory2] + txts2, drawoptions = drawoptions, legendoptions = legendoptions, legendPos = [0.18, 0.64, 0.5, 0.91], legendTextSize = 0.028, doPAS = True, nolabel = True, noSqrtS=True)

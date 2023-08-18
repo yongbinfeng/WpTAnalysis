@@ -8,7 +8,7 @@ import re
 import copy
 import math
 
-def roundToError(values):
+def findPrecision(values):
     err = max(values[1:])
     if err!= 0:
         precision = int(math.log10(float(f"{err:.2g}")))-1
@@ -21,6 +21,11 @@ def roundToError(values):
     elif precision >= 0:
         # err > 10.0
         isInt = True 
+    return precision, isInt
+
+def roundToError(values, precision = None, isInt = None):
+    if precision == None:
+        precision, isInt = findPrecision(values)
     values_new = []
     for val in values:
         if not isInt:
@@ -95,24 +100,27 @@ def FormatOutputForWZ(istring: str):
     procmaps['Measured'] = 'Data'
     procmaps['data'] = 'Data'
     procmaps['sig'] = "Signal"
-    procmaps['ewk'] = "EWK"
-    procmaps['qcd'] = "QCD"
+    procmaps['ewk'] = "Electroweak"
+    procmaps['qcd'] = "QCD multijet"
     procmaps['ttbar'] = "$t\\bar{t}$"
 
     sysmaps = {}
     sysmaps['lumi'] = 'Lumi'
-    sysmaps['recoil'] = 'Recoil'
+    sysmaps['recoil'] = 'Hadronic recoil calibration'
     sysmaps['QCDbkg'] = 'Bkg QCD'
-    sysmaps['effstat'] = 'Efficiency stat'
-    sysmaps['prefire'] = 'Prefire'
-    sysmaps['QCDscale'] = 'QCD scale'
-    sysmaps['effsys'] = 'Efficiency syst'
+    sysmaps['effstat'] = 'Efficiency (stat)'
+    sysmaps['prefire'] = 'Trigger prefire correction'
+    sysmaps['qcdscale'] = '$\mu_{R}$ and $\mu_{F}$ scales'
+    sysmaps['effsys'] = 'Efficiency (syst)'
     sysmaps['pdfalphaS'] = 'PDF + $\\alpha_\\mathrm{S}$'
     sysmaps['mcsec'] = 'EWK+t$\\bar{\\mathrm{t}}$ cross section'
-    sysmaps['QCDsys'] = 'QCD multijet syst'
-    sysmaps['QCDstat'] = 'QCD multijet stat'
+    sysmaps['qcdsys'] = 'QCD multijet (syst)'
+    sysmaps['qcdstat'] = 'QCD multijet (stat)'
     sysmaps['binByBinStat'] = 'MC sim. stat'
     sysmaps['resummFSR'] = "Resum. + FSR"
+    sysmaps['QCDsys'] = sysmaps['qcdsys']
+    sysmaps['QCDstat'] = sysmaps['qcdstat']
+    sysmaps['QCDscale'] = sysmaps['qcdscale']
     
     xsecNames = {}
     xsecNames['xsec'] = '$\\sigma$'
@@ -131,11 +139,11 @@ def FormatOutputForWZ(istring: str):
     for key in labelmaps.keys():
         istring = istring.replace(key, labelmaps[key])
     
-    for key in procmaps.keys():
-        istring = istring.replace(key, procmaps[key])
-
     for key in sysmaps.keys():
         istring = istring.replace(key, sysmaps[key])
+        
+    for key in procmaps.keys():
+        istring = istring.replace(key, procmaps[key])
         
     for key in xsecNames.keys():
         istring = istring.replace(key, xsecNames[key])
@@ -150,10 +158,18 @@ def FormatTable(pdict: str, columns: list = None, precision: int=1, escape: bool
     results = copy.deepcopy(pdict)
     for bkey, bval in results.items():
         print("bkey ", bkey)
+        # loop over results first; find the lowest precision
+        vprecision = -100
+        visInt = False
+        for key, val in bval.items():
+            if type(val) is tuple:
+                vtmp_precision, vtmp_isInt = findPrecision(val)
+                vprecision = max(vprecision, vtmp_precision)
+                visInt = visInt or vtmp_isInt
         for key, val in bval.items():
             print("key ", key)
             if type(val) is tuple:
-                rval = roundToError(val)
+                rval = roundToError(val, vprecision, visInt)
                 if key == 'Measured':
                     if not "Ratio" in bkey and "Over" not in bkey:
                         val = f"{rval[0]}\pm{rval[1]}_\mathrm{{stat}}\pm{rval[2]}_\mathrm{{syst}}\pm{rval[3]}_\mathrm{{lum}}"
@@ -175,6 +191,9 @@ def FormatTable(pdict: str, columns: list = None, precision: int=1, escape: bool
     #output = df.to_latex(caption = caption, label = label)
     output = df.to_latex(escape = escape)
     output = output.replace('\\toprule', '\\hline').replace('\\midrule', '\\hline').replace('\\bottomrule','\\hline').replace('\\textbackslash pm', '\\pm').replace("\$", "$")
+    
+    
+    print("OUtput before Format: ", output)
 
     output = FormatOutputForWZ(output)
 

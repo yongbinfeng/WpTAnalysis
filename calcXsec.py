@@ -4,11 +4,11 @@ from collections import OrderedDict
 import math
 from CMSPLOTS.myFunction import DrawHistos
 from modules.postFitScripts import GetPOIValue
-from modules.Utils import roundToError
+from modules.Utils import roundToError, findPrecision
 from copy import deepcopy
 import sys
 
-doFiducial = False
+doFiducial = True
 doElectron = False
 doMuon = False
 
@@ -297,45 +297,6 @@ outputs = FormatTable(dict2Table([results['sqrtS_ratios'], results['sqrtS_double
 print(outputs)
 WriteOutputToText(outputs, f"{outdir}/tables/results_sqrtS_all.tex")
 
-def DrawCompGraph(xsecs_diffs, outputname, ymin = -0.95, ymax = 1.05, is5TeV = False, doCombineYear = False, canH = 600, canW=1200):
-    markers = [2, 3, 4, 5, 25, 26, 27]
-    colors = [3, 7, 4, 6, 9, 46]
-    tgraphs = OrderedDict()
-    
-    tgraphs["Measured"] = ROOT.TGraphErrors()
-    tgraphs["Measured"].SetFillColorAlpha(15, 0.5)
-    
-    for j,pdf in enumerate(pdfsets):
-        pdf = pdf.upper()
-        tgraphs[pdf] = ROOT.TGraphAsymmErrors()
-        tgraphs[pdf].SetMarkerStyle(markers[j])
-        tgraphs[pdf].SetMarkerSize(2.0)
-        tgraphs[pdf].SetMarkerColor(colors[j])
-        tgraphs[pdf].SetLineColor(colors[j])
-        tgraphs[pdf].SetLineWidth(2)
-    
-    i = 0    
-    binlabels = []
-    for ch in xsecs_diffs:
-        if "diff" not in ch: 
-            continue
-        tgraphs["Measured"].SetPoint(i, i + 1, xsecs_diffs[ch]["Measured"][0])
-        tgraphs["Measured"].SetPointError(i, 0.5, xsecs_diffs[ch]["Measured"][1])
-        binlabels.append(FormatROOTInput(ch.replace("_diff", "")))
-        for j, pdf in enumerate(pdfsets):
-            pdf = pdf.upper()
-            tgraphs[pdf].SetPoint(i, i + 1 + j * 0.1, xsecs_diffs[ch][pdf][0])
-            #tgraphs[pdf].SetPointError(i, 0., xsecs_diffs[ch][pdf][1])
-            tgraphs[pdf].SetPointEXlow(i, 0.)
-            tgraphs[pdf].SetPointEXhigh(i, 0.)
-            tgraphs[pdf].SetPointEYlow(i, xsecs_diffs[ch][pdf][1])
-            tgraphs[pdf].SetPointEYhigh(i, xsecs_diffs[ch][pdf][2])
-            #print("error ", ch, pdf, xsecs_diffs[ch][pdf][1])
-        i += 1
-            
-    DrawHistos(list(tgraphs.values()), list(tgraphs.keys()), 0.5, len(binlabels) + 0.5, "POIs", ymin, ymax, "ratio (Theory / Measured)", outputname, dology=False, binlabels = binlabels, drawoptions = ["E2"] + ["PE1"] * len(pdfsets), legendoptions = ["F"] + ["P"] * len(pdfsets), legendPos = [0.67, 0.7, 0.87, 0.9], is5TeV = is5TeV, doCombineYear = doCombineYear, canH = canH, canW = canW)
-    
-
 def DrawHorizontalCompGraph(xsecs_diffs, outputname, xmin = 0.95, xmax = 1.05, is5TeV = False, doCombineYear = False, canH = 600, canW=800, showXsecs = True, pdfsets_plot = ["NNPDF4.0"], poiname = "#sigma^{tot}"):
     markers = [21, 22, 23, 24, 25, 26, 27]
     colors = [4, 3, 7, 6, 9, 46]
@@ -398,6 +359,7 @@ def DrawHorizontalCompGraph(xsecs_diffs, outputname, xmin = 0.95, xmax = 1.05, i
         valTheory.SetTextColor(colors[0])
         valTheory.SetTextSize(0.03)
         valTheorys.append(valTheory)
+        
     
     for ch in xsecs_diffs:
         if "diff" not in ch: 
@@ -431,6 +393,17 @@ def DrawHorizontalCompGraph(xsecs_diffs, outputname, xmin = 0.95, xmax = 1.05, i
         
         if showXsecs:
             unit = " pb" if (not ("Over" in ch or "Ratio" in ch) and not doCombineYear) else ""
+            
+            # find the precision of the measured and theory values
+            # not optimal.
+            # ideally should directly use the table result instead
+            # but these are changed to strings for formatting...
+            valM = xsecs_diffs[ch.replace("_diff","")]["Measured"]
+            precisionM, isIntM = findPrecision(valM)
+            valT = xsecs_diffs[ch.replace("_diff","")][pdfsets_plot[0]]
+            precisionT, isIntT = findPrecision(valT)
+            precision = max(precisionM, precisionT)
+            isInt = isIntM or isIntT
         
             valMeasured = ROOT.TPaveText(0.58, (counts - i ) / (counts + 1.5) * 0.81 + .07, 0.94, (counts - i +0.38) / (counts+1.5)*0.81+0.07, "NDC")
             valMeasured.SetFillStyle(0)
@@ -438,7 +411,7 @@ def DrawHorizontalCompGraph(xsecs_diffs, outputname, xmin = 0.95, xmax = 1.05, i
             valMeasured.SetTextAlign(12)
             valMeasured.SetTextFont(42)
             val = xsecs_diffs[ch.replace("_diff","")]["Measured"]
-            rval = roundToError(val)
+            rval = roundToError(val, precision, isInt)
             #print("measured : ", val)
             if not "Ratio" in ch and "Over" not in ch:
                 valMeasured.AddText(f"{rval[0]}#pm{rval[1]}_{{stat}}#pm{rval[2]}_{{syst}}#pm{rval[3]}_{{lum}}{unit}")
@@ -454,7 +427,7 @@ def DrawHorizontalCompGraph(xsecs_diffs, outputname, xmin = 0.95, xmax = 1.05, i
             valTheory.SetTextAlign(12)
             valTheory.SetTextFont(42)
             val = xsecs_diffs[ch.replace("_diff","")][pdfsets_plot[0]]
-            rval = roundToError(val)
+            rval = roundToError(val, precision, isInt)
             #print("theory ", val)
             valTheory.AddText(f"{rval[0]}^{{+{rval[2]}}}_{{-{rval[1]}}}{unit}")
             valTheory.SetTextColor(colors[0])
@@ -475,8 +448,43 @@ def DrawHorizontalCompGraph(xsecs_diffs, outputname, xmin = 0.95, xmax = 1.05, i
     #headerText.AddText(header)
     #headerText.SetTextColor(ROOT.kBlack)
     #headerText.SetTextSize(0.035)
+    
+    # customized legends 
+    legends = []
+    legends_draw_options = []
+    # data
+    grLeg_Measured_0 = ROOT.TGraphErrors()
+    grLeg_Measured_0.SetFillColorAlpha(15, 0.6)
+    grLeg_Measured_0.SetFillStyle(1001)
+    grLeg_Measured_0.SetMarkerColor(15)
+    grLeg_Measured_0.SetMarkerStyle(1)
+    grLeg_Measured_0.SetPoint(0, xmin + 0.02, len(procNames) + 1.24)
+    grLeg_Measured_0.SetPointError(0, 0.005, 0.12)
+    grLeg_Measured_1 = ROOT.TGraphErrors()
+    grLeg_Measured_1.SetMarkerColor(2)
+    grLeg_Measured_1.SetMarkerStyle(1)
+    grLeg_Measured_1.SetLineColor(2)
+    grLeg_Measured_1.SetLineWidth(2)
+    grLeg_Measured_1.SetPoint(0, xmin + 0.02, len(procNames) + 1.24)
+    grLeg_Measured_1.SetPointError(0, 0, 0.12)
+    legends.append(grLeg_Measured_0)
+    legends.append(grLeg_Measured_1)
+    legends_draw_options.append("E2")
+    legends_draw_options.append("LZ")
+    
+    text_leg = OrderedDict()
+    text_leg["Measured"] = ROOT.TPaveText(0.125, 0.85, 0.15, 0.87, "NDC")
+    text_leg["Measured"].SetFillStyle(0)
+    text_leg["Measured"].SetBorderSize(0)
+    text_leg["Measured"].SetTextAlign(12)
+    text_leg["Measured"].SetTextFont(42)
+    text_leg["Measured"].AddText("Measured")
+    text_leg["Measured"].SetTextColor(ROOT.kBlack)
+    text_leg["Measured"].SetTextSize(0.03)
+    
+    DrawHistos(list(tgraphs.values()) + legends, list(tgraphs.keys())[1:], xmin, xmax, "Theory / Measured Ratio of " + poiname, 0.5, len(procNames) + 0.5 + 1.5, "", outputname, dology=False, drawoptions = ["E2"] + ["1PE"] * len(pdfsets_plot) + legends_draw_options, legendoptions = ["F"] + ["PLF"] * len(pdfsets_plot), legendPos = [0.25, 0.81, 0.57, 0.91], is5TeV = is5TeV, doCombineYear = doCombineYear, canH = canH, canW = canW, yndivisions=0, additionalToDraw=[theoLine]+splitLines+procNames+valMeasureds+valTheorys+list(text_leg.values()), legendNCols = 2, leftmargin=0.05, tickx=0, doPAS =True, legOffset = -1)
             
-    DrawHistos(list(tgraphs.values()), list(tgraphs.keys()), xmin, xmax, "Ratio (Theory / Measured) of " + poiname, 0.5, len(procNames) + 0.5 + 1.5, "", outputname, dology=False, drawoptions = ["E2"] + ["1PE"] * len(pdfsets_plot), legendoptions = ["F"] + ["PLF"] * len(pdfsets_plot), legendPos = [0.06, 0.80, 0.57, 0.9], is5TeV = is5TeV, doCombineYear = doCombineYear, canH = canH, canW = canW, yndivisions=0, additionalToDraw=[theoLine]+splitLines+procNames+valMeasureds+valTheorys, legendNCols = 3, leftmargin=0.05, tickx=0, doPAS =True)
+    #DrawHistos(list(tgraphs.values()), list(tgraphs.keys()), xmin, xmax, "Ratio (Theory / Measured) of " + poiname, 0.5, len(procNames) + 0.5 + 1.5, "", outputname, dology=False, drawoptions = ["E2"] + ["1PE"] * len(pdfsets_plot), legendoptions = ["F"] + ["PLF"] * len(pdfsets_plot), legendPos = [0.06, 0.80, 0.57, 0.9], is5TeV = is5TeV, doCombineYear = doCombineYear, canH = canH, canW = canW, yndivisions=0, additionalToDraw=[theoLine]+splitLines+procNames+valMeasureds+valTheorys, legendNCols = 3, leftmargin=0.05, tickx=0, doPAS =True)
     
 if doFiducial:
     poiname = "#sigma^{fid}"

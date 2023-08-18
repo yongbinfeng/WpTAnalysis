@@ -204,18 +204,21 @@ def MakeDataMCPlot(ifilename: str, channel: str, bins: np.array, suffix: str, sh
         outputname = f"histo_wjets_{channel}_{suffix}"
     else:
         # z's
-        xlabel = "m_{ll} [GeV]"
+        if "ee" in channel:
+            xlabel = "m_{e^{+}e^{-}} [GeV]"
+        else:
+            xlabel = "m_{#mu^{+}#mu^{-}} [GeV]"
         outputname = f"histo_zjets_{channel}_{suffix}"
     yrmin = yrmin if doPostfit else 0.89
     yrmax = yrmax if doPostfit else 1.11
-    drawconfigs = DrawConfig(xmin = bins.min(), xmax = bins.max(), xlabel = xlabel, ymin = 0, ymax = ymaxs[channel] / (int(nbins/36)+1), ylabel = "Events / GeV", outputname = outdir + "/" + outputname, dology=False, addOverflow=False, addUnderflow=False, yrmin=yrmin, yrmax=yrmax, yrlabel = "Data / Pred", legendPos = [0.92, 0.87, 0.67, 0.54])
+    drawconfigs = DrawConfig(xmin = bins.min(), xmax = bins.max(), xlabel = xlabel, ymin = 0, ymax = ymaxs[channel] / (int(nbins/36)+1), ylabel = "Events / GeV", outputname = outdir + "/" + outputname, dology=False, addOverflow=False, addUnderflow=False, yrmin=yrmin, yrmax=yrmax, yrlabel = "Data / Pred", legendPos = [0.92, 0.87, 0.67, 0.52])
 
     if dology:
         drawconfigs.dology = True
-        drawconfigs.ymin = 1.0
+        drawconfigs.ymin = 1.01
         drawconfigs.ymax = drawconfigs.ymax * 1e2
 
-    DrawHistos( [hdata, hs_gmc], ["Data", siglabels[channel], "Electroweak", "t#bar{t}", "QCD multijet"], drawconfigs.xmin, drawconfigs.xmax, drawconfigs.xlabel, drawconfigs.ymin, drawconfigs.ymax, drawconfigs.ylabel, drawconfigs.outputname, dology=drawconfigs.dology, dologx=drawconfigs.dologx, showratio=drawconfigs.showratio, yrmax = drawconfigs.yrmax, yrmin = drawconfigs.yrmin, yrlabel = drawconfigs.yrlabel, donormalize=drawconfigs.donormalize, ratiobase=drawconfigs.ratiobase, legendPos = drawconfigs.legendPos, redrawihist = drawconfigs.redrawihist, extraText = drawconfigs.extraText, addOverflow = drawconfigs.addOverflow, addUnderflow = drawconfigs.addUnderflow, nMaxDigits = drawconfigs.nMaxDigits, hratiopanel=hratio, drawoptions=['PE', 'HIST same'], showpull=showpull, hpulls=[hpull], W_ref = 600 * int(nbins/36+1), is5TeV = is5TeV, doPAS = True, outofFrame=False) 
+    DrawHistos( [hdata, hs_gmc], ["Data", siglabels[channel], "Electroweak", "t#bar{t}", "QCD multijet"], drawconfigs.xmin, drawconfigs.xmax, drawconfigs.xlabel, drawconfigs.ymin, drawconfigs.ymax, drawconfigs.ylabel, drawconfigs.outputname, dology=drawconfigs.dology, dologx=drawconfigs.dologx, showratio=drawconfigs.showratio, yrmax = drawconfigs.yrmax, yrmin = drawconfigs.yrmin, yrlabel = drawconfigs.yrlabel, donormalize=drawconfigs.donormalize, ratiobase=drawconfigs.ratiobase, legendPos = drawconfigs.legendPos, redrawihist = drawconfigs.redrawihist, extraText = drawconfigs.extraText, addOverflow = drawconfigs.addOverflow, addUnderflow = drawconfigs.addUnderflow, nMaxDigits = drawconfigs.nMaxDigits, hratiopanel=hratio, drawoptions=['PE', 'HIST same'], showpull=showpull, hpulls=[hpull], W_ref = 600 * int(nbins/36+1), is5TeV = is5TeV, doPAS = True, outofFrame=False, legendTextSize = 0.03) 
 
     return nevts, nevts_withCut
 
@@ -354,7 +357,7 @@ def result2json(ifilename: str, poiname: str, ofilename: str, hname: str = "nuis
     with open(ofilename, 'w') as fp:
         json.dump(results, fp, indent=2)
     
-def DumpGroupImpacts(ifilename: str, poiname: str, hname = "nuisance_group_impact_mu"):
+def DumpGroupImpacts(ifilename: str, poiname: str, hname = "nuisance_group_impact_mu", includeStat: bool = False):
     """
     print out the grouped impacts
     """
@@ -373,10 +376,19 @@ def DumpGroupImpacts(ifilename: str, poiname: str, hname = "nuisance_group_impac
     assert ibinX >=0, "Can not find the POI {} in the postfit file {}. Please check.".format(poiname, ifilename)
 
     impacts = OrderedDict()
+    val_stat = 0.0
     for ibinY in range(1, himpact_grouped.GetNbinsY()+1):
         nuis = himpact_grouped.GetYaxis().GetBinLabel(ibinY)
-        impacts[nuis] = himpact_grouped.GetBinContent(ibinX, ibinY) * 100.0 / val_poi
-    impacts['Total'] = err_poi / val_poi * 100.0
+        val = himpact_grouped.GetBinContent(ibinX, ibinY) * 100.0 / val_poi
+        if not includeStat and nuis == 'stat':
+            # skip the data stat uncertainty in the systematic table
+            val_stat = val
+        else:
+            impacts[nuis] = val
+        #impacts[nuis] = himpact_grouped.GetBinContent(ibinX, ibinY) * 100.0 / val_poi
+    val_tot = err_poi / val_poi * 100.0
+    val_tot = math.sqrt(val_tot**2 - val_stat**2)
+    impacts['Total'] = val_tot
 
     # sort impacts, descending
     impacts = OrderedDict(sorted(list(impacts.items()), key=lambda x: abs(x[1]), reverse=True))
