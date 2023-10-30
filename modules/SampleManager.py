@@ -130,9 +130,7 @@ class Sample(object):
 
         self.DoZptReweighting()
         
-        self.xsecVal = None
-        if self.isMC:
-            self.__GetXSec()
+        self.xsecVals = OrderedDict()
 
         self._garbagerdfs = []
 
@@ -281,6 +279,7 @@ class Sample(object):
             if self.isWSR or self.isZSR:
                 self.rdf_org = self.rdf_org.Define(
                     "weight_WoVpt", f"evtWeight[0] * {self.fnorm}")
+            self.rdf_org = self.rdf_org.Define("scale1fbNorm", f"scale1fb / {self.nmcevt}") 
         else:
             self.rdf_org = self.rdf_org.Define("weight_WoVpt", "1.0")
 
@@ -341,17 +340,29 @@ class Sample(object):
             self.rdf = self.rdf.Define("ZptWeight", "1.")
         self.rdf = self.rdf.Define("weight_WVpt", "ZptWeight * weight_WoVpt")
 
-    def __GetXSec(self):
+    def GetXSec(self, selection = None):
         """
         return the cross section after the selections
         """
-        if self.xsecVal is None:
-            print(colored(f'Calculating cross section for sample {self.name}', 'blue'))
-            self.rdf = self.rdf.Define("scale1fbNorm", f"scale1fb / {self.nmcevt}") 
-            self.xsecVal = self.rdf.Sum("scale1fbNorm")
-            self.xsecValV = self.rdf.Sum("scale1fb")
-        else:
-            print(colored(f'Cross section already calcuated for sample {self.name}', 'red'))
+        if not self.isMC:
+            print(colored(f'Sample {self.name} is not MC, no cross section', 'red'))
+            sys.exit(1)
+            
+        if selection not in self.xsecVals:
+            print(colored(f'Calculating cross section for selection {selection} for sample {self.name}', 'blue'))
+            self.rdf_tmp = self.rdf.Define(f"xsec_{selection}", f"scale1fbNorm * {selection}")
+            self.xsecVals[selection] = self.rdf_tmp.Sum(f"xsec_{selection}")
+            self._garbagerdfs.append(self.rdf_tmp)
+            
+        return self.xsecVals[selection]
+            
+        #if self.xsecVal is None:
+        #    print(colored(f'Calculating cross section for sample {self.name}', 'blue'))
+        #    self.rdf = self.rdf.Define("scale1fbNorm", f"scale1fb / {self.nmcevt}") 
+        #    self.xsecVal = self.rdf.Sum("scale1fbNorm")
+        #    self.xsecValV = self.rdf.Sum("scale1fb")
+        #else:
+        #    print(colored(f'Cross section already calcuated for sample {self.name}', 'red'))
 
 
 class SampleManager(object):

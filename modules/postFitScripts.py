@@ -7,9 +7,12 @@ from collections import OrderedDict
 import json
 import re
 import numpy as np
+from ctypes import c_double
 
 from CMSPLOTS.myFunction import DrawHistos
 from modules.SampleManager import DrawConfig
+
+from data.FLAG import doPAS
 
 ROOT.gROOT.SetBatch(True)
 
@@ -156,19 +159,39 @@ def MakeDataMCPlot(ifilename: str, channel: str, bins: np.array, suffix: str, sh
     hqcd.SetLineColor(226)
 
     nevts = OrderedDict()
-    nevts['data'] = hdata.Integral()
-    nevts['sig'] = hsig.Integral()
-    nevts['ewk'] = hewk.Integral()
-    nevts['ttbar'] = httbar.Integral()
-    nevts['qcd'] = hqcd.Integral()
+    
+    err = c_double(0.0)
+    def GetIntegralAndError(h, binmin = -1, binmax = -1):
+        if binmin < 0:
+            binmin = 1
+        if binmax < 0:
+            binmax = h.GetNbinsX()
+        val = h.IntegralAndError(binmin, binmax, err)
+        return val, err.value
+    
+    #nevts['data'] = hdata.Integral()
+    #nevts['sig'] = hsig.Integral()
+    #nevts['ewk'] = hewk.Integral()
+    #nevts['ttbar'] = httbar.Integral()
+    #nevts['qcd'] = hqcd.Integral()
+    nevts['data'] = GetIntegralAndError(hdata)
+    nevts['sig'] = GetIntegralAndError(hsig)
+    nevts['ewk'] = GetIntegralAndError(hewk)
+    nevts['ttbar'] = GetIntegralAndError(httbar)
+    nevts['qcd'] = GetIntegralAndError(hqcd)
 
     nevts_withCut = OrderedDict()
     binmin = hdata.FindBin(mTCut)
-    nevts_withCut['data'] = hdata.Integral(binmin, hdata.GetNbinsX()+1)
-    nevts_withCut['sig'] = hsig.Integral(binmin, hsig.GetNbinsX()+1)
-    nevts_withCut['ewk'] = hewk.Integral(binmin, hewk.GetNbinsX()+1)
-    nevts_withCut['ttbar'] = httbar.Integral(binmin, httbar.GetNbinsX()+1)
-    nevts_withCut['qcd'] = hqcd.Integral(binmin, hqcd.GetNbinsX()+1)
+    #nevts_withCut['data'] = hdata.Integral(binmin, hdata.GetNbinsX()+1)
+    #nevts_withCut['sig'] = hsig.Integral(binmin, hsig.GetNbinsX()+1)
+    #nevts_withCut['ewk'] = hewk.Integral(binmin, hewk.GetNbinsX()+1)
+    #nevts_withCut['ttbar'] = httbar.Integral(binmin, httbar.GetNbinsX()+1)
+    #nevts_withCut['qcd'] = hqcd.Integral(binmin, hqcd.GetNbinsX()+1)
+    nevts_withCut['data'] = GetIntegralAndError(hdata, binmin, hdata.GetNbinsX()+1)
+    nevts_withCut['sig'] = GetIntegralAndError(hsig, binmin, hsig.GetNbinsX()+1)
+    nevts_withCut['ewk'] = GetIntegralAndError(hewk, binmin, hewk.GetNbinsX()+1)
+    nevts_withCut['ttbar'] = GetIntegralAndError(httbar, binmin, httbar.GetNbinsX()+1)
+    nevts_withCut['qcd'] = GetIntegralAndError(hqcd, binmin, hqcd.GetNbinsX()+1)
 
     hdata.SetMarkerStyle(20)
     hdata.SetMarkerSize(1)
@@ -218,7 +241,7 @@ def MakeDataMCPlot(ifilename: str, channel: str, bins: np.array, suffix: str, sh
         drawconfigs.ymin = 1.01
         drawconfigs.ymax = drawconfigs.ymax * 1e2
 
-    DrawHistos( [hdata, hs_gmc], ["Data", siglabels[channel], "Electroweak", "t#bar{t}", "QCD multijet"], drawconfigs.xmin, drawconfigs.xmax, drawconfigs.xlabel, drawconfigs.ymin, drawconfigs.ymax, drawconfigs.ylabel, drawconfigs.outputname, dology=drawconfigs.dology, dologx=drawconfigs.dologx, showratio=drawconfigs.showratio, yrmax = drawconfigs.yrmax, yrmin = drawconfigs.yrmin, yrlabel = drawconfigs.yrlabel, donormalize=drawconfigs.donormalize, ratiobase=drawconfigs.ratiobase, legendPos = drawconfigs.legendPos, redrawihist = drawconfigs.redrawihist, extraText = drawconfigs.extraText, addOverflow = drawconfigs.addOverflow, addUnderflow = drawconfigs.addUnderflow, nMaxDigits = drawconfigs.nMaxDigits, hratiopanel=hratio, drawoptions=['PE', 'HIST same'], showpull=showpull, hpulls=[hpull], W_ref = 600 * int(nbins/36+1), is5TeV = is5TeV, doPAS = True, outofFrame=False, legendTextSize = 0.03) 
+    DrawHistos( [hdata, hs_gmc], ["Data", siglabels[channel], "Electroweak", "t#bar{t}", "QCD multijet"], drawconfigs.xmin, drawconfigs.xmax, drawconfigs.xlabel, drawconfigs.ymin, drawconfigs.ymax, drawconfigs.ylabel, drawconfigs.outputname, dology=drawconfigs.dology, dologx=drawconfigs.dologx, showratio=drawconfigs.showratio, yrmax = drawconfigs.yrmax, yrmin = drawconfigs.yrmin, yrlabel = drawconfigs.yrlabel, donormalize=drawconfigs.donormalize, ratiobase=drawconfigs.ratiobase, legendPos = drawconfigs.legendPos, redrawihist = drawconfigs.redrawihist, extraText = drawconfigs.extraText, addOverflow = drawconfigs.addOverflow, addUnderflow = drawconfigs.addUnderflow, nMaxDigits = drawconfigs.nMaxDigits, hratiopanel=hratio, drawoptions=['PE', 'HIST same'], showpull=showpull, hpulls=[hpull], W_ref = 600 * int(nbins/36+1), is5TeV = is5TeV, doPAS = doPAS, outofFrame=False, legendTextSize = 0.03) 
 
     return nevts, nevts_withCut
 

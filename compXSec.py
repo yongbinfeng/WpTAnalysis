@@ -1,5 +1,6 @@
 import numpy as np
 from collections import OrderedDict
+from data.FLAG import doPAS
 
 """
 theory results
@@ -246,7 +247,7 @@ for pos, ch in ylabels.items():
     txts.append(txt_)
 
 
-DrawHistos(toDraws, legends, 0.3, 48, "Center-of-mass energy [TeV]", 20, 3e5, "#sigma x B [pb]", "xsec", dologx=True, W_ref = 800, H_ref = 600, noCMSLumi=True, additionalToDraw = [Theory, ppbar, pp] + txts, drawoptions = drawoptions, legendoptions = legendoptions, legendPos = [0.18, 0.55, 0.5, 0.91], legendTextSize = 0.028, nolabel = True)
+DrawHistos(toDraws, legends, 0.3, 48, "Center-of-mass energy [TeV]", 20, 3e5, "#sigma x B [pb]", "xsec", dologx=True, W_ref = 800, H_ref = 600, noLumi=True, additionalToDraw = [Theory, ppbar, pp] + txts, drawoptions = drawoptions, legendoptions = legendoptions, legendPos = [0.18, 0.55, 0.5, 0.91], legendTextSize = 0.028, doPAS = doPAS, nolabel = True, noSqrtS=True)
 
 
 # CMS only
@@ -288,4 +289,4 @@ Theory2.SetTextColor(4)
 Theory2.SetFillColor(0)
 Theory2.SetBorderSize(0)
 
-DrawHistos(toDraws, legends, 1.5, 29, "Center-of-mass energy [TeV]", 1.1e2, 3e5, "#sigma x B [pb]", "xsec_CMS_Only_PAS", dologx=True, W_ref = 800, H_ref = 600, noLumi=True, additionalToDraw = [Theory2] + txts2, drawoptions = drawoptions, legendoptions = legendoptions, legendPos = [0.18, 0.64, 0.5, 0.91], legendTextSize = 0.028, doPAS = True, nolabel = True, noSqrtS=True)
+DrawHistos(toDraws, legends, 1.5, 29, "Center-of-mass energy [TeV]", 1.1e2, 3e5, "#sigma x B [pb]", "xsec_CMS_Only_PAS", dologx=True, W_ref = 800, H_ref = 600, noLumi=True, additionalToDraw = [Theory2] + txts2, drawoptions = drawoptions, legendoptions = legendoptions, legendPos = [0.18, 0.64, 0.5, 0.91], legendTextSize = 0.028, doPAS = doPAS, nolabel = True, noSqrtS=True)

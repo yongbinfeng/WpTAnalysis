@@ -182,20 +182,20 @@ if not doDifferential:
 
                 ## print out the nevts pre and post fit information
                 # prefit
-                outputs = FormatTable(nevts_prefit)
+                outputs = FormatTable(nevts_prefit, isYield=True)
                 print(outputs)
                 WriteOutputToText(outputs, f"{outdir}/tables/nevts_prefit_{sqrtS}.tex")
                 print("\n\n\n\n")
-                outputs = FormatTable(nevts_withCut_prefit)
+                outputs = FormatTable(nevts_withCut_prefit, isYield=True)
                 print(outputs)
                 WriteOutputToText(outputs, f"{outdir}/tables/nevts_withCut_prefit_{sqrtS}.tex")
                 print("\n\n\n\n")
                 # postfit 
-                outputs = FormatTable(nevts_postfit)
+                outputs = FormatTable(nevts_postfit, isYield=True)
                 print(outputs)
                 WriteOutputToText(outputs, f"{outdir}/tables/nevts_postfit_{sqrtS}.tex")
                 print("\n\n\n\n")
-                outputs = FormatTable(nevts_withCut_postfit)
+                outputs = FormatTable(nevts_withCut_postfit, isYield=True)
                 print(outputs)
                 WriteOutputToText(outputs, f"{outdir}/tables/nevts_withCut_postfit_{sqrtS}.tex")
                 print("\n\n\n\n")

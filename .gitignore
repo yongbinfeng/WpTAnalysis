@@ -8,3 +8,6 @@ root/*
 inputs*
 *.bak
 backup/*
+*json
+forCombine*
+*log

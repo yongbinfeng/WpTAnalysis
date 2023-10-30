@@ -6,9 +6,10 @@ from CMSPLOTS.myFunction import DrawHistos
 from modules.postFitScripts import GetPOIValue
 from modules.Utils import roundToError, findPrecision
 from copy import deepcopy
+from data.FLAG import doPAS
 import sys
 
-doFiducial = True
+doFiducial = False
 doElectron = False
 doMuon = False
 
@@ -32,15 +33,15 @@ lumiUncs = {
 }
 
 if doFiducial:
-    f_fit = "forCombine_WithVpT/Fiducial/test0/commands/scripts/card_combined.root"
-    #f_fit = "forCombine_default/Fiducial/test0/commands/scripts/card_combined.root"
+    #f_fit = "forCombine_WithVpT/Fiducial/test0/commands/scripts/card_combined.root"
+    f_fit = "forCombine_default/Fiducial/test0/commands/scripts/card_combined.root"
     if doElectron:
         f_fit = "forCombine_default/Fiducial/test0/commands/scripts/card_e.root"
     elif doMuon:
         f_fit = "forCombine_default/Fiducial/test0/commands/scripts/card_mu.root"
 else:
-    f_fit = "forCombine_WithVpT/Inclusive/test0/commands/scripts/card_combined.root"
-f_fit_fid = "forCombine_WithVpT/Fiducial/test0/commands/scripts/card_combined.root"
+    f_fit = "forCombine_default/Inclusive/test0/commands/scripts/card_combined.root"
+f_fit_fid = "forCombine_default/Fiducial/test0/commands/scripts/card_combined.root"
 
 f_root = ROOT.TFile(f_fit)
 tree = f_root.Get("fitresults")
@@ -482,7 +483,7 @@ def DrawHorizontalCompGraph(xsecs_diffs, outputname, xmin = 0.95, xmax = 1.05, i
     text_leg["Measured"].SetTextColor(ROOT.kBlack)
     text_leg["Measured"].SetTextSize(0.03)
     
-    DrawHistos(list(tgraphs.values()) + legends, list(tgraphs.keys())[1:], xmin, xmax, "Theory / Measured Ratio of " + poiname, 0.5, len(procNames) + 0.5 + 1.5, "", outputname, dology=False, drawoptions = ["E2"] + ["1PE"] * len(pdfsets_plot) + legends_draw_options, legendoptions = ["F"] + ["PLF"] * len(pdfsets_plot), legendPos = [0.25, 0.81, 0.57, 0.91], is5TeV = is5TeV, doCombineYear = doCombineYear, canH = canH, canW = canW, yndivisions=0, additionalToDraw=[theoLine]+splitLines+procNames+valMeasureds+valTheorys+list(text_leg.values()), legendNCols = 2, leftmargin=0.05, tickx=0, doPAS =True, legOffset = -1)
+    DrawHistos(list(tgraphs.values()) + legends, list(tgraphs.keys())[1:], xmin, xmax, "Theory / Measured Ratio of " + poiname, 0.5, len(procNames) + 0.5 + 1.5, "", outputname, dology=False, drawoptions = ["E2"] + ["1PE"] * len(pdfsets_plot) + legends_draw_options, legendoptions = ["F"] + ["PLF"] * len(pdfsets_plot), legendPos = [0.25, 0.81, 0.57, 0.91], is5TeV = is5TeV, doCombineYear = doCombineYear, canH = canH, canW = canW, yndivisions=0, additionalToDraw=[theoLine]+splitLines+procNames+valMeasureds+valTheorys+list(text_leg.values()), legendNCols = 2, leftmargin=0.05, tickx=0, doPAS = doPAS, legOffset = -1)
             
     #DrawHistos(list(tgraphs.values()), list(tgraphs.keys()), xmin, xmax, "Ratio (Theory / Measured) of " + poiname, 0.5, len(procNames) + 0.5 + 1.5, "", outputname, dology=False, drawoptions = ["E2"] + ["1PE"] * len(pdfsets_plot), legendoptions = ["F"] + ["PLF"] * len(pdfsets_plot), legendPos = [0.06, 0.80, 0.57, 0.9], is5TeV = is5TeV, doCombineYear = doCombineYear, canH = canH, canW = canW, yndivisions=0, additionalToDraw=[theoLine]+splitLines+procNames+valMeasureds+valTheorys, legendNCols = 3, leftmargin=0.05, tickx=0, doPAS =True)
     

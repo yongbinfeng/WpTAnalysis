@@ -358,6 +358,8 @@ def main():
             f"lheweightS_{i}", f"lheweight[{i}] * self.nmcevt / self.nmcevts_varied[{i}]")
 
     vsamples = ["wl0", "wl1", "wl2", "wx0", "wx1", "wx2"]
+    if is5TeV:
+        vsamples = ["wlnu", "wx"]
     sampMan.DefineSpecificMCs("VpT", "genV.Pt()", sampnames=vsamples)
 
     theoryMaps = theoryUnc_13TeV_wjets if not is5TeV else theoryUnc_5TeV_wjets

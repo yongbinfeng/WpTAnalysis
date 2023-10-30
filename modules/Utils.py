@@ -151,7 +151,7 @@ def FormatOutputForWZ(istring: str):
     return istring
 
 
-def FormatTable(pdict: str, columns: list = None, precision: int=1, escape: bool = False, doTranspose = False):
+def FormatTable(pdict: str, columns: list = None, precision: int=1, escape: bool = False, doTranspose = False, isYield : bool = False):
     """
     given a dictionary, print the latex version of the table
     """
@@ -162,7 +162,10 @@ def FormatTable(pdict: str, columns: list = None, precision: int=1, escape: bool
         vprecision = -100
         visInt = False
         for key, val in bval.items():
-            if type(val) is tuple:
+            if isYield:
+                visInt = True
+                vprecision = 0
+            elif type(val) is tuple:
                 vtmp_precision, vtmp_isInt = findPrecision(val)
                 vprecision = max(vprecision, vtmp_precision)
                 visInt = visInt or vtmp_isInt
@@ -170,12 +173,17 @@ def FormatTable(pdict: str, columns: list = None, precision: int=1, escape: bool
             print("key ", key)
             if type(val) is tuple:
                 rval = roundToError(val, vprecision, visInt)
-                if key == 'Measured':
+                if key == 'data':
+                    val = f"{rval[0]}"
+                elif isYield: 
+                    val = f"{rval[0]}\pm{rval[1]}"
+                elif key == 'Measured':
                     if not "Ratio" in bkey and "Over" not in bkey:
                         val = f"{rval[0]}\pm{rval[1]}_\mathrm{{stat}}\pm{rval[2]}_\mathrm{{syst}}\pm{rval[3]}_\mathrm{{lum}}"
                     else:
                         val = f"{rval[0]}\pm{rval[1]}_\mathrm{{stat}}\pm{rval[2]}_\mathrm{{syst}}"
                 else:
+                    # theory predictions
                     val = f"{rval[0]}^{{+{rval[2]}}}_{{-{rval[1]}}}"
                 val = "$" + val +"$"
                 bval[key] = val
