@@ -74,22 +74,22 @@ def FormatROOTInput(istring: str):
     return istring
     
 
-def FormatOutputForWZ(istring: str):
+def FormatOutputForWZ(istring: str, isYield: bool = False):
     labelmaps = {}
-    labelmaps['muplus'] = '$\\mathrm{W}^{+}\\rightarrow\\mu^{+}\\nu$'
-    labelmaps['muminus'] = '$\\mathrm{W}^{-}\\rightarrow\\mu^{-}\\bar{\\nu}$'
-    labelmaps['mumu'] = '$\\mathrm{Z}\\rightarrow\\mu^{+}\\mu^{-}$'
-    labelmaps['ee'] = '$\\mathrm{Z}\\rightarrow e^{+}e^{-}$'
-    labelmaps['eplus'] = '$\\mathrm{W}^{+}\\rightarrow e^{+}\\nu$'
-    labelmaps['eminus'] = '$\\mathrm{W}^{-}\\rightarrow e^{-}\\bar{\\nu}$'
-    labelmaps['lepplus'] = '$\\mathrm{W}^{+}\\rightarrow \\ell^{+}\\nu$'
-    labelmaps['lepminus'] = '$\\mathrm{W}^{-}\\rightarrow \\ell^{-}\\bar{\\nu}$'
-    labelmaps['leplep'] = '$\\mathrm{Z}\\rightarrow \\ell^{+}\\ell^{-}$'
-    labelmaps['Winc'] = '$\\mathrm{W}^{\\pm}\\rightarrow \\ell^{\\pm}\\nu$'
-    labelmaps['WOverZ'] = '$\\mathrm{W}^{\pm}/\\mathrm{Z}$'
-    labelmaps['WpOverWm'] = '$\\mathrm{W}^{+}/\\mathrm{W}^{-}$'
-    labelmaps['WZRatio'] = '$\\mathrm{W}^{\pm}/\\mathrm{Z}$'
-    labelmaps['WchgRatio'] = '$\\mathrm{W}^{+}/\\mathrm{W}^{-}$'
+    labelmaps['muplus']    = '$\\PW^{+}\\rightarrow\\PGm^{+}\\PGn$'
+    labelmaps['muminus']   = '$\\PW^{-}\\rightarrow\\PGm^{-}\\PAGn$'
+    labelmaps['mumu']      = '$\\PZ\\rightarrow\\PGm^{+}\\PGm^{-}$'
+    labelmaps['ee']        = '$\\PZ\\rightarrow\\Pe^{+}\\Pe^{-}$'
+    labelmaps['eplus']     = '$\\PW^{+}\\rightarrow\\Pe^{+}\\PGn$'
+    labelmaps['eminus']    = '$\\PW^{-}\\rightarrow\\Pe^{-}\\PAGn$'
+    labelmaps['lepplus']   = '$\\PW^{+}\\rightarrow \\Pell^{+}\\PGn$'
+    labelmaps['lepminus']  = '$\\PW^{-}\\rightarrow \\Pell^{-}\\PAGn$'
+    labelmaps['leplep']    = '$\\PZ\\rightarrow \\Pell^{+}\\Pell^{-}$'
+    labelmaps['Winc']      = '$\\PW^{\\pm}\\rightarrow \\Pell^{\\pm}\\PGn$'
+    labelmaps['WOverZ']    = '$\\PW^{\pm}/\\PZ$'
+    labelmaps['WpOverWm']  = '$\\PW^{+}/\\PW^{-}$'
+    labelmaps['WZRatio']   = '$\\PW^{\pm}/\\PZ$'
+    labelmaps['WchgRatio'] = '$\\PW^{+}/\\PW^{-}$'
     
     labelmaps['Wplus'] = labelmaps['lepplus']
     labelmaps['Wminus'] = labelmaps['lepminus']
@@ -102,7 +102,7 @@ def FormatOutputForWZ(istring: str):
     procmaps['sig'] = "Signal"
     procmaps['ewk'] = "Electroweak"
     procmaps['qcd'] = "QCD multijet"
-    procmaps['ttbar'] = "$t\\bar{t}$"
+    procmaps['ttbar '] = "$\\ttbar$"
 
     sysmaps = {}
     sysmaps['lumi'] = 'Lumi'
@@ -110,10 +110,10 @@ def FormatOutputForWZ(istring: str):
     sysmaps['QCDbkg'] = 'Bkg QCD'
     sysmaps['effstat'] = 'Efficiency (stat)'
     sysmaps['prefire'] = 'Trigger prefire correction'
-    sysmaps['qcdscale'] = '$\mu_{R}$ and $\mu_{F}$ scales'
+    sysmaps['qcdscale'] = '$\\mu_{\\mathrm{R}}$ and $\\mu_{\\mathrm{F}}$ scales'
     sysmaps['effsys'] = 'Efficiency (syst)'
     sysmaps['pdfalphaS'] = 'PDF + $\\alpha_\\mathrm{S}$'
-    sysmaps['mcsec'] = 'EWK+t$\\bar{\\mathrm{t}}$ cross section'
+    sysmaps['mcsec'] = 'EWK+$\\ttbar$ cross section'
     sysmaps['qcdsys'] = 'QCD multijet (syst)'
     sysmaps['qcdstat'] = 'QCD multijet (stat)'
     sysmaps['binByBinStat'] = 'MC sim. stat'
@@ -137,7 +137,11 @@ def FormatOutputForWZ(istring: str):
         istring = istring.replace(key, hacks[key])
         
     for key in labelmaps.keys():
-        istring = istring.replace(key, labelmaps[key])
+        # multiple columns for yield tables
+        val = labelmaps[key]
+        if isYield:
+            val = "\\multicolumn{2}{c}{" + val + "}"
+        istring = istring.replace(key, val)
     
     for key in sysmaps.keys():
         istring = istring.replace(key, sysmaps[key])
@@ -158,35 +162,43 @@ def FormatTable(pdict: str, columns: list = None, precision: int=1, escape: bool
     results = copy.deepcopy(pdict)
     for bkey, bval in results.items():
         print("bkey ", bkey)
-        # loop over results first; find the lowest precision
-        vprecision = -100
-        visInt = False
-        for key, val in bval.items():
-            if isYield:
-                visInt = True
-                vprecision = 0
-            elif type(val) is tuple:
-                vtmp_precision, vtmp_isInt = findPrecision(val)
-                vprecision = max(vprecision, vtmp_precision)
-                visInt = visInt or vtmp_isInt
-        for key, val in bval.items():
-            print("key ", key)
-            if type(val) is tuple:
-                rval = roundToError(val, vprecision, visInt)
+        if isYield:
+            # for event yield, no need to sync precision for different rows
+            for key, val in bval.items():
                 if key == 'data':
+                    rval = roundToError(val, 0, True)
                     val = f"{rval[0]}"
-                elif isYield: 
-                    val = f"{rval[0]}\pm{rval[1]}"
-                elif key == 'Measured':
-                    if not "Ratio" in bkey and "Over" not in bkey:
-                        val = f"{rval[0]}\pm{rval[1]}_\mathrm{{stat}}\pm{rval[2]}_\mathrm{{syst}}\pm{rval[3]}_\mathrm{{lum}}"
-                    else:
-                        val = f"{rval[0]}\pm{rval[1]}_\mathrm{{stat}}\pm{rval[2]}_\mathrm{{syst}}"
+                    val = "\\multicolumn{2}{c}{" + val + "}"
                 else:
-                    # theory predictions
-                    val = f"{rval[0]}^{{+{rval[2]}}}_{{-{rval[1]}}}"
-                val = "$" + val +"$"
+                    vprecision, visInt = findPrecision(val) 
+                    visInt = True
+                    rval = roundToError(val, vprecision, visInt)
+                    val = f"{rval[0]} & {rval[1]}"
                 bval[key] = val
+        else:
+            # loop over results first; find the lowest precision
+            # such that all the values can be rounded to the same precision for one column
+            vprecision = -100
+            visInt = False
+            for key, val in bval.items():
+                if type(val) is tuple:
+                    vtmp_precision, vtmp_isInt = findPrecision(val)
+                    vprecision = max(vprecision, vtmp_precision)
+                    visInt = visInt or vtmp_isInt
+            for key, val in bval.items():
+                print("key ", key)
+                if type(val) is tuple:
+                    rval = roundToError(val, vprecision, visInt)
+                    if key == 'Measured':
+                        if not "Ratio" in bkey and "Over" not in bkey:
+                            val = f"{rval[0]}\pm{rval[1]}_\mathrm{{stat}}\pm{rval[2]}_\mathrm{{syst}}\pm{rval[3]}_\mathrm{{lum}}"
+                        else:
+                            val = f"{rval[0]}\pm{rval[1]}_\mathrm{{stat}}\pm{rval[2]}_\mathrm{{syst}}"
+                    else:
+                        # theory predictions
+                        val = f"{rval[0]}^{{+{rval[2]}}}_{{-{rval[1]}}}"
+                    val = "$" + val +"$"
+                    bval[key] = val
         print("bval ", bval)
         results[bkey] = bval
         
@@ -200,9 +212,8 @@ def FormatTable(pdict: str, columns: list = None, precision: int=1, escape: bool
     output = df.to_latex(escape = escape)
     output = output.replace('\\toprule', '\\hline').replace('\\midrule', '\\hline').replace('\\bottomrule','\\hline').replace('\\textbackslash pm', '\\pm').replace("\$", "$")
     
-    
     print("OUtput before Format: ", output)
 
-    output = FormatOutputForWZ(output)
+    output = FormatOutputForWZ(output, isYield)
 
     return output
