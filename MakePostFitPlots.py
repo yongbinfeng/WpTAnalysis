@@ -4,7 +4,7 @@ script to make postfit comparisons
 from modules.postFitScripts import MakeDataMCPlot, result2json, MakeWpTPostFitPlots, GetPOIValue, ComparePOIs, DumpGroupImpacts, WriteOutputToText
 from modules.CombineHarvester.plotImpacts import plotImpacts
 from modules.Binnings import mass_bins_w, mass_bins_z, mass_bins_test
-from modules.Utils import FormatTable
+from modules.Utils import FormatTable, ReOrderDict
 import ROOT
 import numpy as np
 import argparse
@@ -155,6 +155,16 @@ if not doDifferential:
                     MakeDataMCPlot(filename, "ee",   mass_bins_z,  f"_mT{idx}_{sqrtS}", showPULL, startbin = binBase + len(mass_bins)*2 - 2, is5TeV=is5TeV, outdir = f"{outdir}/postfits_log", yrmin = 0.86, yrmax = 1.14, dology=True)
 
                     binBase = binBase + len(mass_bins)*2 + len(mass_bins_z) - 3
+                    
+                tableOrder = []
+                if doElectron:
+                    tableOrder += ["eplus", "eminus", "ee"]
+                if doMuon:
+                    tableOrder += ["muplus", "muminus", "mumu"]
+                nevts_prefit = ReOrderDict(nevts_prefit, tableOrder)
+                nevts_withCut_prefit = ReOrderDict(nevts_withCut_prefit, tableOrder)
+                nevts_postfit = ReOrderDict(nevts_postfit, tableOrder)
+                nevts_withCut_postfit = ReOrderDict(nevts_withCut_postfit, tableOrder)
 
                 result2json(filename, f"lepplus_{sqrtS}_sig_mu",  f"{outdir}/json/impacts_lepplus.json")
                 result2json(filename, f"lepminus_{sqrtS}_sig_mu", f"{outdir}/json/impacts_lepminus.json")
@@ -174,10 +184,10 @@ if not doDifferential:
                 impacts = OrderedDict()
                 impacts['lepplus']  = DumpGroupImpacts(filename, f"lepplus_{sqrtS}_sig_mu")
                 impacts['lepminus'] = DumpGroupImpacts(filename, f"lepminus_{sqrtS}_sig_mu")
-                impacts['leplep']   = DumpGroupImpacts(filename, f"leplep_{sqrtS}_sig_mu")
                 impacts['Winc']     = DumpGroupImpacts(filename, f"Winc_{sqrtS}_sig_sumxsec",         "nuisance_group_impact_sumpois")
-                impacts['WOverZ']   = DumpGroupImpacts(filename, f"WZRatio_{sqrtS}_ratiometaratio",   "nuisance_group_impact_ratiometapois")
+                impacts['leplep']   = DumpGroupImpacts(filename, f"leplep_{sqrtS}_sig_mu")
                 impacts['WpOverWm'] = DumpGroupImpacts(filename, f"WchgRatio_{sqrtS}_ratiometaratio", "nuisance_group_impact_ratiometapois")
+                impacts['WOverZ']   = DumpGroupImpacts(filename, f"WZRatio_{sqrtS}_ratiometaratio",   "nuisance_group_impact_ratiometapois")
                 #impacts['WAsym']    = DumpGroupImpacts(filename, "WchgAsym_chargemetaasym",  "nuisance_group_impact_chargemetapois")
 
                 ## print out the nevts pre and post fit information
@@ -225,8 +235,8 @@ if not doDifferential:
                 impacts['Wminus'] = DumpGroupImpacts(filename, "sqrtS_Wminus_ratio_ratiometaratio",  "nuisance_group_impact_ratiometapois")
                 impacts['Winc']   = DumpGroupImpacts(filename, "sqrtS_Winc_ratio_ratiometaratio",    "nuisance_group_impact_ratiometapois")
                 impacts['Zinc']   = DumpGroupImpacts(filename, "sqrtS_Zinc_ratio_ratiometaratio",    "nuisance_group_impact_ratiometapois")
-                impacts['WOverZ']   = DumpGroupImpacts(filename, "sqrtS_WZRatio_ratio_doubleratiometaratio",     "nuisance_group_impact_doubleratiometapois")
                 impacts['WpOverWm'] = DumpGroupImpacts(filename, "sqrtS_WchgRatio_ratio_doubleratiometaratio",   "nuisance_group_impact_doubleratiometapois")
+                impacts['WOverZ']   = DumpGroupImpacts(filename, "sqrtS_WZRatio_ratio_doubleratiometaratio",     "nuisance_group_impact_doubleratiometapois")
 
                 outputs = FormatTable(impacts, precision=2)
                 print(outputs)

@@ -55,9 +55,11 @@ def FormatROOTInput(istring: str):
     labelmaps['lepplus']  = 'W^{+}#rightarrow l^{+}#nu'
     labelmaps['lepminus'] = 'W^{-}#rightarrow l^{-}#bar{#nu}'
     labelmaps['leplep']   = 'Z#rightarrow l^{+} l^{-}'
-    labelmaps['lepinc']   = 'W^{#pm}#rightarrow l^{#pm}#nu'
+    #labelmaps['lepinc']   = 'W^{#pm}#rightarrow l^{#pm}#nu'
+    labelmaps['lepinc']   = 'W#rightarrow l#nu'
     
-    labelmaps["WOverZ"] = "W^{#pm}#rightarrow l^{#pm}#nu / Z#rightarrow l^{+} l^{-}"
+    #labelmaps["WOverZ"] = "W^{#pm}#rightarrow l^{#pm}#nu / Z#rightarrow l^{+} l^{-}"
+    labelmaps["WOverZ"] = "W#rightarrow l#nu / Z#rightarrow l^{+} l^{-}"
     labelmaps["WchgRatio"] = "W^{+}#rightarrow l^{+}#nu / W^{-}#rightarrow l^{-}#bar{#nu}"
     labelmaps['WpOverWm'] = labelmaps['WchgRatio']
     labelmaps['WZRatio'] = labelmaps['WOverZ']
@@ -85,10 +87,13 @@ def FormatOutputForWZ(istring: str, isYield: bool = False):
     labelmaps['lepplus']   = '$\\PW^{+}\\rightarrow \\Pell^{+}\\PGn$'
     labelmaps['lepminus']  = '$\\PW^{-}\\rightarrow \\Pell^{-}\\PAGn$'
     labelmaps['leplep']    = '$\\PZ\\rightarrow \\Pell^{+}\\Pell^{-}$'
-    labelmaps['Winc']      = '$\\PW^{\\pm}\\rightarrow \\Pell^{\\pm}\\PGn$'
-    labelmaps['WOverZ']    = '$\\PW^{\pm}/\\PZ$'
+    #labelmaps['Winc']      = '$\\PW^{\\pm}\\rightarrow \\Pell^{\\pm}\\PGn$'
+    labelmaps['Winc']      = '$\\PW\\rightarrow \\Pell\\PGn$'
+    #labelmaps['WOverZ']    = '$\\PW^{\pm}/\\PZ$'
+    labelmaps['WOverZ']    = '$\\PW/\\PZ$'
     labelmaps['WpOverWm']  = '$\\PW^{+}/\\PW^{-}$'
-    labelmaps['WZRatio']   = '$\\PW^{\pm}/\\PZ$'
+    #labelmaps['WZRatio']   = '$\\PW^{\pm}/\\PZ$'
+    labelmaps['WZRatio']   = '$\\PW/\\PZ$'
     labelmaps['WchgRatio'] = '$\\PW^{+}/\\PW^{-}$'
     
     labelmaps['Wplus'] = labelmaps['lepplus']
@@ -100,12 +105,12 @@ def FormatOutputForWZ(istring: str, isYield: bool = False):
     procmaps['Measured'] = 'Data'
     procmaps['data'] = 'Data'
     procmaps['sig'] = "Signal"
-    procmaps['ewk'] = "Electroweak"
+    procmaps['ewk'] = "EW"
     procmaps['qcd'] = "QCD multijet"
     procmaps['ttbar '] = "$\\ttbar$"
 
     sysmaps = {}
-    sysmaps['lumi'] = 'Lumi'
+    #sysmaps['lumi'] = 'Lumi'
     sysmaps['recoil'] = 'Hadronic recoil calibration'
     sysmaps['QCDbkg'] = 'Bkg QCD'
     sysmaps['effstat'] = 'Efficiency (stat)'
@@ -191,7 +196,7 @@ def FormatTable(pdict: str, columns: list = None, precision: int=1, escape: bool
                     rval = roundToError(val, vprecision, visInt)
                     if key == 'Measured':
                         if not "Ratio" in bkey and "Over" not in bkey:
-                            val = f"{rval[0]}\pm{rval[1]}_\mathrm{{stat}}\pm{rval[2]}_\mathrm{{syst}}\pm{rval[3]}_\mathrm{{lum}}"
+                            val = f"{rval[0]}\pm{rval[1]}_\mathrm{{stat}}\pm{rval[2]}_\mathrm{{syst}}\pm{rval[3]}_\mathrm{{lumi}}"
                         else:
                             val = f"{rval[0]}\pm{rval[1]}_\mathrm{{stat}}\pm{rval[2]}_\mathrm{{syst}}"
                     else:
@@ -215,5 +220,17 @@ def FormatTable(pdict: str, columns: list = None, precision: int=1, escape: bool
     print("OUtput before Format: ", output)
 
     output = FormatOutputForWZ(output, isYield)
+    
+    # very hacky way to replace the lllllll with lAAAAAA for table format with uncertainties
+    output = output.replace("lllllll", "lAAAAAA")
 
     return output
+    
+def ReOrderDict(pdict: OrderedDict, order: list):
+    """
+    given a dictionary, return a new dictionary with the keys in the given order
+    """
+    newdict = OrderedDict()
+    for key in order:
+        newdict[key] = pdict[key]
+    return newdict
