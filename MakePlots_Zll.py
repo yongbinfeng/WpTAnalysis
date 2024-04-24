@@ -174,9 +174,9 @@ def main():
         sampMan.groupMCs(["WW", "WZ", "ZZ2L", "ZZ4L", "ZXX"],
                          "EWK", 216, "EWK")
         
-    print("DY sample cross section after selection: ", DYSamp.xsecVal.GetValue())
-    print("DY sample cross section after selection: ", DYSamp.xsecValV.GetValue(), " nevts ", DYSamp.nmcevt, " result ", DYSamp.xsecValV.GetValue() / DYSamp.nmcevt)
-    sys.exit(0)
+    #print("DY sample cross section after selection: ", DYSamp.xsecVal.GetValue())
+    #print("DY sample cross section after selection: ", DYSamp.xsecValV.GetValue(), " nevts ", DYSamp.nmcevt, " result ", DYSamp.xsecValV.GetValue() / DYSamp.nmcevt)
+    #sys.exit(0)
 
     sampMan.outdir = "plots/"+outdir
 

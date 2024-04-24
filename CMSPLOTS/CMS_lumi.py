@@ -30,6 +30,7 @@ extraOverCmsTextSize = 0.76
 #lumi_13TeV = "20.1 fb^{-1}"
 lumi_13TeV = "200.9 pb^{-1}"
 lumi_13TeV = "201 pb^{-1}"
+lumi_13TeV = "206 pb^{-1}"
 lumi_5TeV = "298.0 pb^{-1}"
 lumi_5TeV = "298 pb^{-1}"
 lumi_8TeV  = "19.7 fb^{-1}" 

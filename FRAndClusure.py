@@ -144,7 +144,7 @@ def main():
         if useGenMET:
             sqrtS = "QCDMC_GenMET"
         else:
-            sqrtS = "QCDMC_PFMET"
+            sqrtS = "QCDMC"
     
     isovar = "relIso" if not useChgIso else "pfChIso"
 

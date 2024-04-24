@@ -33,9 +33,9 @@ maps = {
 }
 
 lumiUncs = {
-    "13TeV": 0.017,
+    "13TeV": 0.023,
     "5TeV": 0.019,
-    "sqrtS": math.sqrt(0.015**2 + 0.017**2)
+    "sqrtS": math.sqrt(0.022**2 + 0.017**2)
 }
 
 if doFiducial:

@@ -12,7 +12,7 @@ from modules.SampleManager import DrawConfig, Sample, SampleManager
 from modules.Binnings import mass_bins_forqcd
 
 ROOT.gROOT.SetBatch(True)
-ROOT.ROOT.EnableImplicitMT(16)
+ROOT.ROOT.EnableImplicitMT(18)
 
 
 def main():
