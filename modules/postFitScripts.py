@@ -59,10 +59,10 @@ def MakeDataMCPlot(ifilename: str, channel: str, bins: np.array, suffix: str, sh
         elif bool(re.match(fr"expproc_tt\w*{hsuffix}$", hkey)):
             hnames_ttbar.append( hkey )
     assert len(hnames_sig)>=1, "There should be at least one sig histogram in file: {}".format(ifilename)
-    print("sig ", hnames_sig)
-    print("qcd ", hnames_qcd)
-    print("ewk ", hnames_ewks)
-    print("ttbar ", hnames_ttbar)
+    #print("sig ", hnames_sig)
+    #print("qcd ", hnames_qcd)
+    #print("ewk ", hnames_ewks)
+    #print("ttbar ", hnames_ttbar)
 
     ## read the postfit plots from input file
     hexpsig = None
@@ -105,8 +105,8 @@ def MakeDataMCPlot(ifilename: str, channel: str, bins: np.array, suffix: str, sh
     binnings = (nbins, bins)
     
     #binnings = (newbins.shape[0]-1, newbins)
-    print("channel" , channel)
-    print("suffix" , suffix)
+    #print("channel" , channel)
+    #print("suffix" , suffix)
     hdata   = ROOT.TH1D("hdata_{}_{}".format( channel, suffix),  "hdata_{}_{}".format( channel, suffix),  *binnings)
     hsig    = ROOT.TH1D("hsig_{}_{}".format(  channel, suffix),  "hsig_{}_{}".format(  channel, suffix),  *binnings)
     hewk    = ROOT.TH1D("hewk_{}_{}".format(  channel, suffix),  "hewk_{}_{}".format(  channel, suffix),  *binnings)
@@ -260,7 +260,7 @@ def ComparePOIs(vals_x: np.array, vals: list, errs: list, labels: list, colors: 
     """
     compare the POI values with different selections
     """
-    print(vals_x)
+    #print(vals_x)
     graphs = []
     for idx in range(len(vals)):
         val = vals[idx]
@@ -369,7 +369,7 @@ def result2json(ifilename: str, poiname: str, ofilename: str, hname: str = "nuis
         systematic['prefit'] = [-1.0, 0., 1.0]
         systematic[poiname] = [poi['fit'][1] - impacts[nuis], poi['fit'][1], poi['fit'][1] + impacts[nuis]]
         systematic['type'] = "Gaussian"
-        print((getNuisName(nuis), pulls[nuis][1], pulls[nuis][1]-pulls[nuis][0], impacts[nuis]))
+        #print((getNuisName(nuis), pulls[nuis][1], pulls[nuis][1]-pulls[nuis][0], impacts[nuis]))
 
         results['params'].append(systematic)
 
@@ -385,7 +385,7 @@ def DumpGroupImpacts(ifilename: str, poiname: str, hname = "nuisance_group_impac
     print out the grouped impacts
     """
     val_poi, err_poi = GetPOIValue(ifilename, poiname)
-    print("val_poi ", val_poi)
+    #print("val_poi ", val_poi)
     ifile = ROOT.TFile(ifilename)
     himpact_grouped = ifile.Get(hname)
 
@@ -416,10 +416,10 @@ def DumpGroupImpacts(ifilename: str, poiname: str, hname = "nuisance_group_impac
     # sort impacts, descending
     impacts = OrderedDict(sorted(list(impacts.items()), key=lambda x: abs(x[1]), reverse=True))
 
-    print(f"\nPrint grouped nuisance impacts for {poiname} in {ifilename}")
-    for nuis in list(impacts.keys()):
-        print(f"{nuis:20}: {impacts[nuis]:.3f}")
-    print()
+    #print(f"\nPrint grouped nuisance impacts for {poiname} in {ifilename}")
+    #for nuis in list(impacts.keys()):
+    #    print(f"{nuis:20}: {impacts[nuis]:.3f}")
+    #print()
 
     return impacts
 

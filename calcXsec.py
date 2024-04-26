@@ -19,6 +19,8 @@ doFiducial = not args.doInclusive
 doElectron = False
 doMuon = False
 
+syncPrecision = False
+
 f_xsecs_MC = "data/xsecs_fid.json" if doFiducial else "data/xsecs_inc.json"
 
 with open(f_xsecs_MC) as f:
@@ -401,16 +403,17 @@ def DrawHorizontalCompGraph(xsecs_diffs, outputname, xmin = 0.95, xmax = 1.05, i
         if showXsecs:
             unit = " pb" if (not ("Over" in ch or "Ratio" in ch) and not doCombineYear) else ""
             
-            # find the precision of the measured and theory values
-            # not optimal.
-            # ideally should directly use the table result instead
-            # but these are changed to strings for formatting...
-            valM = xsecs_diffs[ch.replace("_diff","")]["Measured"]
-            precisionM, isIntM = findPrecision(valM)
-            valT = xsecs_diffs[ch.replace("_diff","")][pdfsets_plot[0]]
-            precisionT, isIntT = findPrecision(valT)
-            precision = max(precisionM, precisionT)
-            isInt = isIntM or isIntT
+            if syncPrecision:
+                # find the precision of the measured and theory values
+                # not optimal.
+                # ideally should directly use the table result instead
+                # but these are changed to strings for formatting...
+                valM = xsecs_diffs[ch.replace("_diff","")]["Measured"]
+                precisionM, isIntM = findPrecision(valM)
+                valT = xsecs_diffs[ch.replace("_diff","")][pdfsets_plot[0]]
+                precisionT, isIntT = findPrecision(valT)
+                precision = max(precisionM, precisionT)
+                isInt = isIntM or isIntT
         
             valMeasured = ROOT.TPaveText(0.58, (counts - i ) / (counts + 1.5) * 0.81 + .07, 0.94, (counts - i +0.38) / (counts+1.5)*0.81+0.07, "NDC")
             valMeasured.SetFillStyle(0)
@@ -418,6 +421,8 @@ def DrawHorizontalCompGraph(xsecs_diffs, outputname, xmin = 0.95, xmax = 1.05, i
             valMeasured.SetTextAlign(12)
             valMeasured.SetTextFont(42)
             val = xsecs_diffs[ch.replace("_diff","")]["Measured"]
+            if not syncPrecision:
+                precision, isInt = findPrecision(val)
             rval = roundToError(val, precision, isInt)
             #print("measured : ", val)
             if not "Ratio" in ch and "Over" not in ch:
@@ -434,6 +439,8 @@ def DrawHorizontalCompGraph(xsecs_diffs, outputname, xmin = 0.95, xmax = 1.05, i
             valTheory.SetTextAlign(12)
             valTheory.SetTextFont(42)
             val = xsecs_diffs[ch.replace("_diff","")][pdfsets_plot[0]]
+            if not syncPrecision:
+                precision, isInt = findPrecision(val)
             rval = roundToError(val, precision, isInt)
             #print("theory ", val)
             valTheory.AddText(f"{rval[0]}^{{+{rval[2]}}}_{{-{rval[1]}}}{unit}")

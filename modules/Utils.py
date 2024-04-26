@@ -17,7 +17,10 @@ def findPrecision(values):
     isInt = False
     if precision < 0 and err < 1.0:
         # err < 1.0
-        precision = precision -1
+        if math.pow(10,-precision)*err < 9.95:
+            # very hacky way to deal with the case when the error is going to 
+            # be rounded to 0.0xxx1
+            precision = precision -1
     elif precision >= 0:
         # err > 10.0
         isInt = True 
@@ -160,13 +163,13 @@ def FormatOutputForWZ(istring: str, isYield: bool = False):
     return istring
 
 
-def FormatTable(pdict: str, columns: list = None, precision: int=1, escape: bool = False, doTranspose = False, isYield : bool = False):
+def FormatTable(pdict: str, columns: list = None, precision: int=1, escape: bool = False, doTranspose = False, isYield : bool = False, syncPrecision: bool = False):
     """
     given a dictionary, print the latex version of the table
     """
     results = copy.deepcopy(pdict)
     for bkey, bval in results.items():
-        print("bkey ", bkey)
+        #print("bkey ", bkey)
         if isYield:
             # for event yield, no need to sync precision for different rows
             for key, val in bval.items():
@@ -176,23 +179,31 @@ def FormatTable(pdict: str, columns: list = None, precision: int=1, escape: bool
                     val = "\\multicolumn{2}{c}{" + val + "}"
                 else:
                     vprecision, visInt = findPrecision(val) 
-                    visInt = True
+                    #visInt = True
                     rval = roundToError(val, vprecision, visInt)
                     val = f"{rval[0]} & {rval[1]}"
+                    if float(rval[0]) == 0. and float(rval[1]) == 0.:
+                        # both val and err are 0
+                        # not applicable for this process, so just use "-"
+                        val = "\\multicolumn{2}{c}{-}"
                 bval[key] = val
         else:
-            # loop over results first; find the lowest precision
-            # such that all the values can be rounded to the same precision for one column
-            vprecision = -100
-            visInt = False
+            if syncPrecision:
+                # loop over results first; find the lowest precision
+                # such that all the values can be rounded to the same precision 
+                # for one column
+                vprecision = -100
+                visInt = False
+                for key, val in bval.items():
+                    if type(val) is tuple:
+                        vtmp_precision, vtmp_isInt = findPrecision(val)
+                        vprecision = max(vprecision, vtmp_precision)
+                        visInt = visInt or vtmp_isInt
             for key, val in bval.items():
+                #print("key ", key)
                 if type(val) is tuple:
-                    vtmp_precision, vtmp_isInt = findPrecision(val)
-                    vprecision = max(vprecision, vtmp_precision)
-                    visInt = visInt or vtmp_isInt
-            for key, val in bval.items():
-                print("key ", key)
-                if type(val) is tuple:
+                    if not syncPrecision:
+                        vprecision, visInt = findPrecision(val)
                     rval = roundToError(val, vprecision, visInt)
                     if key == 'Measured':
                         if not "Ratio" in bkey and "Over" not in bkey:
@@ -204,7 +215,7 @@ def FormatTable(pdict: str, columns: list = None, precision: int=1, escape: bool
                         val = f"{rval[0]}^{{+{rval[2]}}}_{{-{rval[1]}}}"
                     val = "$" + val +"$"
                     bval[key] = val
-        print("bval ", bval)
+        #print("bval ", bval)
         results[bkey] = bval
         
     pd.set_option('display.max_colwidth', None)
@@ -217,8 +228,7 @@ def FormatTable(pdict: str, columns: list = None, precision: int=1, escape: bool
     output = df.to_latex(escape = escape)
     output = output.replace('\\toprule', '\\hline').replace('\\midrule', '\\hline').replace('\\bottomrule','\\hline').replace('\\textbackslash pm', '\\pm').replace("\$", "$")
     
-    print("OUtput before Format: ", output)
-
+    #print("OUtput before Format: ", output)
     output = FormatOutputForWZ(output, isYield)
     
     # very hacky way to replace the lllllll with lAAAAAA for table format with uncertainties

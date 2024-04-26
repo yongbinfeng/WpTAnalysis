@@ -8,6 +8,7 @@ from modules.Utils import FormatTable, ReOrderDict
 import ROOT
 import numpy as np
 import argparse
+import sys
 from collections import OrderedDict
 ROOT.gROOT.SetBatch(True)
 
@@ -193,25 +194,20 @@ if not doDifferential:
                 ## print out the nevts pre and post fit information
                 # prefit
                 outputs = FormatTable(nevts_prefit, isYield=True)
-                print(outputs)
                 WriteOutputToText(outputs, f"{outdir}/tables/nevts_prefit_{sqrtS}.tex")
-                print("\n\n\n\n")
                 outputs = FormatTable(nevts_withCut_prefit, isYield=True)
-                print(outputs)
                 WriteOutputToText(outputs, f"{outdir}/tables/nevts_withCut_prefit_{sqrtS}.tex")
-                print("\n\n\n\n")
                 # postfit 
                 outputs = FormatTable(nevts_postfit, isYield=True)
-                print(outputs)
                 WriteOutputToText(outputs, f"{outdir}/tables/nevts_postfit_{sqrtS}.tex")
-                print("\n\n\n\n")
+                print("nevts_withCut_postfit ", nevts_withCut_postfit)
                 outputs = FormatTable(nevts_withCut_postfit, isYield=True)
-                print(outputs)
+                print("outputs ", outputs)
+                print("\n\n\n\n\n")
+                print("wrote to ", f"{outdir}/tables/nevts_withCut_postfit_{sqrtS}.tex")
                 WriteOutputToText(outputs, f"{outdir}/tables/nevts_withCut_postfit_{sqrtS}.tex")
-                print("\n\n\n\n")
                 # impacts
                 outputs = FormatTable(impacts, precision=2)
-                print(outputs)
                 WriteOutputToText(outputs, f"{outdir}/tables/impacts_{sqrtS}.tex")
 
             if combineSqrtS:
@@ -239,7 +235,6 @@ if not doDifferential:
                 impacts['WOverZ']   = DumpGroupImpacts(filename, "sqrtS_WZRatio_ratio_doubleratiometaratio",     "nuisance_group_impact_doubleratiometapois")
 
                 outputs = FormatTable(impacts, precision=2)
-                print(outputs)
                 WriteOutputToText(outputs, f"{outdir}/tables/impacts_sqrtS_mT{idx}.tex")
 
     
