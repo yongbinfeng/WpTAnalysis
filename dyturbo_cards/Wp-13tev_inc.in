@@ -1,0 +1,212 @@
+# Process settings
+sroot        = 13e3  # Center-of-mass energy
+ih1          = 1    # Hadron 1: 1 for proton, -1 for antiproton
+ih2          = 1    # Hadron 2: 1 for proton, -1 for antiproton
+nproc        = 1    # Process: 1) W+; 2) W-; 3) Z/gamma*
+
+# Perturbative order
+# fixedorder_only = true   # Evaluate predictions at fixed order
+# fixedorder_only = false  # Evaluate predictions including qt-resummation
+fixedorder_only = false
+order           = 2        # QCD order: 0) LO(+LL), 1) NLO(+NLL), 2) NNLO(+NNLL), 3) N3LO(+N3LL)
+
+# Non-perturbative form factor, S_NP = exp(-npff(b))
+# 0: Gaussian (BLNY)                 npff(b) = (g1 + g2*log(m/Q0) + g3*log(100*m/sqrt(s)))*b^2
+npff = 2
+
+# Collins-Rogers options (npff = 2)
+g1     = 0.7 # Gaussian term
+lambda = 1   # Transition to exponential
+q      = 0   # Quartic term
+sx     = 0   # Sextic term
+g0     = 0.3 # g0 at blim = bref
+bref   = 1.5 # Reference value of blim for the running of g0(blim)
+Q0     = 1   # Starting scale of the TMD evolution
+
+#PDF settings
+#LHAPDFset    = MSHT20nnlo_as118  # PDF set from LHAPDF
+LHAPDFset    = NNPDF40_nnlo_hessian_pdfas #
+LHAPDFmember = 0                 # PDF member
+#PDFerrors    = false              # Calculate PDF errors
+
+
+# Functional form of QCD scales (mV: wmass or zmass, pT: boson transverse momentum, mjj: dijet invariant mass)
+#0: mu^2 = mV^2
+#1: mu^2 = mll^2
+#2: mu^2 = mll^2+pT^2
+#3: mu^2 = mll^2+pT^2+mjj^2
+#4: mu^2 = (pT + sqrt(mll^2+pT^2))^2
+#5: mu^2 = mll^2+2*pT^2
+fmuren = 1     # Functional form of the renormalisation scale
+fmufac = 1     # Functional form of the factorisation scale
+fmures = 1     # Functional form of the resummation scale (forms >= 2 are equivalent to 1)
+
+# QCD scale settings
+kmuren = 1.0         # Scale factor for the renormalisation scale
+kmufac = 1.0         # Scale factor for the factorisation scale
+kmures = 1.0         # Scale factor for the resummation scale
+
+# EW scheme
+#0: Input: alpha(mZ), zmass, xw;     Derived: wmass, Gf
+#1: Input: Gf, wmass, zmass;         Derived: xw, alpha(mZ)    [Gmu scheme]
+#2: Input: Gf, alpha(mZ), xw, Gf;    Derived: wmass, zmass
+#3: All masses and couplings determined by inputs
+ewscheme = 1
+
+# EW parameters
+Gf    = 1.1663787e-5         # G-Fermi
+#zmass = 91.1876              # Mass of the Z boson
+zmass = 91.15350974
+#wmass = 80.385               # Mass of the W boson
+wmass = 80.35181229
+xw    = 0.23153              # Weak-mixing angle    (not used in the Gmu scheme)
+#aemmz = 7.7585538055706e-03  # alpha_EM(MZ)         (not used in the Gmu scheme)
+aemmz = 7.5582086669181e-03 # alpha_EM
+
+# W and Z total widths used in the propagator are determined by the following inputs
+#zwidth = 2.4950          # Width of the Z boson
+zwidth = 2.493201899
+#wwidth = 2.091           # Width of the W boson
+wwidth = 2.090431081
+#runningwidth = false     # Use Z and W propagators including energy-dependent width effects
+runningwidth = true
+
+# CKM matrix
+#Vud = 0.97427
+#Vus = 0.2253
+#Vub = 0.00351
+#Vcd = 0.2252
+#Vcs = 0.97344
+#Vcb = 0.0412
+Vud = 0.97446
+Vus = 0.22452
+Vub = 0.00365
+Vcd = 0.22438
+Vcs = 0.97359
+Vcb = 0.04214
+Vtd = 0.00896
+Vts = 0.04133
+Vtb = 0.999105
+
+# Prescription to avoid the Landau pole in the Bessel inverse transform
+# 0: bstar prescription, which freezes b at bmax: b -> bstar = b/sqrt(1+b^2/bmax^2)
+# 2: Minimal prescription (complex plane)
+bprescription = 0
+
+#Value of blim for the bstar prescription. Positive values set a fixed bmax=blim, a negative values sets bmax=b_L/(-blim), where b_L is the Landau singularity.
+blim         = 2
+
+# Resummation damping
+damp = true
+
+# Resummation damping function
+# 1: Gaussian:    exp(-(k*mll-qt)^2)/(delta*mll)^2
+# 2: Exponential: exp((k*mll)^-qt^2)/(delta*mll)^2
+# 3: Cosine:      cos(PI/(delta*mll)*(qt-k*mll))+1)/2
+dampmode = 1
+dampk = 0.75
+dampdelta = 0.25
+
+# qt-subtraction cut-off. Both conditions are applied, at least one between qtcut and xqtcut must be > 0
+xqtcut = 0.008  # cutoff on qt/m
+qtcut = 0.      # cutoff on qt
+
+# Integration settings
+rseed        = 123456         # Random seed for MC integration
+
+# Term switches
+doBORN = true
+doCT   = true
+doVJ   = true
+
+doVJREAL = true
+doVJVIRT = true
+doFPC   = true
+
+# Integration type: true -> quadrature, false -> vegas
+BORNquad = true
+CTquad   = true
+VJquad   = true 
+FPCquad  = true
+
+# Multithreading parallelisation
+cores         = 20   # Number of parallel threads (0 for turning off parallelisation)
+
+# Cuba settings
+cubaverbosity     = 0     # Cuba info messsages, from 0 to 3
+cubanbatch        = 1000  # The batch size for sampling in Cuba vegas integration
+niterBORN         = 5     # Only for 2d and 3d cuhre integration of resummed part
+niterCT           = 5     # Only for 2d and 3d cuhre integration of counter term
+niterVJ           = 10    # Only for 3d cuhre integration of V+J
+
+# Settings for the inverse Mellin integrations
+mellinrule = 30     # Number of nodes
+ncycle = 15         # Number of pi-cycles in the contour
+
+#Vegas settings
+vegasncallsBORN   = 1000     # only for res 4d vegas integration
+vegasncallsCT     = 10000   # only for 6d and 8d vegas integration of the counter term
+vegasncallsVJLO   = 100000   # only for lo 7d vegas integration
+vegasncallsVJREAL = 500000000 # only for real 10d vegas integration
+vegasncallsVJVIRT = 5000000  # only for virt 8d vegas integration
+
+# cubature settings
+relaccuracy = 1e-2 # target relative uncertainty of each term
+absaccuracy = 0    # target absolute uncertainty of each term in fb
+
+# Lepton cuts
+# Total cross section or with lepton cuts
+makecuts = false
+
+# charged leptons cuts
+lptcut = 25
+lycut = 2.4 # absolute rapidity cut
+
+# leptons and antileptons cuts
+lepptcut = 0
+lepycut = 1000
+alpptcut = 0
+alpycut = 1000
+
+#absolute-rapidity-ordered leptons (central and forward)
+lcptcut = 0
+lcymin = 0
+lcymax = 1000
+lfptcut = 0
+lfymin = 0
+lfymax = 1000
+
+# cuts on neutrino and transverse mass (these cuts are applied only in W processes)
+etmisscut = 0
+mtcut = 40
+
+#costh CS
+cthCSmin = -1
+cthCSmax = +1
+
+# Output settings
+output_filename = w-13tev  # output filename
+texttable   = true         # dump result table to text file (including pdf variations)
+redirect    = false        # redirect stdout and stderr to log file (except for gridverbose output)
+unicode     = true         # use unicode characters for the table formatting
+silent      = false        # no output on screen (except for gridverbose output)
+makehistos  = true         # fill histograms
+gridverbose = false        # printout number of events to keep job alive when running on grid
+
+# binning
+
+# qt, y, m bins
+qt_bins = [0 13000]
+y_bins = [-10 10]
+m_bins = [40.0 200]
+
+# default histograms (need to be run in vegas mode)
+hetal = true
+hptl  = true
+hptnu = true
+hmt   = true
+
+etalep_bins = [ 0.0 0.2 0.4 0.6 0.8 1.0 1.2 1.4 1.6 1.8 2.0 2.2 2.4 ]
+ptlep_bins = [0.0 25.0 13000.0]
+ptnu_bins = [0.0 25.0 13000.0]
+mt_bins = [0 50 100 13000.0]

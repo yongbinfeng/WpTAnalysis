@@ -7,6 +7,7 @@ from collections import OrderedDict
 import re
 import copy
 import math
+import os
 
 def findPrecision(values):
     err = max(values[1:])
@@ -244,3 +245,31 @@ def ReOrderDict(pdict: OrderedDict, order: list):
     for key in order:
         newdict[key] = pdict[key]
     return newdict
+
+def GrepXsecs(xdir = "/afs/cern.ch/work/y/yofeng/public/TestEWK/dyturbo-1.3.2/logs", verbose = False):
+    """
+    collect the xsec from DYTurbo logs
+    """
+    xsecs = OrderedDict()
+    coms = OrderedDict()
+    coms['pp'] = [2, 3, 4, 5, 5.02, 6, 7, 8, 9, 10, 13, 14, 20]
+    coms['ppbar'] = [0.5, 0.7, 1, 1.4, 1.96, 2, 2.5, 3]
+    for proc in ['pp', 'ppbar']:
+        xsecs[proc] = OrderedDict()
+        for chn in ["Wp", "Wm", "Z"]:
+            xsecs[proc][chn] = OrderedDict()
+            for com in coms[proc]:
+                log = f"{xdir}/{chn}-{com}tev_inc_{proc}.log"
+                if verbose:
+                    print(f"Looking for {log}")
+                if os.path.isfile(log):
+                    with open(log, 'r') as f:
+                        for line in f:
+                            if "Total cross section" in line:
+                                xsec = float(line.split()[-4])
+                                if line.split()[-1] == "nb":
+                                    xsec = xsec * 1000
+                                if verbose:
+                                    print(f"{chn} {com} {proc} xsec: {xsec:.2f} pb")
+                                xsecs[proc][chn][com * 1000] = xsec
+    return xsecs
