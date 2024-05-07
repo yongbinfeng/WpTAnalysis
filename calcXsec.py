@@ -425,10 +425,15 @@ def DrawHorizontalCompGraph(xsecs_diffs, outputname, xmin = 0.95, xmax = 1.05, i
                 precision, isInt = findPrecision(val)
             rval = roundToError(val, precision, isInt)
             #print("measured : ", val)
+            strMeasured = f"{rval[0]}"
+            if float(rval[1]) != 0.:
+                strMeasured += f"#pm {rval[1]}_{{stat}}"
+            if float(rval[2]) != 0.:
+                strMeasured += f"#pm {rval[2]}_{{syst}}"
             if not "Ratio" in ch and "Over" not in ch:
-                valMeasured.AddText(f"{rval[0]}#pm {rval[1]}_{{stat}}#pm {rval[2]}_{{syst}}#pm {rval[3]}_{{lumi}}{unit}")
-            else:
-                valMeasured.AddText(f"{rval[0]}#pm {rval[1]}_{{stat}}#pm {rval[2]}_{{syst}}{unit}")
+                strMeasured += f"#pm {rval[3]}_{{lumi}}"
+            strMeasured += unit
+            valMeasured.AddText(strMeasured)
             valMeasured.SetTextColor(ROOT.kBlack)
             valMeasured.SetTextSize(0.03)
             valMeasureds.append(valMeasured)
