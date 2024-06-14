@@ -354,7 +354,7 @@ def DrawHorizontalCompGraph(xsecs_diffs, outputname, xmin = 0.95, xmax = 1.05, i
         valMeasured.SetBorderSize(0)
         valMeasured.SetTextAlign(12)
         valMeasured.SetTextFont(42)
-        valMeasured.AddText("Measured #pm unc")
+        valMeasured.AddText("Measured#pm unc")
         valMeasured.SetTextColor(ROOT.kBlack)
         valMeasured.SetTextSize(0.03)
         valMeasureds.append(valMeasured)
@@ -364,7 +364,7 @@ def DrawHorizontalCompGraph(xsecs_diffs, outputname, xmin = 0.95, xmax = 1.05, i
         valTheory.SetBorderSize(0)
         valTheory.SetTextAlign(12)
         valTheory.SetTextFont(42)
-        valTheory.AddText("Theory #pm unc (NNPDF3.1)")
+        valTheory.AddText("Theory#pm unc (NNPDF3.1)")
         valTheory.SetTextColor(colors[0])
         valTheory.SetTextSize(0.03)
         valTheorys.append(valTheory)
@@ -448,7 +448,14 @@ def DrawHorizontalCompGraph(xsecs_diffs, outputname, xmin = 0.95, xmax = 1.05, i
                 precision, isInt = findPrecision(val)
             rval = roundToError(val, precision, isInt)
             #print("theory ", val)
-            valTheory.AddText(f"{rval[0]}^{{+{rval[2]}}}_{{-{rval[1]}}}{unit}")
+            if rval[2] == rval[1]:
+                # symmetric error
+                valstring = f"{rval[0]}\pm {rval[1]}"
+            else:
+                valstring = f"{rval[0]}^{{\plus {rval[2]}}}_{{\minus {rval[1]}}}"
+            valstring += unit
+            valTheory.AddText(valstring)
+            #valTheory.AddText(f"{rval[0]}^{{+{rval[2]}}}_{{-{rval[1]}}}{unit}")
             valTheory.SetTextColor(colors[0])
             valTheory.SetTextSize(0.03)
             valTheorys.append(valTheory)

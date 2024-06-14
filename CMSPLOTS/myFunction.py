@@ -656,6 +656,7 @@ def DrawHistos(myhistos, mylabels, xmin, xmax, xlabel, ymin, ymax, ylabel, outpu
     legend.SetMargin(0.18)
     legend.SetFillColor(0)
     legend.SetFillStyle(0)
+    #legend.SetTextSize(0.03)
 
     myhistos_clone = []
     for ihisto in myhistos:

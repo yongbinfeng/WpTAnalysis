@@ -213,7 +213,11 @@ def FormatTable(pdict: str, columns: list = None, precision: int=1, escape: bool
                             val = f"{rval[0]}\pm{rval[1]}_\mathrm{{stat}}\pm{rval[2]}_\mathrm{{syst}}"
                     else:
                         # theory predictions
-                        val = f"{rval[0]}^{{+{rval[2]}}}_{{-{rval[1]}}}"
+                        if rval[2] == rval[1]:
+                            # symmetric error
+                            val = f"{rval[0]}\pm{rval[1]}"
+                        else:
+                            val = f"{rval[0]}^{{+{rval[2]}}}_{{-{rval[1]}}}"
                     val = "$" + val +"$"
                     bval[key] = val
         #print("bval ", bval)

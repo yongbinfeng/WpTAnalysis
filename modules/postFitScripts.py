@@ -214,12 +214,12 @@ def MakeDataMCPlot(ifilename: str, channel: str, bins: np.array, suffix: str, sh
         for key, val in ymaxs.items():
             ymaxs[key] = val*0.7
 
-    siglabels = {"muplus":  "W^{+}#rightarrow#mu^{+}#nu", 
-                 "muminus": "W^{-}#rightarrow#mu^{-}#bar{#nu}", 
-                 "eplus":   "W^{+}#rightarrow e^{+}#nu", 
-                 "eminus":  "W^{-}#rightarrow e^{-}#bar{#nu}",
-                 "ee":      "Z#rightarrow e^{+}e^{-}",
-                 "mumu":    "Z#rightarrow #mu^{+}#mu^{-}"}
+    siglabels = {"muplus":  "W^{+} #rightarrow #mu^{+}#nu", 
+                 "muminus": "W^{-} #rightarrow #mu^{-}#bar{#nu}", 
+                 "eplus":   "W^{+} #rightarrow e^{+}#nu", 
+                 "eminus":  "W^{-} #rightarrow e^{-}#bar{#nu}",
+                 "ee":      "Z #rightarrow e^{+}e^{-}",
+                 "mumu":    "Z #rightarrow #mu^{+}#mu^{-}"}
 
     if "ee" not in channel and "mumu" not in channel:
         # w's
@@ -234,12 +234,12 @@ def MakeDataMCPlot(ifilename: str, channel: str, bins: np.array, suffix: str, sh
         outputname = f"histo_zjets_{channel}_{suffix}"
     yrmin = yrmin if doPostfit else 0.89
     yrmax = yrmax if doPostfit else 1.11
-    drawconfigs = DrawConfig(xmin = bins.min(), xmax = bins.max(), xlabel = xlabel, ymin = 0, ymax = ymaxs[channel] / (int(nbins/36)+1), ylabel = "Events / GeV", outputname = outdir + "/" + outputname, dology=False, addOverflow=False, addUnderflow=False, yrmin=yrmin, yrmax=yrmax, yrlabel = "Data / Pred", legendPos = [0.92, 0.89, 0.67, 0.50])
+    drawconfigs = DrawConfig(xmin = bins.min(), xmax = bins.max(), xlabel = xlabel, ymin = 0, ymax = ymaxs[channel] / (int(nbins/36)+1), ylabel = "Events / GeV", outputname = outdir + "/" + outputname, dology=False, addOverflow=False, addUnderflow=False, yrmin=yrmin, yrmax=yrmax, yrlabel = "Data / Pred", legendPos = [0.92, 0.89, 0.67, 0.47])
 
     if dology:
         drawconfigs.dology = True
         drawconfigs.ymin = 1.01
-        drawconfigs.ymax = drawconfigs.ymax * 1e2
+        drawconfigs.ymax = drawconfigs.ymax * 1e3
 
     DrawHistos( [hdata, hs_gmc], ["Data", siglabels[channel], "EW", "t#bar{t}", "QCD multijet"], drawconfigs.xmin, drawconfigs.xmax, drawconfigs.xlabel, drawconfigs.ymin, drawconfigs.ymax, drawconfigs.ylabel, drawconfigs.outputname, dology=drawconfigs.dology, dologx=drawconfigs.dologx, showratio=drawconfigs.showratio, yrmax = drawconfigs.yrmax, yrmin = drawconfigs.yrmin, yrlabel = drawconfigs.yrlabel, donormalize=drawconfigs.donormalize, ratiobase=drawconfigs.ratiobase, legendPos = drawconfigs.legendPos, redrawihist = drawconfigs.redrawihist, extraText = drawconfigs.extraText, addOverflow = drawconfigs.addOverflow, addUnderflow = drawconfigs.addUnderflow, nMaxDigits = drawconfigs.nMaxDigits, hratiopanel=hratio, drawoptions=['PE', 'HIST same'], showpull=showpull, hpulls=[hpull], W_ref = 600 * int(nbins/36+1), is5TeV = is5TeV, doPAS = doPAS, outofFrame=False, legendTextSize = 0.046, legendoptions = ['LEP']) 
 

@@ -17,7 +17,8 @@ extraTextFont = 52
 lumiTextSize     = 0.72
 lumiTextOffset   = 0.2
 
-cmsTextSize      = 0.75
+#cmsTextSize      = 0.75
+cmsTextSize      = 1.3
 cmsTextOffset    = 0.1
 
 relPosX    = 0.045
@@ -128,7 +129,7 @@ def CMS_lumi(pad,  iPeriod,  iPosX, plotCMS = True):
     if( outOfFrame and plotCMS ):
         latex.SetTextFont(cmsTextFont)
         latex.SetTextAlign(11) 
-        latex.SetTextSize(cmsTextSize*t)    
+        latex.SetTextSize(cmsTextSize*t*0.8)    
         print("l, t, lumitextoffset*t: ", l, t, lumiTextOffset*t)
         print("l, 1-t+lumiTextOffset*t, cmsText: ", l, 1-t+lumiTextOffset*t, cmsText)
         latex.DrawLatex(l,1-t+lumiTextOffset*t,cmsText)
@@ -150,9 +151,9 @@ def CMS_lumi(pad,  iPeriod,  iPosX, plotCMS = True):
         if( drawLogo ):
             posX_ =   l + 0.045*(1-l-r)*W/H
             posY_ = 1-t - 0.045*(1-t-b)
-            xl_0 = posX_
+            xl_0 = posX_ + 0.02
             yl_0 = posY_ - 0.15
-            xl_1 = posX_ + 0.15*H/W
+            xl_1 = posX_ + 0.15*H/W + 0.02
             yl_1 = posY_
             CMS_logo = rt.TASImage("CMS-BW-label.png")
             pad_logo =  rt.TPad("logo","logo", xl_0, yl_0, xl_1, yl_1 )
@@ -165,7 +166,7 @@ def CMS_lumi(pad,  iPeriod,  iPosX, plotCMS = True):
             latex.SetTextFont(cmsTextFont)
             latex.SetTextSize(cmsTextSize*t)
             latex.SetTextAlign(align_)
-            latex.DrawLatex(posX_, posY_, cmsText)
+            latex.DrawLatex(posX_ + 0.05, posY_, cmsText)
         if( writeExtraText ) :
             latex.SetTextFont(extraTextFont)
             latex.SetTextAlign(align_)

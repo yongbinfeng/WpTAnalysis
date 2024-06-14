@@ -134,7 +134,9 @@ drawoptions += ["PZ", "PZ"]
 legendoptions += ["P", "P"]
 legends += [f"UA2, {xsecs_UA2.GetLegend()}", f"UA1, {xsecs_UA1.GetLegend()}"]
 
-Theory = ROOT.TPaveText(2., 40, 24., 80)
+Theory = ROOT.TPaveText(2., 40, 30, 200)
+Theory.SetTextSize(0.030)
+Theory.SetTextFont(42)
 Theory.AddText("Theory: NNLO, DYTURBO and NNPDF 4.0 PDFs")
 Theory.SetTextAlign(12)
 Theory.SetFillColor(4000)
@@ -181,7 +183,7 @@ for pos, ch in ylabels.items():
     txts.append(txt_)
 
 
-DrawHistos(toDraws, legends, 0.3, 48, "Center-of-mass energy [TeV]", 20, 3e5, "#sigma x B [pb]", "xsec", dologx=True, W_ref = 800, H_ref = 600, noLumi=True, additionalToDraw = [Theory, ppbar, pp] + txts, drawoptions = drawoptions, legendoptions = legendoptions, legendPos = [0.18, 0.55, 0.5, 0.91], legendTextSize = 0.028, doPAS = doPAS, nolabel = True, noSqrtS=True)
+DrawHistos(toDraws, legends, 0.3, 48, "#sqrt{s} [TeV]", 20, 3e5, "#sigma x B [pb]", "xsec", dologx=True, W_ref = 800, H_ref = 600, noLumi=True, additionalToDraw = [Theory, ppbar, pp] + txts, drawoptions = drawoptions, legendoptions = legendoptions, legendPos = [0.18, 0.55, 0.5, 0.91], legendTextSize = 0.028, doPAS = doPAS, nolabel = True, noSqrtS=True)
 
 
 # CMS only
@@ -223,4 +225,4 @@ Theory2.SetTextColor(4)
 Theory2.SetFillColor(0)
 Theory2.SetBorderSize(0)
 
-DrawHistos(toDraws, legends, 1.5, 29, "Center-of-mass energy [TeV]", 1.1e2, 3e5, "#sigma x B [pb]", "xsec_CMS_Only_PAS", dologx=True, W_ref = 800, H_ref = 600, noLumi=True, additionalToDraw = [Theory2] + txts2, drawoptions = drawoptions, legendoptions = legendoptions, legendPos = [0.18, 0.64, 0.5, 0.91], legendTextSize = 0.028, doPAS = doPAS, nolabel = True, noSqrtS=True)
+DrawHistos(toDraws, legends, 1.5, 29, "#sqrt{s} [TeV]", 1.1e2, 3e5, "#sigma x B [pb]", "xsec_CMS_Only_PAS", dologx=True, W_ref = 800, H_ref = 600, noLumi=True, additionalToDraw = [Theory2] + txts2, drawoptions = drawoptions, legendoptions = legendoptions, legendPos = [0.18, 0.64, 0.5, 0.91], legendTextSize = 0.028, doPAS = doPAS, nolabel = True, noSqrtS=True)
