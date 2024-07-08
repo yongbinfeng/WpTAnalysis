@@ -16,7 +16,7 @@ from data.FLAG import doPAS
 
 ROOT.gROOT.SetBatch(True)
 
-def MakeDataMCPlot(ifilename: str, channel: str, bins: np.array, suffix: str, showpull: bool = False, is5TeV: bool = False, startbin: int = 1, outdir: str = "plots", doPostfit = True, mTCut = 40.0, yrmin = 0.95, yrmax = 1.05, dology=False):
+def MakeDataMCPlot(ifilename: str, channel: str, bins: np.array, suffix: str, showpull: bool = False, is5TeV: bool = False, startbin: int = 1, outdir: str = "plots", doPostfit = True, mTCut = 40.0, yrmin = 0.95, yrmax = 1.05, dology=False, savehistos=False):
     """
     compare the unrolled pre/post-fit of data and templates
     """
@@ -135,6 +135,8 @@ def MakeDataMCPlot(ifilename: str, channel: str, bins: np.array, suffix: str, sh
         # not 100% sure if this is the correct way to calculate pull
         sig = math.sqrt(horgdata.GetBinError(ibin + startbin - 1)**2 + hexpfull.GetBinError(ibin + startbin - 1)**2)
         hpull.SetBinContent(ibin, diff/(sig+1e-6))
+        
+    htot = hratio.Clone("htot_{}_{}".format(channel, suffix))
 
     # deal with the uncertainty bar
     for ibin in range(1, hratio.GetNbinsX()+1):
@@ -202,12 +204,24 @@ def MakeDataMCPlot(ifilename: str, channel: str, bins: np.array, suffix: str, sh
     httbar.Scale(1.0, "width")
     hewk.Scale(1.0, "width")
     hsig.Scale(1.0, "width")
+    
+    htot.Scale(1.0, "width")
 
     hs_gmc = ROOT.THStack("hs_stack_{}_{}".format(channel, suffix), "hs_stack")
-    hs_gmc.Add(hqcd)
+    if "ee" not in channel and "mumu" not in channel:
+        # QCD only for W's
+        hs_gmc.Add(hqcd)
     hs_gmc.Add(httbar)
     hs_gmc.Add(hewk)
     hs_gmc.Add(hsig)
+    
+    h_outputs = []
+    h_outputs.append(hdata)
+    h_outputs.append(hsig)
+    h_outputs.append(hewk)
+    h_outputs.append(httbar)
+    h_outputs.append(hqcd)
+    h_outputs.append(htot)
 
     ymaxs = {"muplus": 3.5e4, "muminus": 2.5e4, "eplus": 2.5e4, "eminus": 1.8e4, "mumu": 2.0e4, "ee": 1.5e4}
     if is5TeV:
@@ -225,6 +239,8 @@ def MakeDataMCPlot(ifilename: str, channel: str, bins: np.array, suffix: str, sh
         # w's
         xlabel = "m_{T} [GeV]"
         outputname = f"histo_wjets_{channel}_{suffix}"
+        legendPos = [0.92, 0.89, 0.67, 0.47]
+        labels = ["Data", siglabels[channel], "EW", "t#bar{t}", "QCD multijet"]
     else:
         # z's
         if "ee" in channel:
@@ -232,16 +248,26 @@ def MakeDataMCPlot(ifilename: str, channel: str, bins: np.array, suffix: str, sh
         else:
             xlabel = "m_{#mu^{+}#mu^{-}} [GeV]"
         outputname = f"histo_zjets_{channel}_{suffix}"
+        legendPos = [0.92, 0.89, 0.67, 0.52]
+        labels = ["Data", siglabels[channel], "EW", "t#bar{t}"]
     yrmin = yrmin if doPostfit else 0.89
     yrmax = yrmax if doPostfit else 1.11
-    drawconfigs = DrawConfig(xmin = bins.min(), xmax = bins.max(), xlabel = xlabel, ymin = 0, ymax = ymaxs[channel] / (int(nbins/36)+1), ylabel = "Events / GeV", outputname = outdir + "/" + outputname, dology=False, addOverflow=False, addUnderflow=False, yrmin=yrmin, yrmax=yrmax, yrlabel = "Data / Pred", legendPos = [0.92, 0.89, 0.67, 0.47])
+    drawconfigs = DrawConfig(xmin = bins.min(), xmax = bins.max(), xlabel = xlabel, ymin = 0, ymax = ymaxs[channel] / (int(nbins/36)+1), ylabel = "Events / GeV", outputname = outdir + "/" + outputname, dology=False, addOverflow=False, addUnderflow=False, yrmin=yrmin, yrmax=yrmax, yrlabel = "Data / Pred", legendPos = legendPos)
 
     if dology:
         drawconfigs.dology = True
         drawconfigs.ymin = 1.01
         drawconfigs.ymax = drawconfigs.ymax * 1e3
 
-    DrawHistos( [hdata, hs_gmc], ["Data", siglabels[channel], "EW", "t#bar{t}", "QCD multijet"], drawconfigs.xmin, drawconfigs.xmax, drawconfigs.xlabel, drawconfigs.ymin, drawconfigs.ymax, drawconfigs.ylabel, drawconfigs.outputname, dology=drawconfigs.dology, dologx=drawconfigs.dologx, showratio=drawconfigs.showratio, yrmax = drawconfigs.yrmax, yrmin = drawconfigs.yrmin, yrlabel = drawconfigs.yrlabel, donormalize=drawconfigs.donormalize, ratiobase=drawconfigs.ratiobase, legendPos = drawconfigs.legendPos, redrawihist = drawconfigs.redrawihist, extraText = drawconfigs.extraText, addOverflow = drawconfigs.addOverflow, addUnderflow = drawconfigs.addUnderflow, nMaxDigits = drawconfigs.nMaxDigits, hratiopanel=hratio, drawoptions=['PE', 'HIST same'], showpull=showpull, hpulls=[hpull], W_ref = 600 * int(nbins/36+1), is5TeV = is5TeV, doPAS = doPAS, outofFrame=False, legendTextSize = 0.046, legendoptions = ['LEP']) 
+    DrawHistos( [hdata, hs_gmc], labels, drawconfigs.xmin, drawconfigs.xmax, drawconfigs.xlabel, drawconfigs.ymin, drawconfigs.ymax, drawconfigs.ylabel, drawconfigs.outputname, dology=drawconfigs.dology, dologx=drawconfigs.dologx, showratio=drawconfigs.showratio, yrmax = drawconfigs.yrmax, yrmin = drawconfigs.yrmin, yrlabel = drawconfigs.yrlabel, donormalize=drawconfigs.donormalize, ratiobase=drawconfigs.ratiobase, legendPos = drawconfigs.legendPos, redrawihist = drawconfigs.redrawihist, extraText = drawconfigs.extraText, addOverflow = drawconfigs.addOverflow, addUnderflow = drawconfigs.addUnderflow, nMaxDigits = drawconfigs.nMaxDigits, hratiopanel=hratio, drawoptions=['PE', 'HIST same'], showpull=showpull, hpulls=[hpull], W_ref = 600 * int(nbins/36+1), is5TeV = is5TeV, doPAS = doPAS, outofFrame=False, legendTextSize = 0.046, legendoptions = ['LEP']) 
+    
+    if savehistos:
+        print(f"Save the histograms to {outdir}/{outputname}.root")
+        f_output = ROOT.TFile(f"{outdir}/{outputname}.root", "RECREATE")
+        for h in h_outputs:
+            h.SetDirectory(f_output)
+            h.Write()
+        f_output.Close()
 
     return nevts, nevts_withCut
 

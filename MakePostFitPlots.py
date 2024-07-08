@@ -135,9 +135,9 @@ if not doDifferential:
                     nevts_postfit['mumu'], nevts_withCut_postfit["mumu"]       = MakeDataMCPlot(filename, "mumu", mass_bins_z,  f"_mT{idx}_{sqrtS}", showPULL, startbin = binBase + len(mass_bins)*2 - 2, is5TeV=is5TeV, outdir = f"{outdir}/postfits", yrmin = 0.86, yrmax = 1.14)
 
                     # postfit log
-                    MakeDataMCPlot(filename, "muplus",  mass_bins, f"_mT{idx}_{sqrtS}", showPULL, startbin = binBase, is5TeV=is5TeV, outdir = f"{outdir}/postfits_log", dology=True)
-                    MakeDataMCPlot(filename, "muminus", mass_bins, f"_mT{idx}_{sqrtS}", showPULL, startbin = binBase + len(mass_bins) - 1, is5TeV=is5TeV, outdir = f"{outdir}/postfits_log", dology=True)
-                    MakeDataMCPlot(filename, "mumu", mass_bins_z,  f"_mT{idx}_{sqrtS}", showPULL, startbin = binBase + len(mass_bins)*2 - 2, is5TeV=is5TeV, outdir = f"{outdir}/postfits_log", dology=True, yrmin = 0.86, yrmax = 1.14)
+                    MakeDataMCPlot(filename, "muplus",  mass_bins, f"_mT{idx}_{sqrtS}", showPULL, startbin = binBase, is5TeV=is5TeV, outdir = f"{outdir}/postfits_log", dology=True, savehistos=True)
+                    MakeDataMCPlot(filename, "muminus", mass_bins, f"_mT{idx}_{sqrtS}", showPULL, startbin = binBase + len(mass_bins) - 1, is5TeV=is5TeV, outdir = f"{outdir}/postfits_log", dology=True, savehistos=True)
+                    MakeDataMCPlot(filename, "mumu", mass_bins_z,  f"_mT{idx}_{sqrtS}", showPULL, startbin = binBase + len(mass_bins)*2 - 2, is5TeV=is5TeV, outdir = f"{outdir}/postfits_log", dology=True, yrmin = 0.86, yrmax = 1.14, savehistos=True)
 
                     binBase = binBase + len(mass_bins)*2 + len(mass_bins_z) - 3
 
@@ -151,9 +151,9 @@ if not doDifferential:
                     nevts_postfit['eminus'], nevts_withCut_postfit['eminus'] = MakeDataMCPlot(filename, "eminus", mass_bins,  f"_mT{idx}_{sqrtS}", showPULL, startbin = binBase + len(mass_bins) - 1, is5TeV=is5TeV, outdir = f"{outdir}/postfits")
                     nevts_postfit['ee'], nevts_withCut_postfit['ee']         = MakeDataMCPlot(filename, "ee",   mass_bins_z,  f"_mT{idx}_{sqrtS}", showPULL, startbin = binBase + len(mass_bins)*2 - 2, is5TeV=is5TeV, outdir = f"{outdir}/postfits", yrmin = 0.86, yrmax = 1.14)
 
-                    MakeDataMCPlot(filename, "eplus",  mass_bins,  f"_mT{idx}_{sqrtS}", showPULL, startbin = binBase, is5TeV=is5TeV, outdir = f"{outdir}/postfits_log", dology=True)
-                    MakeDataMCPlot(filename, "eminus", mass_bins,  f"_mT{idx}_{sqrtS}", showPULL, startbin = binBase + len(mass_bins) - 1, is5TeV=is5TeV, outdir = f"{outdir}/postfits_log", dology=True)
-                    MakeDataMCPlot(filename, "ee",   mass_bins_z,  f"_mT{idx}_{sqrtS}", showPULL, startbin = binBase + len(mass_bins)*2 - 2, is5TeV=is5TeV, outdir = f"{outdir}/postfits_log", yrmin = 0.86, yrmax = 1.14, dology=True)
+                    MakeDataMCPlot(filename, "eplus",  mass_bins,  f"_mT{idx}_{sqrtS}", showPULL, startbin = binBase, is5TeV=is5TeV, outdir = f"{outdir}/postfits_log", dology=True, savehistos=True)
+                    MakeDataMCPlot(filename, "eminus", mass_bins,  f"_mT{idx}_{sqrtS}", showPULL, startbin = binBase + len(mass_bins) - 1, is5TeV=is5TeV, outdir = f"{outdir}/postfits_log", dology=True, savehistos=True)
+                    MakeDataMCPlot(filename, "ee",   mass_bins_z,  f"_mT{idx}_{sqrtS}", showPULL, startbin = binBase + len(mass_bins)*2 - 2, is5TeV=is5TeV, outdir = f"{outdir}/postfits_log", yrmin = 0.86, yrmax = 1.14, dology=True, savehistos=True)
 
                     binBase = binBase + len(mass_bins)*2 + len(mass_bins_z) - 3
                     
