@@ -240,6 +240,80 @@ def FormatTable(pdict: str, columns: list = None, precision: int=1, escape: bool
     output = output.replace("lllllll", "lAAAAAA")
 
     return output
+
+
+def FormatText(pdict: str, columns: list = None, precision: int=1, escape: bool = False, doTranspose = False, isYield : bool = False, syncPrecision: bool = False):
+    """
+    given a dictionary, print the txt version of the table, for HEPData
+    """
+    results = copy.deepcopy(pdict)
+    for bkey, bval in results.items():
+        #print("bkey ", bkey)
+        if isYield:
+            # for event yield, no need to sync precision for different rows
+            for key, val in bval.items():
+                if key == 'data':
+                    rval = roundToError(val, 0, True)
+                    val = f"{rval[0]}"
+                    val = "\\multicolumn{2}{c}{" + val + "}"
+                else:
+                    vprecision, visInt = findPrecision(val) 
+                    #visInt = True
+                    rval = roundToError(val, vprecision, visInt)
+                    val = f"{rval[0]} {rval[1]}"
+                    if float(rval[0]) == 0. and float(rval[1]) == 0.:
+                        # both val and err are 0
+                        # not applicable for this process, so just use "-"
+                        val = "\\multicolumn{2}{c}{-}"
+                bval[key] = val
+        else:
+            if syncPrecision:
+                # loop over results first; find the lowest precision
+                # such that all the values can be rounded to the same precision 
+                # for one column
+                vprecision = -100
+                visInt = False
+                for key, val in bval.items():
+                    if type(val) is tuple:
+                        vtmp_precision, vtmp_isInt = findPrecision(val)
+                        vprecision = max(vprecision, vtmp_precision)
+                        visInt = visInt or vtmp_isInt
+            for key, val in bval.items():
+                #print("key ", key)
+                if type(val) is tuple:
+                    if not syncPrecision:
+                        vprecision, visInt = findPrecision(val)
+                    rval = roundToError(val, vprecision, visInt)
+                    if key == 'Measured':
+                        if not "Ratio" in bkey and "Over" not in bkey:
+                            #val = f"{rval[0]}\pm{rval[1]}_\mathrm{{stat}}\pm{rval[2]}_\mathrm{{syst}}\pm{rval[3]}_\mathrm{{lumi}}"
+                            val = f"{rval[0]} {rval[1]} {rval[2]} {rval[3]}"
+                        else:
+                            #val = f"{rval[0]}\pm{rval[1]}_\mathrm{{stat}}\pm{rval[2]}_\mathrm{{syst}}"
+                            val = f"{rval[0]} {rval[1]} {rval[2]} 0."
+                    else:
+                        # theory predictions
+                        val = f"{rval[0]} {rval[1]} {rval[2]}"
+                    #val = "$" + val +"$"
+                    bval[key] = val
+        #print("bval ", bval)
+        results[bkey] = bval
+        
+    pd.set_option('display.max_colwidth', None)
+    df = pd.DataFrame(results, columns=columns)
+    if doTranspose:
+        df = df.transpose()
+    df = df.round(precision)
+    #output = df.to_latex(float_format="{:.1f}".format, caption = caption, label = label)
+    #output = df.to_latex(caption = caption, label = label)
+    #output = df.to_latex(escape = escape)
+    output = df.to_string(index=False, header=False)
+    output = output.replace('\\toprule', '\\hline').replace('\\midrule', '\\hline').replace('\\bottomrule','\\hline').replace('\\textbackslash pm', '\\pm').replace("\$", "$")
+    
+    #print("OUtput before Format: ", output)
+    #output = FormatOutputForWZ(output, isYield)
+    
+    return output
     
 def ReOrderDict(pdict: OrderedDict, order: list):
     """

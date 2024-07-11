@@ -281,7 +281,7 @@ if doMuon:
 elif doElectron:
     outdir += "_e"
     
-from modules.Utils import FormatTable, FormatROOTInput
+from modules.Utils import FormatTable, FormatROOTInput, FormatText
 from modules.postFitScripts import WriteOutputToText
 
 def dict2Table(list_results):
@@ -297,14 +297,23 @@ print(results['13TeV'])
 outputs = FormatTable(dict2Table([results['13TeV'],results['13TeV_ratios']]), doTranspose=True)
 print(outputs)
 WriteOutputToText(outputs, f"{outdir}/tables/results_13TeV_all.tex")
+outputs = FormatText(dict2Table([results['13TeV'],results['13TeV_ratios']]), doTranspose=True)
+print(outputs)
+WriteOutputToText(outputs, f"{outdir}/tables/results_13TeV_all.txt")
 
 outputs = FormatTable(dict2Table([results['5TeV'],results['5TeV_ratios']]), doTranspose=True)
 print(outputs)
 WriteOutputToText(outputs, f"{outdir}/tables/results_5TeV_all.tex")
+outputs = FormatText(dict2Table([results['5TeV'],results['5TeV_ratios']]), doTranspose=True)
+print(outputs)
+WriteOutputToText(outputs, f"{outdir}/tables/results_5TeV_all.txt")
 
 outputs = FormatTable(dict2Table([results['sqrtS_ratios'], results['sqrtS_double_ratios']]), doTranspose=True)
 print(outputs)
 WriteOutputToText(outputs, f"{outdir}/tables/results_sqrtS_all.tex")
+outputs = FormatText(dict2Table([results['sqrtS_ratios'], results['sqrtS_double_ratios']]), doTranspose=True)
+print(outputs)
+WriteOutputToText(outputs, f"{outdir}/tables/results_sqrtS_all.txt")
 
 def DrawHorizontalCompGraph(xsecs_diffs, outputname, xmin = 0.95, xmax = 1.05, is5TeV = False, doCombineYear = False, canH = 600, canW=800, showXsecs = True, pdfsets_plot = ["NNPDF4.0"], poiname = "#sigma^{tot}"):
     markers = [21, 22, 23, 24, 25, 26, 27]
