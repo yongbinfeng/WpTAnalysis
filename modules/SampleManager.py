@@ -7,7 +7,7 @@ extened to general usage.
 
 import ROOT
 import numpy as np
-import sys
+import sys, os
 from collections import OrderedDict
 from CMSPLOTS.myFunction import DrawHistos
 from typing import List
@@ -24,6 +24,7 @@ LUMI_5TeV = 298.0
 
 ROOT.ROOT.EnableImplicitMT()
 ROOT.gSystem.Load("./modules/Functions_cc.so")
+ROOT.gSystem.Load("./modules/PDFWeights_cc.so")
 
 
 class DrawConfig(object):
@@ -684,3 +685,23 @@ class SampleManager(object):
         print("Data %d" % self.counts[0])
         for imc in range(len(self.mcs)):
             print("MC %s count %f" % (self.mcs[imc].name, self.counts[imc+1]))
+            
+    def snapShot(self, outdir, branches, addNorm = True):
+        """
+        write the ntuples to a root file
+        """
+        if not os.path.exists(outdir):
+            os.makedirs(outdir)
+            
+        branches_mc = branches
+        if addNorm:
+            branches_mc += ["norm"]
+            
+        for mc in self.mcs:
+            if addNorm:
+                # include the normalizing factor
+                mc.rdf = mc.rdf.Define("norm", "1.0 * {}".format(mc.normfactor))
+            print("snapshot for ", mc.name)
+            mc.rdf.Snapshot("Events", os.path.join(outdir, mc.name+".root"), branches_mc)
+        
+        print("finished snapshot..")

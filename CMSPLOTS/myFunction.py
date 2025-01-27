@@ -839,7 +839,7 @@ def DrawHistos(myhistos, mylabels, xmin, xmax, xlabel, ymin, ymax, ylabel, outpu
         h2.GetXaxis().SetLabelSize(0.045/(padsize2+0.3*padsize3))
         h2.GetYaxis().SetTitleSize(0.043/(padsize2+0.3*padsize3))
         h2.GetYaxis().SetLabelSize(0.040/(padsize2+0.3*padsize3))
-        h2.GetYaxis().SetTitleOffset(1.35*(padsize2+0.35*padsize3)*(600.0/W))
+        h2.GetYaxis().SetTitleOffset(1.6*(padsize2+0.35*padsize3)*(600.0/W))
 
         h2.GetYaxis().SetNdivisions(8)
         h2.GetYaxis().CenterTitle()

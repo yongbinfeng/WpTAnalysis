@@ -16,7 +16,7 @@ from data.FLAG import doPAS
 
 ROOT.gROOT.SetBatch(True)
 
-def MakeDataMCPlot(ifilename: str, channel: str, bins: np.array, suffix: str, showpull: bool = False, is5TeV: bool = False, startbin: int = 1, outdir: str = "plots", doPostfit = True, mTCut = 40.0, yrmin = 0.95, yrmax = 1.05, dology=False, savehistos=False):
+def MakeDataMCPlot(ifilename: str, channel: str, bins: np.array, suffix: str, showpull: bool = False, is5TeV: bool = False, startbin: int = 1, outdir: str = "plots", doPostfit = True, mTCut = 40.0, yrmin = 0.986, yrmax = 1.014, dology=False, savehistos=False):
     """
     compare the unrolled pre/post-fit of data and templates
     """
